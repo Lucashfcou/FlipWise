@@ -20,3 +20,8 @@ node scripts/make-artifact.mjs   # ficheiro único para pré-visualização
 
 ## Próximos passos
 Leitura de print por IA (precisa de função de servidor com chave), eBay Browse API, PriceCharting, alertas, mais produtos. Ver `docs/spec.md` e `docs/founder/board/`.
+
+## Pipeline de anúncios (src/pipeline)
+JSON bruto das plataformas -> `sanitize` (tira HTML, CSS, imagens e layout; fica id, título, preço, moeda, descrição, url) -> classificador (`claudeClassifier` por tool use, ou `rulesClassifier` local) -> moeda principal -> filtro IQR -> média, mediana, mínimo, máximo. As contas são sempre em código, nunca no Claude.
+- Demo no terminal sobre dados simulados: `npm run pipeline:demo` (regras locais) ou `ANTHROPIC_API_KEY=... npm run pipeline:demo -- --claude`.
+- A chamada ao Claude só deve correr no servidor: a chave não pode ir para o telemóvel. O pipeline não inclui coletor das plataformas; recebe o JSON como entrada (CSV, API oficial ou dados enviados pelo utilizador).
