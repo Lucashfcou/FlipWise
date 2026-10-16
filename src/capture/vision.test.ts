@@ -36,7 +36,7 @@ describe("parseVisionResponse", () => {
     const { result, usage } = parseVisionResponse(
       reply({
         productId: "ps4-slim-500", title: "PS4 Slim 500GB", price: 140, currency: "EUR", condition: "B",
-        conditionReason: "sem caixa", platform: "Vinted", includes: ["1 comando"], defects: [], confidence: "alta", notes: "",
+        conditionReason: "sem caixa", platform: "Vinted", includes: ["1 comando"], defects: [], confidence: "alta", notes: "", imageType: "anuncio", inconsistencies: [],
       }),
     );
     expect(result.productId).toBe("ps4-slim-500");
@@ -47,20 +47,65 @@ describe("parseVisionResponse", () => {
   });
 
   it("id fora do catálogo e estado inválido para o produto viram null", () => {
-    const a = parseVisionResponse(reply({ productId: "iphone-13", title: "x", price: 300, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta" }));
+    const a = parseVisionResponse(reply({ imageType: "anuncio", productId: "iphone-13", title: "x", price: 300, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta" }));
     expect(a.result.productId).toBeNull();
     expect(a.result.condition).toBeNull();
     expect(a.result.confidence).toBe("baixa");
 
-    const b = parseVisionResponse(reply({ productId: "ds4-v2", title: "x", price: 20, currency: "EUR", condition: "A", conditionReason: "", confidence: "alta" }));
+    const b = parseVisionResponse(reply({ imageType: "anuncio", productId: "ds4-v2", title: "x", price: 20, currency: "EUR", condition: "A", conditionReason: "", confidence: "alta" }));
     expect(b.result.productId).toBe("ds4-v2");
     expect(b.result.condition).toBeNull();
   });
 
   it("preço inválido vira null e baixa a confiança", () => {
-    const { result } = parseVisionResponse(reply({ productId: "ps4-slim-500", title: "x", price: -5, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta" }));
+    const { result } = parseVisionResponse(reply({ imageType: "anuncio", productId: "ps4-slim-500", title: "x", price: -5, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta" }));
     expect(result.price).toBeNull();
     expect(result.confidence).toBe("baixa");
+  });
+
+  it("foto solta sem texto vira erro NAO_E_ANUNCIO e nunca tem confiança alta", () => {
+    const { result } = parseVisionResponse(
+      reply({ imageType: "foto_sem_texto", productId: "ps4-slim-500", title: "", price: 100, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta", inconsistencies: [] }),
+    );
+    expect(result.problems.map((p) => p.code)).toEqual(["NAO_E_ANUNCIO"]);
+    expect(result.problems[0].severity).toBe("erro");
+    expect(result.problems[0].message).toContain("página do anúncio");
+    expect(result.confidence).toBe("baixa");
+  });
+
+  it("tipo de imagem em falta ou inválido conta como não-anúncio", () => {
+    const { result } = parseVisionResponse(reply({ productId: "ps4-slim-500", title: "x", price: 100, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta" }));
+    expect(result.imageType).toBe("outro");
+    expect(result.problems[0].code).toBe("NAO_E_ANUNCIO");
+  });
+
+  it("foto e texto que não batem geram aviso e baixam a confiança", () => {
+    const { result } = parseVisionResponse(
+      reply({
+        imageType: "anuncio", productId: "ps4-slim-500", title: "PS4 Slim", price: 120, currency: "EUR", condition: "B", conditionReason: "", confidence: "alta",
+        inconsistencies: ["o título diz Slim, a foto mostra um Pro"],
+      }),
+    );
+    const mismatch = result.problems.find((p) => p.code === "NAO_BATE")!;
+    expect(mismatch.severity).toBe("aviso");
+    expect(mismatch.message).toContain("Foto e texto não batem");
+    expect(result.confidence).toBe("baixa");
+    expect(result.productId).toBe("ps4-slim-500");
+  });
+
+  it("anúncio sem produto do catálogo (ex.: portátil) dá erro SEM_PRODUTO", () => {
+    const { result } = parseVisionResponse(
+      reply({ imageType: "anuncio", productId: null, title: "Portátil ASUS 15", price: 350, currency: "EUR", condition: null, conditionReason: "", confidence: "media", inconsistencies: [] }),
+    );
+    expect(result.problems.map((p) => p.code)).toEqual(["SEM_PRODUTO"]);
+  });
+
+  it("sem preço nem estado gera avisos, não erros", () => {
+    const { result } = parseVisionResponse(
+      reply({ imageType: "anuncio", productId: "ps4-slim-500", title: "PS4", price: null, currency: "EUR", condition: null, conditionReason: "", confidence: "media", inconsistencies: [] }),
+    );
+    expect(result.problems.map((p) => p.code).sort()).toEqual(["SEM_ESTADO", "SEM_PRECO"]);
+    expect(result.problems.every((p) => p.severity === "aviso")).toBe(true);
   });
 
   it("falha com erro claro sem a ferramenta", () => {

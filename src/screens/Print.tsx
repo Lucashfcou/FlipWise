@@ -67,6 +67,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const product = productId ? findProduct(productId) : undefined;
   const priceNum = price === "" ? null : Number(price.replace(",", "."));
   const canUse = Boolean(product && condition);
+  const notAd = result?.problems.some((p) => p.code === "NAO_E_ANUNCIO") ?? false;
 
   if (!open) {
     return (
@@ -110,21 +111,64 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
         </>
       )}
 
+      <div className="guide">
+        <strong>O que enviar</strong>
+        <p>
+          Um print da <b>página do anúncio</b>, com o título e o preço visíveis. Uma foto solta do aparelho, por exemplo
+          tirada numa feira, não chega para identificar o produto nem o preço.
+        </p>
+      </div>
+
       {status && !status.enabled && !result && (
-        <div className="actions">
-          <button className="btn accent" onClick={() => load(demoResult())}>Ver com um exemplo</button>
-        </div>
+        <>
+          <p className="hint">Exemplos para ver como o app reage:</p>
+          <div className="actions">
+            <button className="btn accent" onClick={() => load(demoResult("ok"))}>Anúncio lido</button>
+            <button className="btn ghost" onClick={() => load(demoResult("foto"))}>Foto solta</button>
+            <button className="btn ghost" onClick={() => load(demoResult("naobate"))}>Foto não bate</button>
+          </div>
+        </>
       )}
 
       {error && <p className="loss" role="alert">{error}</p>}
 
-      {result && (
+      {result && notAd && (
+        <div className="confirm">
+          {result.demo && <p className="note">Resultado de exemplo: não veio de nenhum print.</p>}
+          <ul className="problems" role="alert">
+            {result.problems.map((p) => (
+              <li key={p.code} className={p.severity}>{p.message}</li>
+            ))}
+          </ul>
+          <div className="actions">
+            <button
+              className="btn primary"
+              onClick={() => {
+                setResult(null);
+                setImage(null);
+                setPreview(null);
+              }}
+            >
+              Tentar outro print
+            </button>
+          </div>
+        </div>
+      )}
+
+      {result && !notAd && (
         <div className="confirm">
           <div className="row">
             <strong>{result.title || "Anúncio lido"}</strong>
             <span className={`conf ${result.confidence}`}>{CONF[result.confidence]}</span>
           </div>
           {result.demo && <p className="note">Resultado de exemplo: não veio de nenhum print.</p>}
+          {result.problems.length > 0 && (
+            <ul className="problems" role="alert">
+              {result.problems.map((p) => (
+                <li key={p.code + p.message} className={p.severity}>{p.message}</li>
+              ))}
+            </ul>
+          )}
           {result.notes && <p className="hint">{result.notes}</p>}
           {result.defects.length > 0 && <p className="loss">Defeitos mencionados: {result.defects.join(", ")}</p>}
           {result.includes.length > 0 && <p className="hint">Inclui: {result.includes.join(", ")}</p>}
