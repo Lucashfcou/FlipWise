@@ -96,26 +96,13 @@ export function Verdict({
     <div className={`verdict ${d?.light ?? ""}`} aria-live="polite">
       <div className="ticket-head">
         <span className="label">{headlineLabel}</span>
-        <span className={`conf ${price.confidence}`}>{CONF_LABEL[price.confidence]} · {price.count} obs.</span>
+        <span className={`conf ${price.confidence}`}>{CONF_LABEL[price.confidence]}</span>
       </div>
 
       <div className="typical">
         <CountUp value={headline} />
         {price.floor !== undefined && <span className="sub">a loja paga {money(price.floor)}</span>}
       </div>
-      {price.safeBuy !== undefined && (
-        <p className="hint safe">Abaixo disto, se vendesses à loja, nunca perdias dinheiro.</p>
-      )}
-
-      <div className="scale" role="img" aria-label={`Revenda estimada ${money(price.low)} a ${money(price.high)}, compra segura ${money(headline)}`}>
-        <div className="track" />
-        <div className="band" style={{ left: pos(price.low), width: `calc(${pos(price.high)} - ${pos(price.low)})` }} />
-        <div className="tick" style={{ left: pos(price.typical) }} />
-        {hasAsked && <div className="mark asked" style={{ left: pos(asked as number) }}>{money(asked as number)}</div>}
-        <div className="mark max" style={{ left: pos(headline) }}>seguro {money(headline)}</div>
-      </div>
-
-      <p className="hint legend">Faixa azul: revenda entre pessoas. Traço preto: valor central.</p>
 
       {d && (
         <div className="decision">
@@ -124,36 +111,54 @@ export function Verdict({
         </div>
       )}
 
-      <div className="facts">
-        <div>
-          <span className="label">{resaleLabel}</span>
-          <span className="mono">{money(price.low)} – {money(price.high)}</span>
-        </div>
-        <div>
-          <span className="label">Para {pct(margin)} de margem</span>
-          <span className="mono">paga até {money(price.maxBuy)}</span>
-        </div>
-        {price.floor !== undefined && (
-          <div>
-            <span className="label">Piso: a loja paga</span>
-            <span className="mono">{money(price.floor)}</span>
-          </div>
-        )}
-        {price.ceiling !== undefined && (
-          <div>
-            <span className="label">Teto: a loja vende</span>
-            <span className="mono">{money(price.ceiling)}</span>
-          </div>
-        )}
+      <div
+        className="scale"
+        role="img"
+        aria-label={`Revenda estimada ${money(price.low)} a ${money(price.high)}, compra segura ${money(headline)}`}
+      >
+        <div className="track" />
+        <div className="band" style={{ left: pos(price.low), width: `calc(${pos(price.high)} - ${pos(price.low)})` }} />
+        <div className="tick" style={{ left: pos(price.typical) }} />
+        {hasAsked && <div className="mark asked" style={{ left: pos(asked as number) }}>{money(asked as number)}</div>}
+        <div className="mark max" style={{ left: pos(headline) }}>seguro {money(headline)}</div>
       </div>
-      <p className="hint">
-        Já desconta envio e destaque.
-        {price.derived
-          ? " A revenda entre pessoas é uma estimativa a partir da loja: ainda não há vendas reais para a confirmar."
-          : price.firm
-            ? ""
-            : " Poucos dados: usa como pista, não como regra."}
-      </p>
+
+      <details className="more">
+        <summary>Ver os números</summary>
+        <dl className="numbers">
+          <div>
+            <dt>{resaleLabel}<small>a faixa azul na régua</small></dt>
+            <dd className="mono">{money(price.low)} – {money(price.high)}</dd>
+          </div>
+          <div>
+            <dt>Paga até, para {pct(margin)} de margem<small>já desconta envio e destaque</small></dt>
+            <dd className="mono">{money(price.maxBuy)}</dd>
+          </div>
+          {price.floor !== undefined && (
+            <div>
+              <dt>A loja paga (piso)<small>o que a loja dá por ele hoje</small></dt>
+              <dd className="mono">{money(price.floor)}</dd>
+            </div>
+          )}
+          {price.ceiling !== undefined && (
+            <div>
+              <dt>A loja vende (teto)<small>o que a loja pede hoje</small></dt>
+              <dd className="mono">{money(price.ceiling)}</dd>
+            </div>
+          )}
+          <div>
+            <dt>Dados usados<small>{CONF_LABEL[price.confidence]}</small></dt>
+            <dd className="mono">{price.count} obs.</dd>
+          </div>
+        </dl>
+        <p className="hint">
+          {price.derived
+            ? "A revenda entre pessoas é uma estimativa a partir da loja: ainda não há vendas reais para a confirmar."
+            : price.firm
+              ? "Estimativa a partir de anúncios e vendas registados."
+              : "Poucos dados: usa como pista, não como regra."}
+        </p>
+      </details>
     </div>
   );
 }
