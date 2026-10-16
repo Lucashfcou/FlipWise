@@ -22,6 +22,7 @@
   --card-shadow: 0 1px 1px rgba(21, 19, 31, 0.14), 0 10px 22px -10px rgba(21, 19, 31, 0.38),
     0 28px 46px -28px rgba(21, 19, 31, 0.34);
   --panel-shadow: 0 1px 0 rgba(21, 19, 31, 0.06), 0 12px 26px -16px rgba(21, 19, 31, 0.28);
+  --ring: #15131f;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --display: "Anybody Variable", "Arial Narrow", system-ui, sans-serif;
@@ -40,6 +41,7 @@
     --muted: #a9a5c2;
     --line: #38344a;
     --line-strong: #5b5775;
+    --ring: #8f95ac;
     --good: #52d58a;
     --warn: #e0a416;
     --bad: #ff7a70;
@@ -482,7 +484,7 @@ span.chip {
   position: relative;
   margin: 22px 0 0;
   background: var(--stock);
-  border: 1.5px solid #15131f;
+  border: 1.5px solid var(--ring);
   border-radius: 14px;
   box-shadow: var(--card-shadow);
   padding: 18px 20px 20px;
@@ -586,7 +588,7 @@ span.chip {
   height: 20px;
   border-radius: 50%;
   background: var(--table);
-  border: 1.5px solid #15131f;
+  border: 1.5px solid var(--ring);
 }
 
 .perforation::before {
@@ -614,7 +616,7 @@ span.chip {
   border-radius: 12px;
   font-weight: 700;
   background: color-mix(in srgb, var(--tone) 24%, var(--stock));
-  border: 1.5px solid #15131f;
+  border: 1.5px solid var(--ring);
 }
 
 .verdict .hint {
