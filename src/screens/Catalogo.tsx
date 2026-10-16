@@ -3,18 +3,19 @@ import { CATEGORY_LABEL, CONDITIONS, PRODUCTS } from "../domain/catalog";
 import type { Category } from "../domain/types";
 import { money } from "../format";
 import { useApp } from "../state";
+import { SourceNote } from "../ui/SourceNote";
 
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as Category[];
 
 export function Catalogo() {
-  const { priceFor, usingExamples } = useApp();
+  const { priceFor } = useApp();
   const [category, setCategory] = useState<Category>("console");
   const [open, setOpen] = useState<string | null>(null);
 
   return (
     <section>
       <h1>Catálogo</h1>
-      {usingExamples && <p className="note">Valores de exemplo, não preços reais.</p>}
+      <SourceNote />
       <div className="chips">
         {CATEGORIES.map((c) => (
           <button key={c} className={c === category ? "chip on" : "chip"} onClick={() => { setCategory(c); setOpen(null); }}>

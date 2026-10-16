@@ -8,7 +8,8 @@ interface AppState {
   stock: StockItem[];
   settings: Settings;
   observations: Observation[];
-  usingExamples: boolean;
+  sourcesFor: (productId: string) => string[];
+  importObservations: (list: Observation[]) => void;
   priceFor: (productId: string, condition: Condition) => PriceEstimate;
   addStock: (item: Omit<StockItem, "id">) => void;
   sellStock: (id: string, sale: NonNullable<StockItem["sale"]>) => void;
@@ -49,7 +50,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stock,
       settings,
       observations,
-      usingExamples: observations.some((o) => o.example),
+      sourcesFor: (productId) => [...new Set(observations.filter((o) => o.productId === productId && o.source !== "eu").map((o) => o.source))],
+      importObservations: (list) => {
+        localRepo.addObservations(list);
+        setObservations((prev) => [...prev, ...list]);
+      },
       priceFor,
       addStock: (item) => persistStock([{ ...item, id: crypto.randomUUID() }, ...stock]),
       sellStock: (id, sale) => {
@@ -64,13 +69,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             source: "eu",
             date: sale.date,
           };
-          localRepo.addObservation(o);
+          localRepo.addObservations([o]);
           setObservations((prev) => [...prev, o]);
         }
       },
       removeStock: (id) => persistStock(stock.filter((i) => i.id !== id)),
       contribute: (o) => {
-        localRepo.addObservation(o);
+        localRepo.addObservations([o]);
         setObservations((prev) => [...prev, o]);
       },
       updateSettings: (s) => {

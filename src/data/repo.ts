@@ -1,4 +1,4 @@
-import { exampleObservations } from "../domain/catalog";
+import { marketObservations } from "./market";
 import { DEFAULT_SETTINGS } from "../domain/types";
 import type { Observation, Settings, StockItem } from "../domain/types";
 
@@ -10,7 +10,7 @@ export interface Repo {
   loadStock(): StockItem[];
   saveStock(items: StockItem[]): void;
   loadObservations(): Observation[];
-  addObservation(o: Observation): void;
+  addObservations(list: Observation[]): void;
   loadSettings(): Settings;
   saveSettings(s: Settings): void;
 }
@@ -35,13 +35,10 @@ function write(key: string, value: unknown) {
 export const localRepo: Repo = {
   loadStock: () => read<StockItem[]>("garimpo.stock", []),
   saveStock: (items) => write("garimpo.stock", items),
-  loadObservations: () => [
-    ...exampleObservations(),
-    ...read<Observation[]>("garimpo.observations", []),
-  ],
-  addObservation: (o) => {
+  loadObservations: () => [...marketObservations(), ...read<Observation[]>("garimpo.observations", [])],
+  addObservations: (list) => {
     const mine = read<Observation[]>("garimpo.observations", []);
-    write("garimpo.observations", [...mine, o]);
+    write("garimpo.observations", [...mine, ...list]);
   },
   loadSettings: () => ({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>("garimpo.settings", {}) }),
   saveSettings: (s) => write("garimpo.settings", s),

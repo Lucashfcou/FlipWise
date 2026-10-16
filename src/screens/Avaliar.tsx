@@ -3,12 +3,13 @@ import { CATEGORY_LABEL, CONDITIONS, PRODUCTS, findProduct } from "../domain/cat
 import type { Category, Condition } from "../domain/types";
 import { money, today } from "../format";
 import { useApp } from "../state";
+import { SourceNote } from "../ui/SourceNote";
 import { Verdict } from "../ui/Verdict";
 
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as Category[];
 
 export function Avaliar({ goStock }: { goStock: () => void }) {
-  const { priceFor, settings, usingExamples, contribute, addStock } = useApp();
+  const { priceFor, settings, contribute, addStock } = useApp();
   const [category, setCategory] = useState<Category>("console");
   const [query, setQuery] = useState("");
   const [productId, setProductId] = useState<string>(PRODUCTS.find((p) => p.category === "console")!.id);
@@ -66,12 +67,7 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   return (
     <section>
       <h1>Vale a pena comprar?</h1>
-      {usingExamples && (
-        <p className="note" role="note">
-          Os preços de arranque são <strong>exemplos</strong>, não dados reais. Vão ficando mais fiéis com as tuas
-          avaliações e vendas.
-        </p>
-      )}
+      <SourceNote />
 
       <div className="chips" role="tablist" aria-label="Categoria">
         {CATEGORIES.map((c) => (

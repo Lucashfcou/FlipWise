@@ -37,9 +37,9 @@ const TABS: { id: Tab; label: string }[] = [
 function Logo() {
   return (
     <svg className="logo" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="var(--ink)" />
-      <path d="M9 19l4-8h6l4 8-7 6z" fill="none" stroke="var(--bg)" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M9 19h14M13 11l3 8 3-8" fill="none" stroke="var(--bg)" strokeWidth="1.6" strokeLinejoin="round" />
+      <rect width="32" height="32" rx="7" fill="var(--ink)" />
+      <path d="M22.1 11.7A7.5 7.5 0 1 0 23.5 16" fill="none" stroke="var(--bg)" strokeWidth="3.6" />
+      <path d="M16.2 16H23.5" fill="none" stroke="var(--accent)" strokeWidth="3.6" />
     </svg>
   );
 }

@@ -42,8 +42,36 @@ describe("estimate", () => {
   it("aplica desconto ao preço pedido", () => {
     const list = [200, 200, 200, 200].map((v, i) => obs(v, "ask", "2026-10-10", `a${i}`));
     const r = estimate(list, costs, TODAY);
-    expect(r.typical).toBeCloseTo(180, 0);
+    expect(r.typical).toBeCloseTo(170, 0);
     expect(r.confidence).toBe("media");
+  });
+
+  it("recompra e recondicionado não entram no típico, ficam como piso e teto", () => {
+    const list = [
+      ...[100, 105, 110, 100, 108].map((v, i) => obs(v, "sold", "2026-10-10", `s${i}`)),
+      obs(60, "buyback", "2026-10-10", "cex"),
+      obs(60, "buyback", "2026-10-10", "cex2"),
+      obs(150, "refurb", "2026-10-10", "bm"),
+    ];
+    const r = estimate(list, costs, TODAY);
+    expect(r.floor).toBe(60);
+    expect(r.ceiling).toBe(150);
+    expect(r.typical).toBeGreaterThan(98);
+    expect(r.typical).toBeLessThan(112);
+    expect(r.low).toBeGreaterThan(95);
+  });
+
+  it("sem vendas nem anúncios infere o típico entre piso e teto com confiança baixa", () => {
+    const r = estimate([obs(60, "buyback", "2026-10-10", "a"), obs(140, "refurb", "2026-10-10", "b")], costs, TODAY);
+    expect(r.derived).toBe(true);
+    expect(r.confidence).toBe("baixa");
+    expect(r.typical).toBeCloseTo(60 + 0.55 * 80, 0);
+  });
+
+  it("limita o típico ao teto de loja", () => {
+    const list = [300, 310, 305, 300].map((v, i) => obs(v, "sold", "2026-10-10", `s${i}`));
+    const r = estimate([...list, obs(200, "refurb", "2026-10-10", "bm")], costs, TODAY);
+    expect(r.typical).toBe(200);
   });
 
   it("dá menos peso a observações antigas", () => {

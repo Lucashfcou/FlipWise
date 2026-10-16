@@ -35,6 +35,12 @@ export interface PriceEstimate {
   firm: boolean;
   confidence: Confidence;
   count: number;
+  /** true quando não há vendas nem anúncios e o típico foi inferido entre piso e teto. */
+  derived: boolean;
+  /** Preço de recompra (o que uma loja paga). */
+  floor?: number;
+  /** Preço de loja (recondicionado ou novo). */
+  ceiling?: number;
 }
 
 export interface Sale {

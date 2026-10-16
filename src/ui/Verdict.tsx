@@ -105,8 +105,27 @@ export function Verdict({
           <span className="label">Margem alvo</span>
           <span className="mono">{pct(margin)}</span>
         </div>
+        {price.floor !== undefined && (
+          <div>
+            <span className="label">Loja paga (piso)</span>
+            <span className="mono">{money(price.floor)}</span>
+          </div>
+        )}
+        {price.ceiling !== undefined && (
+          <div>
+            <span className="label">Loja vende (teto)</span>
+            <span className="mono">{money(price.ceiling)}</span>
+          </div>
+        )}
       </div>
-      <p className="hint">Já desconta envio e destaque.{price.firm ? "" : " Poucos dados: usa como pista, não como regra."}</p>
+      <p className="hint">
+        Já desconta envio e destaque.
+        {price.derived
+          ? " Estimativa inferida entre o que a loja paga e o que vende: ainda sem vendas reais, usa como pista."
+          : price.firm
+            ? ""
+            : " Poucos dados: usa como pista, não como regra."}
+      </p>
     </div>
   );
 }
