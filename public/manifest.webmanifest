@@ -1,0 +1,11 @@
+{
+  "name": "Garimpo",
+  "short_name": "Garimpo",
+  "description": "Preço de mercado e lucro para revendedores de eletrónicos usados.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E4E6EE",
+  "theme_color": "#E4E6EE",
+  "lang": "pt-PT",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
