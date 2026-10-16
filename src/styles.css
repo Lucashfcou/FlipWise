@@ -912,3 +912,52 @@ span.chip {
   font-size: 16px;
   white-space: nowrap;
 }
+
+.printcard {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.printcard span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.printcard small {
+  font-size: 13px;
+}
+
+.capture .row {
+  margin-bottom: 8px;
+}
+
+.btn.small {
+  min-height: 36px;
+  padding: 6px 12px;
+}
+
+.printpreview {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  object-fit: contain;
+}
+
+.confirm {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}

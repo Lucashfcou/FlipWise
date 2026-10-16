@@ -4,6 +4,8 @@ import type { Category, Condition } from "../domain/types";
 import { money, today } from "../format";
 import { useApp } from "../state";
 import { Lote } from "./Lote";
+import { Print } from "./Print";
+import type { PrintPick } from "./Print";
 import { SourceNote } from "../ui/SourceNote";
 import { Verdict } from "../ui/Verdict";
 
@@ -38,6 +40,14 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
     setProductId(id);
     const conds = CONDITIONS[p.category];
     setCondition(conds[Math.min(1, conds.length - 1)].id);
+    setQuery("");
+    setSaved(false);
+  }
+
+  function usePrint(p: PrintPick) {
+    setProductId(p.productId);
+    setCondition(p.condition);
+    setAsked(p.price ? String(p.price) : "");
     setQuery("");
     setSaved(false);
   }
@@ -120,6 +130,7 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
             </ul>
           )}
           {!searching && !category && <p className="hint">Escolhe uma categoria ou procura pelo nome.</p>}
+          {!searching && <Print onUse={usePrint} />}
         </>
       ) : (
         <>

@@ -36,3 +36,12 @@ Telas: Avaliar (escolhe produto e estado, digita o preço do anúncio, recebe fa
 Catálogo: 10 consolas (PS4, PS5, Switch, Xbox), 4 comandos, 25 jogos de PS4. Os preços de arranque são EXEMPLOS marcados como tal, não dados reais.
 Ainda NÃO existe: leitura de print por IA, ligação a eBay/CeX/PriceCharting, alertas, histórico de preço, gerador de anúncio, conta, sincronização, tênis, telemóveis.
 O fundador sente que "falta alguma coisa" e que está "muito básico". Pergunta extra para cada membro: **o que falta no produto para ele ser algo que um revendedor usaria todos os dias e pagaria?** Dê no máximo 5 itens, por ordem de impacto, e diga o que cortar.
+
+## Atualização 3: cenário com eBay e funções novas
+Suposição a avaliar: o fundador consegue a API do eBay (anúncios ativos, vários mercados da Europa), padroniza os preços por produto, aplica cerca de 10% de desconto sobre o preço pedido para estimar o preço pago, e cobre o máximo de eletrónicos possível (consolas, telemóveis, portáteis, tablets). Continua sem vendas reais do eBay e sem scraping de Vinted/OLX.
+O que já existe além do que está acima: avaliação de lotes (soma as peças, compara vender separado e junto), stock parado com sugestão de baixa de preço e dinheiro parado, painel fiscal (faturado, lucro, vendas por plataforma, aviso perto do limite DAC7 de 30 vendas ou 2000 EUR/ano, exportação CSV), "o app acertou?" (compara a previsão na compra com a venda real), gerador de anúncio, pipeline de limpeza e classificação de anúncios (regras locais e Claude), importação de preços por CSV, e um ecrã de avaliação simplificado (categoria, produto, estado, preço; um número principal e uma decisão Comprar/Negociar/Deixar).
+Perguntas a responder, cada membro pela sua lente:
+1. Dado o cenário do eBay, o voto muda? Quais são os 3 defeitos que ainda restam?
+2. O que melhorar no produto (máximo 5 itens, por impacto)?
+3. Modelo de preço: o que ficaria grátis e o que seria pago? Assinatura, uso por consulta, ou outro? Justifica com o que o revendedor valoriza. Não inventes números de mercado: marca como hipótese a testar.
+4. Como validar de forma menos enviesada (o produto foi desenhado em conjunto com o fundador, que é o primeiro utilizador)?

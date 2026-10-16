@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5174",
     "test": "vitest run",
-    "pipeline:demo": "tsx scripts/pipeline-demo.ts"
+    "pipeline:demo": "tsx scripts/pipeline-demo.ts",
+    "capture:server": "tsx server/capture.ts"
   },
   "dependencies": {
     "@fontsource-variable/anybody": "^5.3.0",
