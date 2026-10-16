@@ -14,6 +14,13 @@ export function daysHeld(item: StockItem, today = new Date()): number {
   return Math.max(0, Math.floor((end.getTime() - new Date(item.boughtDate).getTime()) / DAY_MS));
 }
 
+/** Quantas vendas ficaram a menos de 15% do preço típico que o app indicou na compra. */
+export function accuracy(items: StockItem[]): { hits: number; total: number } {
+  const rated = items.filter((i) => i.sale && i.estimate && i.estimate > 0);
+  const hits = rated.filter((i) => Math.abs(i.sale!.price - i.estimate!) / i.estimate! <= 0.15).length;
+  return { hits, total: rated.length };
+}
+
 export interface MonthSummary {
   sold: number;
   unsold: number;

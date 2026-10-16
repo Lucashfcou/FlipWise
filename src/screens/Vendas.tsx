@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { findProduct } from "../domain/catalog";
-import { daysHeld, itemProfit, monthlySummary } from "../domain/profit";
+import { accuracy, daysHeld, itemProfit, monthlySummary } from "../domain/profit";
 import { money, pct } from "../format";
 import { useApp } from "../state";
 
@@ -13,6 +13,7 @@ export function Vendas() {
   }, [stock]);
   const [month, setMonth] = useState(months[0]);
   const summary = monthlySummary(stock, month);
+  const acc = accuracy(stock);
   const sold = stock.filter((i) => i.sale && i.sale.date.startsWith(month));
 
   const byPlatform = useMemo(() => {
@@ -39,6 +40,18 @@ export function Vendas() {
         <div className="kpi"><span className="label">Vendidos</span><span className="mono big">{summary.sold}</span></div>
         <div className="kpi"><span className="label">Faturado</span><span className="mono big">{money(summary.revenue)}</span></div>
         <div className="kpi"><span className="label">Dias até vender</span><span className="mono big">{summary.avgDays}</span></div>
+      </div>
+
+      <div className="panel proof">
+        <span className="label">O app acertou?</span>
+        {acc.total === 0 ? (
+          <p className="hint">Aparece depois da primeira venda de um artigo comprado pela aba Avaliar.</p>
+        ) : (
+          <>
+            <span className="big mono">{acc.hits} de {acc.total}</span>
+            <p className="hint">vendas ficaram a menos de 15% do preço típico indicado na compra. Meta: 7 em cada 10.</p>
+          </>
+        )}
       </div>
 
       {byPlatform.length > 0 && (

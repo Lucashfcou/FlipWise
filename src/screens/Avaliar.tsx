@@ -51,7 +51,15 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
 
   function bought() {
     if (askedNum === null || !Number.isFinite(askedNum) || askedNum <= 0) return;
-    addStock({ productId, condition, cost: askedNum, extraCosts: 0, boughtAt: "", boughtDate: today() });
+    addStock({
+      productId,
+      condition,
+      cost: askedNum,
+      extraCosts: 0,
+      boughtAt: "",
+      boughtDate: today(),
+      estimate: price.count ? price.typical : undefined,
+    });
     goStock();
   }
 

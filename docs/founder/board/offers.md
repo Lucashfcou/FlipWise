@@ -1,33 +1,55 @@
 # Offers lens
-Score: 5/10 | Vote: FUND IF
+
+Score: 4/10 | Vote: FUND IF
+
+Framework applied: the Offers lens (market first, value equation, stack, guarantee). Scored on the business as briefed, not on the founder.
 
 ## What is strong
-- Pain is concrete and repeated. Every buy is a bet on a resale price, and a wrong bet costs real money. The dream outcome is clear: buy at a price that guarantees the margin.
-- The output is a number the buyer can act on: a max purchase price for their own target margin. That is closer to a result than a "price lookup".
-- Effort is low in principle: a screenshot or a link in, a price out. Stock and profit tracking sit in the same place.
-- Honest design: range, source and confidence are always shown. This helps perceived likelihood, because the buyer can see why to trust it.
-- Founder is the buyer. Fast, cheap feedback from real purchases, and a clear MVP test (7 of 10 estimates close to the actual sale).
-- Cost to deliver is near zero at the start, so a guarantee is affordable.
+- Pain is concrete and repeated. Every buy decision needs one number: the most I can pay. The product answers exactly that, in seconds.
+- Buyer has a money motive. A reseller who earns per flip may pay for a tool that protects margin. One avoided bad buy could cover a month's fee.
+- Founder is the customer. Pain is lived, and the first test user is on hand.
+- Honest data policy (no scraping, confidence level always shown, prices marked as examples). This builds trust, which is the scarce part of a pricing tool.
+- Stock plus real profit per item is a second job that brings the user back after the buy.
+
+Market score (four tests):
+- Pain: moderate. Real, but the user can guess by feel today.
+- Money: unknown. Side-income resellers may be price-sensitive.
+- Reach: good in principle (Vinted/OLX groups, forums). Not tested.
+- Growth: unknown. Market size in Portugal is an open question.
+
+Value equation today:
+- Dream outcome: clear (buy right, earn more).
+- Likelihood: weak. Seed prices are examples, so the number is not yet believable.
+- Time to result: good (seconds per check).
+- Effort: medium. Typing the ad price by hand, per item, is friction. The print reader is not built.
 
 ## What would kill it (the top 3, most dangerous first)
-1. **Market is thin and may not pay.** Part-time resellers in Portugal buying PS4 items are few, price-sensitive and used to free tools (Vinted/OLX search, spreadsheets). Size of the market and willingness to pay 5 to 15 EUR/month are both unknown. If monthly profit per user is small, the price is a large share of it.
-2. **Likelihood of the outcome is weak because the data is weak.** Vinted and OLX, where these buyers actually trade, feed in only through user input. Prices come from other channels (new, refurbished, CeX, eBay, PriceCharting) that may not match what a used PS4 pad sells for on Vinted.pt. At cold start, confidence will often be "low", which is the case where the buyer needs help most. If early answers miss, trust is lost and the promise "max buy price" has no proof.
-3. **Effort and value gap at the moment of buying.** The user must take a print, upload it, confirm what the AI read, and wait, often in a fair or a chat, while the seller is waiting. Free alternatives (check sold listings by hand) take about the same time. Without a clear speed or accuracy edge, this is a nicer-looking version of what the buyer already does, priced as a subscription. The value of the stock and profit part is real but is a commodity.
+1. **The number is not trustworthy, so nothing else matters.** Likelihood is the weakest leg. With example prices and no real sold data, the "pays at most" figure is a guess in a nice interface. A reseller who loses money once on it leaves. Test: the founder's own 7-in-10 check.
+2. **The market may be too small or too poor to pay 5 to 15 EUR a month.** Part-time resellers of PS4 gear in Portugal may be few, and many will use free tools: Vinted search, eBay sold filter, a spreadsheet. If the alternative is free and "good enough", this is a commodity. Size and willingness to pay are both unknown.
+3. **The tool does not enter the daily habit.** The check happens on the spot (at a fair, in a chat). If it takes more taps than looking at Vinted listings, the user skips it. Stock tracking alone is a weak reason to pay; a spreadsheet does it.
+
+## What is missing from the product (max 5 items, by impact, plus what to cut)
+1. **Real price data for the founder's own categories.** Replace the example prices with sold and asking data the founder collects and verifies, with date and source per figure. Without it there is no offer.
+2. **Print or link input.** Drop the ad price typing. A screenshot in, a verdict out, user confirms. This removes the main effort cost.
+3. **A proof loop.** Log what you paid and what it sold for, then show "the app's call vs the real outcome" with a hit rate. This is the evidence that answers "why believe it", and it becomes the product's own data.
+4. **A one-tap verdict at the moment of buying.** Buy / haggle to X / walk, large and readable, usable one-handed at a fair. The semáforo exists; make it the whole screen.
+5. **A listing helper.** Suggested price and title from the evaluated item, to close the loop to the sale. This is where time is saved after the buy.
+
+Cut or delay: Lucro by platform, Catálogo as a browse screen, tenis, phones, accounts, sync, alerts, price history. Keep Avaliar and Stock only until the number is proven.
+
+Why it feels "basic": the shell is built, but the promise (a price you can trust) is not. More screens will not fix that; data and input speed will.
 
 ## The questions I would ask the founder
-- How many people in Portugal buy and resell used electronics weekly, and how many do it as more than a hobby? Where do they gather, and can you reach them for free?
-- How much does a typical reseller earn per month, and what share is 10 EUR? Would they pay it before or after the first month of proof?
-- What do they use today, and what does it cost them in time and in wrong buys? Has anyone paid for a price tool before?
-- In your own purchases, how often would the app have said something useful that you did not already know? What share of estimates would be "low confidence" at launch?
-- How long from print to answer, and can the user do it in under 15 seconds while standing in front of the seller?
-- Which one category (for example PS4 controllers) can you make accurate enough that a user feels stupid not using it? Why start broader than that?
-- What guarantee can you offer (for example refund if the first 10 estimates are off by more than X)? What does that cost you?
-- What would make a user pay double? Is it avoided losses, saved time, or a number they cannot get elsewhere?
-- Would a one-off or per-use price (instead of a subscription) fit how and when they buy?
+1. In your last 20 real buys, how many times would the app have changed your decision, and by how much money?
+2. How many resellers do you know who buy at least weekly? Would any pay 5 EUR today, before it is finished?
+3. What do you and they use now to check a price, and how many minutes per item does it cost?
+4. Where will real sold-price data come from for PS4 and consoles, and how often must it be refreshed to stay true?
+5. What is the guarantee? What do you promise if the number is wrong?
+6. Could the price be double, and would a serious reseller still say yes? What result would justify that?
 
 ## If FUND IF: the conditions
-1. Prove the pain and the money before building more: find 20 real resellers, show them a manual version of the output (you run the price check by hand), and get at least 5 to commit to pay or pre-pay. Report the price they accepted.
-2. Narrow the first offer to one category where you hold data you trust, and publish the accuracy you reach. The MVP bar (7 of 10 close to the actual sale) must be met on at least 30 real evaluations, not 10, with misses recorded.
-3. Show a speed or accuracy gap against the free routine: a stopwatch comparison on real listings. If the app is not clearly faster or more right, do not charge.
-4. Attach a guarantee the numbers can bear, tied to the max-buy-price promise, and test it with the first paying users.
-5. Set a kill rule up front: if fewer than a stated number of paying users (name it after step 1) by a stated date, stop or turn it into a personal tool.
+1. **Proof of accuracy.** Run the 2 to 4 week test with real prices (not examples) and log every case. Gate: at least 7 in 10 calls near the real outcome, with the log kept.
+2. **Proof of payment.** Resellers outside the founder's circle commit to a paid pre-sale or monthly price before more features are built. The count needed (suggested: 10) is a judgment call; market size is still an open question.
+3. **Input effort fixed.** A print or link flow that gets a verdict in seconds, or a clear reason it cannot.
+4. **A defined offer.** Name the outcome (for example, "never overpay on a console"), a first-month guarantee, and a niche start (PS4 and consoles in Portugal) before widening.
+5. **Cost check.** Confirm that data and AI costs per user stay well below the price. Open question today.

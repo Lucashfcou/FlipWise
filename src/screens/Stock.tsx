@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
+import { buildListing } from "../domain/listing";
 import { daysHeld } from "../domain/profit";
 import type { Condition, StockItem } from "../domain/types";
 import { money, today } from "../format";
@@ -116,10 +117,47 @@ function SellForm({ item, onDone }: { item: StockItem; onDone: () => void }) {
   );
 }
 
+function ListingPanel({ item }: { item: StockItem }) {
+  const { priceFor } = useApp();
+  const price = priceFor(item.productId, item.condition);
+  const quick = price.count ? Math.round(price.typical * 0.95) : Math.round(item.cost * 1.3);
+  const best = price.count ? Math.round(price.high) : Math.round(item.cost * 1.6);
+  const [chosen, setChosen] = useState(price.count ? Math.round(price.typical) : quick);
+  const [copied, setCopied] = useState(false);
+  const l = buildListing(item.productId, item.condition, chosen);
+  const text = `${l.title}\n\n${l.body}`;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div className="sell">
+      <span className="label">Preço do anúncio</span>
+      <div className="chips">
+        <button className={chosen === quick ? "chip on" : "chip"} onClick={() => setChosen(quick)}>Rápido {money(quick)}</button>
+        <button className={chosen === Math.round(price.typical) ? "chip on" : "chip"} onClick={() => setChosen(Math.round(price.typical))} disabled={!price.count}>Típico {money(price.typical)}</button>
+        <button className={chosen === best ? "chip on" : "chip"} onClick={() => setChosen(best)}>Máximo {money(best)}</button>
+      </div>
+      <label className="label" htmlFor={`lt-${item.id}`}>Texto para colar na Vinted ou OLX</label>
+      <textarea id={`lt-${item.id}`} className="field" rows={7} readOnly value={text} onFocus={(e) => e.currentTarget.select()} />
+      <div className="actions">
+        <button className="btn primary" onClick={copy}>{copied ? "Copiado" : "Copiar texto"}</button>
+      </div>
+    </div>
+  );
+}
+
 export function Stock() {
   const { stock, removeStock, priceFor } = useApp();
   const [adding, setAdding] = useState(false);
   const [selling, setSelling] = useState<string | null>(null);
+  const [listing, setListing] = useState<string | null>(null);
   const open = stock.filter((i) => !i.sale);
 
   return (
@@ -154,11 +192,15 @@ export function Stock() {
                   </span>
                 )}
               </div>
+              {listing === i.id && <ListingPanel item={i} />}
               {selling === i.id ? (
                 <SellForm item={i} onDone={() => setSelling(null)} />
               ) : (
                 <div className="actions">
                   <button className="btn accent" onClick={() => setSelling(i.id)}>Vendi</button>
+                  <button className="btn ghost" onClick={() => setListing(listing === i.id ? null : i.id)}>
+                    {listing === i.id ? "Fechar anúncio" : "Anunciar"}
+                  </button>
                   <button
                     className="btn ghost"
                     onClick={() => {

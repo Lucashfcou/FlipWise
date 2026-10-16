@@ -52,6 +52,8 @@ export interface StockItem {
   extraCosts: number;
   boughtAt: string;
   boughtDate: string;
+  /** Preço típico que o app indicava quando compraste. Serve para medir se acertou. */
+  estimate?: number;
   sale?: Sale;
 }
 

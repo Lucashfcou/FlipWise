@@ -30,3 +30,9 @@ Fundador sozinho, renda extra, custo inicial perto de zero, sem orçamento em di
 
 ## O que ainda se desconhece
 Tamanho do mercado em Portugal; quantos revendedores pagariam; custo real de aquisição de clientes; se a API do eBay dá acesso útil a vendas concluídas; se a PriceCharting cobre preços europeus a custo viável; quão precisa será a leitura de prints por IA.
+
+## Atualização: o MVP já existe (v0.1, local, sem backend)
+Telas: Avaliar (escolhe produto e estado, digita o preço do anúncio, recebe faixa de mercado, "paga no máximo", semáforo), Stock (custo, dias parado, lucro potencial, marcar vendido), Lucro (por mês, por plataforma), Catálogo (preço por estado), Ajustes (margem alvo, envio, destaque).
+Catálogo: 10 consolas (PS4, PS5, Switch, Xbox), 4 comandos, 25 jogos de PS4. Os preços de arranque são EXEMPLOS marcados como tal, não dados reais.
+Ainda NÃO existe: leitura de print por IA, ligação a eBay/CeX/PriceCharting, alertas, histórico de preço, gerador de anúncio, conta, sincronização, tênis, telemóveis.
+O fundador sente que "falta alguma coisa" e que está "muito básico". Pergunta extra para cada membro: **o que falta no produto para ele ser algo que um revendedor usaria todos os dias e pagaria?** Dê no máximo 5 itens, por ordem de impacto, e diga o que cortar.
