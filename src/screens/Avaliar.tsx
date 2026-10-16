@@ -3,6 +3,7 @@ import { CATEGORY_LABEL, CONDITIONS, PRODUCTS, findProduct } from "../domain/cat
 import type { Category, Condition } from "../domain/types";
 import { money, today } from "../format";
 import { useApp } from "../state";
+import { Lote } from "./Lote";
 import { SourceNote } from "../ui/SourceNote";
 import { Verdict } from "../ui/Verdict";
 
@@ -16,6 +17,7 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   const [condition, setCondition] = useState<Condition>("B");
   const [asked, setAsked] = useState("");
   const [saved, setSaved] = useState(false);
+  const [mode, setMode] = useState<"item" | "lote">("item");
 
   const list = useMemo(
     () =>
@@ -67,6 +69,14 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   return (
     <section>
       <h1>Vale a pena comprar?</h1>
+      <div className="chips" role="tablist" aria-label="Tipo de avaliação">
+        <button role="tab" aria-selected={mode === "item"} className={mode === "item" ? "chip on" : "chip"} onClick={() => setMode("item")}>Um item</button>
+        <button role="tab" aria-selected={mode === "lote"} className={mode === "lote" ? "chip on" : "chip"} onClick={() => setMode("lote")}>Lote</button>
+      </div>
+      {mode === "lote" ? (
+        <Lote goStock={goStock} />
+      ) : (
+        <>
       <SourceNote />
 
       <div className="chips" role="tablist" aria-label="Categoria">
@@ -127,6 +137,8 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
             {saved ? "Guardado" : "Guardar este preço"}
           </button>
         </div>
+      )}
+        </>
       )}
     </section>
   );

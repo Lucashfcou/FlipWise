@@ -12,6 +12,7 @@ interface AppState {
   importObservations: (list: Observation[]) => void;
   priceFor: (productId: string, condition: Condition) => PriceEstimate;
   addStock: (item: Omit<StockItem, "id">) => void;
+  addStockMany: (items: Omit<StockItem, "id">[]) => void;
   sellStock: (id: string, sale: NonNullable<StockItem["sale"]>) => void;
   removeStock: (id: string) => void;
   contribute: (o: Observation) => void;
@@ -57,6 +58,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       priceFor,
       addStock: (item) => persistStock([{ ...item, id: crypto.randomUUID() }, ...stock]),
+      addStockMany: (list) => persistStock([...list.map((i) => ({ ...i, id: crypto.randomUUID() })), ...stock]),
       sellStock: (id, sale) => {
         persistStock(stock.map((i) => (i.id === id ? { ...i, sale } : i)));
         const item = stock.find((i) => i.id === id);

@@ -70,6 +70,8 @@ export interface Settings {
   shipping: number;
   promo: number;
   contribute: boolean;
+  /** Dias em stock a partir dos quais o item conta como parado. */
+  staleDays: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -77,4 +79,5 @@ export const DEFAULT_SETTINGS: Settings = {
   shipping: 4,
   promo: 0,
   contribute: true,
+  staleDays: 14,
 };

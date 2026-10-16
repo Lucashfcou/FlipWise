@@ -52,9 +52,10 @@ export function Config() {
   const [margin, setMargin] = useState(String(Math.round(settings.targetMargin * 100)));
   const [shipping, setShipping] = useState(String(settings.shipping));
   const [promo, setPromo] = useState(String(settings.promo));
+  const [stale, setStale] = useState(String(settings.staleDays));
 
   const num = (s: string) => Number(s.replace(",", "."));
-  const valid = [margin, shipping, promo].every((s) => Number.isFinite(num(s)) && num(s) >= 0) && num(margin) < 100;
+  const valid = [margin, shipping, promo, stale].every((s) => Number.isFinite(num(s)) && num(s) >= 0) && num(margin) < 100;
 
   return (
     <section>
@@ -64,7 +65,7 @@ export function Config() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!valid) return;
-          updateSettings({ ...settings, targetMargin: num(margin) / 100, shipping: num(shipping), promo: num(promo) });
+          updateSettings({ ...settings, targetMargin: num(margin) / 100, shipping: num(shipping), promo: num(promo), staleDays: Math.max(1, Math.round(num(stale))) });
         }}
       >
         <label className="label" htmlFor="m">Margem alvo (%)</label>
@@ -73,6 +74,8 @@ export function Config() {
         <input id="s" className="field mono" inputMode="decimal" value={shipping} onChange={(e) => setShipping(e.target.value)} />
         <label className="label" htmlFor="pr">Destaque do anúncio (€)</label>
         <input id="pr" className="field mono" inputMode="decimal" value={promo} onChange={(e) => setPromo(e.target.value)} />
+        <label className="label" htmlFor="st">Considerar parado ao fim de (dias)</label>
+        <input id="st" className="field mono" inputMode="numeric" value={stale} onChange={(e) => setStale(e.target.value)} />
         <button className="btn primary" type="submit" disabled={!valid}>Guardar</button>
       </form>
 

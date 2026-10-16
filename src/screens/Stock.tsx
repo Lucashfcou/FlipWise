@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
 import { buildListing } from "../domain/listing";
 import { daysHeld } from "../domain/profit";
+import { parkedCapital, staleAdvice } from "../domain/stale";
 import type { Condition, StockItem } from "../domain/types";
 import { money, today } from "../format";
 import { useApp } from "../state";
@@ -154,11 +155,13 @@ function ListingPanel({ item }: { item: StockItem }) {
 }
 
 export function Stock() {
-  const { stock, removeStock, priceFor } = useApp();
+  const { stock, removeStock, priceFor, settings } = useApp();
   const [adding, setAdding] = useState(false);
   const [selling, setSelling] = useState<string | null>(null);
   const [listing, setListing] = useState<string | null>(null);
   const open = stock.filter((i) => !i.sale);
+  const parked = parkedCapital(stock);
+  const staleCount = open.filter((i) => staleAdvice(i, priceFor(i.productId, i.condition), settings).stale).length;
 
   return (
     <section>
@@ -169,6 +172,13 @@ export function Stock() {
         <button className="btn primary wide" onClick={() => setAdding(true)}>+ Adicionar item</button>
       )}
 
+      {open.length > 0 && (
+        <div className="kpis">
+          <div className="kpi"><span className="label">Dinheiro parado</span><span className="big mono">{money(parked.capital)}</span></div>
+          <div className="kpi"><span className="label">Parados há {settings.staleDays}+ dias</span><span className={`big mono ${staleCount ? "loss" : ""}`}>{staleCount} de {parked.count}</span></div>
+        </div>
+      )}
+
       {open.length === 0 && !adding && <p className="empty">Nada em stock. Avalia um artigo e toca em “Comprei”.</p>}
 
       <ul className="cards">
@@ -177,6 +187,7 @@ export function Stock() {
           const price = priceFor(i.productId, i.condition);
           const days = daysHeld(i);
           const potential = price.count ? price.typical - i.cost - i.extraCosts : null;
+          const advice = staleAdvice(i, price, settings);
           return (
             <li key={i.id} className="stockcard">
               <div className="row">
@@ -192,6 +203,11 @@ export function Stock() {
                   </span>
                 )}
               </div>
+              {advice.stale && (
+                <p className="stale">
+                  Parado há {advice.days} dias. {advice.atBreakEven ? `Já no limite do custo: ${money(advice.suggested)} só cobre o que gastaste.` : `Baixa o anúncio para ${money(advice.suggested)} (lucro ${money(advice.profit)}).`}
+                </p>
+              )}
               {listing === i.id && <ListingPanel item={i} />}
               {selling === i.id ? (
                 <SellForm item={i} onDone={() => setSelling(null)} />

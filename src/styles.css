@@ -801,3 +801,11 @@ span.chip {
   margin: 4px 0 0;
   font-size: 12.5px;
 }
+
+.stale {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--warn) 13%, var(--surface));
+}

@@ -1,0 +1,119 @@
+import { findProduct } from "./catalog";
+import type { Condition, PriceEstimate, Settings } from "./types";
+
+export interface BundleLine {
+  productId: string;
+  condition: Condition;
+  qty: number;
+}
+
+/** Vender tudo junto costuma obrigar a um desconto. Hipótese a calibrar com vendas reais. */
+export const BUNDLE_DISCOUNT = 0.9;
+
+export interface BundleItem {
+  line: BundleLine;
+  price: PriceEstimate;
+  found: boolean;
+  label: string;
+}
+
+export interface BundleResult {
+  items: BundleItem[];
+  totalUnits: number;
+  /** Unidades com preço no catálogo. As outras ficam de fora das somas. */
+  pricedUnits: number;
+  missingUnits: number;
+  sumTypical: number;
+  sumSafe: number;
+  separate: { net: number; maxBuy: number; sales: number };
+  together: { net: number; maxBuy: number; sales: number };
+  best: "separado" | "junto";
+  maxBuy: number;
+  decision: { light: "go" | "maybe" | "stop"; title: string; text: string } | null;
+}
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+const eur = (n: number) => `${Math.round(n)} €`;
+
+export function evaluateBundle(
+  lines: BundleLine[],
+  priceFor: (productId: string, condition: Condition) => PriceEstimate,
+  settings: Pick<Settings, "targetMargin" | "shipping" | "promo">,
+  asked: number | null,
+): BundleResult {
+  const items: BundleItem[] = lines.map((line) => {
+    const price = priceFor(line.productId, line.condition);
+    const p = findProduct(line.productId);
+    return { line, price, found: price.count > 0, label: p ? `${p.name} ${p.variant}` : line.productId };
+  });
+
+  let totalUnits = 0;
+  let pricedUnits = 0;
+  let sumTypical = 0;
+  let sumSafe = 0;
+  for (const it of items) {
+    const q = Math.max(1, Math.round(it.line.qty));
+    totalUnits += q;
+    if (!it.found) continue;
+    pricedUnits += q;
+    sumTypical += it.price.typical * q;
+    sumSafe += (it.price.safeBuy ?? it.price.maxBuy) * q;
+  }
+
+  const perSale = settings.shipping + settings.promo;
+  const sepNet = sumTypical - pricedUnits * perSale;
+  const sepMax = Math.max(0, sepNet - settings.targetMargin * sumTypical);
+  const togNet = sumTypical * BUNDLE_DISCOUNT - (pricedUnits > 0 ? perSale : 0);
+  const togMax = Math.max(0, togNet - settings.targetMargin * sumTypical * BUNDLE_DISCOUNT);
+
+  const best = togMax > sepMax ? "junto" : "separado";
+  const maxBuy = Math.max(sepMax, togMax);
+
+  let decision: BundleResult["decision"] = null;
+  if (asked !== null && Number.isFinite(asked) && asked > 0 && pricedUnits > 0) {
+    if (asked <= maxBuy) {
+      decision = {
+        light: "go",
+        title: "Comprar o lote",
+        text: `Fica ${eur(maxBuy - asked)} abaixo do teu máximo. Melhor vender ${best === "junto" ? "tudo junto" : "peça a peça"}.`,
+      };
+    } else if (asked <= sumSafe) {
+      decision = {
+        light: "maybe",
+        title: "Margem curta",
+        text: "Se vendesses tudo às lojas ainda não perdias, mas fica abaixo da tua margem alvo.",
+      };
+    } else if (asked <= sumTypical) {
+      decision = { light: "maybe", title: "Negociar", text: `Propõe ${eur(Math.max(maxBuy, sumSafe))} pelo lote.` };
+    } else {
+      decision = { light: "stop", title: "Deixar", text: `${eur(asked - sumTypical)} acima da revenda estimada das peças.` };
+    }
+  }
+
+  return {
+    items,
+    totalUnits,
+    pricedUnits,
+    missingUnits: totalUnits - pricedUnits,
+    sumTypical: r2(sumTypical),
+    sumSafe: r2(sumSafe),
+    separate: { net: r2(sepNet), maxBuy: r2(sepMax), sales: pricedUnits },
+    together: { net: r2(togNet), maxBuy: r2(togMax), sales: pricedUnits > 0 ? 1 : 0 },
+    best,
+    maxBuy: r2(maxBuy),
+    decision,
+  };
+}
+
+/** Reparte o custo do lote pelas peças, proporcional ao valor típico (peças sem preço pesam a média). */
+export function allocateCost(lines: BundleLine[], items: BundleItem[], totalCost: number): number[] {
+  const units: { idx: number; weight: number }[] = [];
+  const known = items.filter((i) => i.found).map((i) => i.price.typical);
+  const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 1;
+  items.forEach((it, idx) => {
+    const q = Math.max(1, Math.round(lines[idx].qty));
+    for (let k = 0; k < q; k++) units.push({ idx, weight: it.found ? it.price.typical : avg });
+  });
+  const total = units.reduce((a, u) => a + u.weight, 0) || 1;
+  return units.map((u) => r2((totalCost * u.weight) / total));
+}

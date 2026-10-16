@@ -2,7 +2,74 @@ import { useMemo, useState } from "react";
 import { findProduct } from "../domain/catalog";
 import { accuracy, daysHeld, itemProfit, monthlySummary } from "../domain/profit";
 import { money, pct } from "../format";
+import { salesCsv, taxSummary, THRESHOLDS } from "../domain/tax";
 import { useApp } from "../state";
+
+const STATUS_TEXT = { ok: "dentro do limite", perto: "perto do limite", acima: "acima do limite" } as const;
+
+function Fiscal({ year }: { year: string }) {
+  const { stock } = useApp();
+  const s = taxSummary(stock, year);
+  const [copied, setCopied] = useState(false);
+  const csv = salesCsv(stock, year);
+
+  function save() {
+    try {
+      const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `garimpo-vendas-${year}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      /* sem permissão para guardar ficheiros: usa Copiar */
+    }
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(csv);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <>
+      <h2>Fiscal {year}</h2>
+      <div className="panel">
+        <div className="two">
+          <div><span className="label">Faturado</span><span className="mono big">{money(s.revenue)}</span></div>
+          <div><span className="label">Lucro</span><span className={`mono big ${s.profit >= 0 ? "gain" : "loss"}`}>{money(s.profit)}</span></div>
+        </div>
+        <p className="hint">{s.sales} vendas no ano. Investido nas peças vendidas: {money(s.invested)}.</p>
+        {s.platforms.length > 0 && (
+          <ul className="plain">
+            {s.platforms.map((p) => (
+              <li key={p.platform} className="row">
+                <span>{p.platform}</span>
+                <span className="mono">
+                  {p.count}/{THRESHOLDS.count} vendas · {money(p.revenue)}/{money(THRESHOLDS.revenue)}
+                  <span className={`chip ${p.status === "ok" ? "" : "on"}`}>{STATUS_TEXT[p.status]}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="hint">
+          Referência informativa: na UE, as plataformas comunicam ao fisco quem faz 30 ou mais vendas, ou 2000 € ou mais, num ano
+          (regra DAC7). Confirma os limites atuais e o que se aplica a ti com um contabilista. Isto não é aconselhamento fiscal.
+        </p>
+        <div className="actions">
+          <button className="btn primary" onClick={save} disabled={s.sales === 0}>Exportar CSV</button>
+          <button className="btn ghost" onClick={copy} disabled={s.sales === 0}>{copied ? "Copiado" : "Copiar CSV"}</button>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export function Vendas() {
   const { stock } = useApp();
@@ -64,6 +131,8 @@ export function Vendas() {
           </ul>
         </>
       )}
+
+      <Fiscal year={month.slice(0, 4)} />
 
       <h2>Vendas do mês</h2>
       {sold.length === 0 && <p className="empty">Ainda sem vendas neste mês.</p>}
