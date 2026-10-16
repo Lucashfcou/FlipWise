@@ -65,7 +65,10 @@ describe("estimate", () => {
     const r = estimate([obs(60, "buyback", "2026-10-10", "a"), obs(140, "refurb", "2026-10-10", "b")], costs, TODAY);
     expect(r.derived).toBe(true);
     expect(r.confidence).toBe("baixa");
-    expect(r.typical).toBeCloseTo(60 + 0.55 * 80, 0);
+    expect(r.typical).toBeCloseTo(60 + 0.3 * 80, 0);
+    expect(r.low).toBeCloseTo(60 + 0.2 * 80, 0);
+    expect(r.high).toBeCloseTo(60 + 0.4 * 80, 0);
+    expect(r.safeBuy).toBeCloseTo(60 * 0.92, 1);
   });
 
   it("limita o típico ao teto de loja", () => {

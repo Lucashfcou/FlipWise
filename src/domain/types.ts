@@ -37,6 +37,8 @@ export interface PriceEstimate {
   count: number;
   /** true quando não há vendas nem anúncios e o típico foi inferido entre piso e teto. */
   derived: boolean;
+  /** Compra segura: abaixo do que a loja paga, com margem mínima. Só existe com preço de recompra. */
+  safeBuy?: number;
   /** Preço de recompra (o que uma loja paga). */
   floor?: number;
   /** Preço de loja (recondicionado ou novo). */

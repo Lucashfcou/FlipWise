@@ -11,8 +11,16 @@ const KIND_WEIGHT = { sold: 1, ask: 0.5 } as const;
 
 /** Preço pedido costuma ficar acima do preço pago. Valor a calibrar com as vendas reais dos utilizadores. */
 export const ASK_DISCOUNT = 0.85;
-/** Sem vendas nem anúncios, o típico fica entre o piso e o teto a esta fração do caminho. Hipótese a calibrar. */
-export const DERIVED_POSITION = 0.55;
+/**
+ * Sem vendas nem anúncios, a revenda entre pessoas fica numa faixa entre o piso (o que a loja paga) e o teto
+ * (o que a loja vende), em fração do caminho. Calibrado a olho com o PS5 na Vinted (450 a 500) e com os anúncios do
+ * eBay.es para PS4 Slim 500 GB. Continua a ser estimativa até haver vendas reais.
+ */
+export const DERIVED_LOW = 0.2;
+export const DERIVED_POSITION = 0.3;
+export const DERIVED_HIGH = 0.4;
+/** Margem mínima abaixo do piso para a "compra segura": se tudo correr mal, vendes à loja e ainda ganhas. */
+export const SAFE_MARGIN = 0.08;
 
 const HALF_LIFE_DAYS = 60;
 const RECENT_DAYS = 90;
@@ -91,9 +99,10 @@ export function estimate(observations: Observation[], costs: Costs, today = new 
     if (recent.length >= 10 && recent.some((o) => o.kind === "sold")) confidence = "alta";
     else if (kept.length >= 4) confidence = "media";
   } else if (floor !== undefined && ceiling !== undefined && ceiling > floor) {
-    low = floor;
-    high = ceiling;
-    typical = floor + DERIVED_POSITION * (ceiling - floor);
+    const spread = ceiling - floor;
+    low = floor + DERIVED_LOW * spread;
+    typical = floor + DERIVED_POSITION * spread;
+    high = floor + DERIVED_HIGH * spread;
     count = buyback.length + retail.length;
     derived = true;
   } else {
@@ -117,6 +126,7 @@ export function estimate(observations: Observation[], costs: Costs, today = new 
     confidence,
     count,
     derived,
+    safeBuy: floor === undefined ? undefined : round2(Math.max(0, floor * (1 - SAFE_MARGIN))),
     floor: floor === undefined ? undefined : round2(floor),
     ceiling: ceiling === undefined ? undefined : round2(ceiling),
   };

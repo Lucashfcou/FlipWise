@@ -788,3 +788,16 @@ span.chip {
     transition-duration: 0.01ms !important;
   }
 }
+
+.verdict .hint.safe {
+  margin: 2px 0 0;
+}
+
+.facts .mono {
+  font-size: 16px;
+}
+
+.verdict .hint.legend {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+}
