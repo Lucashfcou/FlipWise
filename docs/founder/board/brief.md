@@ -45,3 +45,17 @@ Perguntas a responder, cada membro pela sua lente:
 2. O que melhorar no produto (máximo 5 itens, por impacto)?
 3. Modelo de preço: o que ficaria grátis e o que seria pago? Assinatura, uso por consulta, ou outro? Justifica com o que o revendedor valoriza. Não inventes números de mercado: marca como hipótese a testar.
 4. Como validar de forma menos enviesada (o produto foi desenhado em conjunto com o fundador, que é o primeiro utilizador)?
+
+## Atualização 4: estado atual e plano pago (pergunta desta ronda)
+O app agora chama-se **Flipwise**, é para a **Europa** (inglês por omissão, português à escolha), e continua local, sem contas nem servidor.
+**Dados:** 247 produtos em 10 categorias (consolas, telemóveis, tablets, portáteis, relógios, áudio, câmaras e drones, placas gráficas, comandos, 103 jogos). Preços de anúncios ativos do eBay.es (API oficial Browse, já aprovada e a funcionar), limpos por um pipeline (acessórios, lotes, edições especiais, defeituosos, golpes, IQR) com 10% de desconto sobre o pedido; mais piso e teto do CeX Portugal para ~38 produtos; preços de "para peças". Produtos com poucos anúncios válidos ficam sem dados em vez de mostrar número duvidoso (PS5 Pro, Switch 2, 4 placas gráficas). Continuam a ser preços PEDIDOS, não vendas concluídas; o acesso a vendas concluídas do eBay não existe.
+**Produto:** avaliar um item (decisão Buy/Negotiate/Pass, oferta máxima, régua, números de apoio), avaliar lotes, stock com dinheiro parado e sugestão de baixa de preço, painel de lucro e fiscal (DAC7) com CSV, "o app acertou?", gerador de anúncio, importação CSV, recentes.
+**Leitura de print** por IA (Claude Haiku 5.5): implementada, desligada por omissão, só prova de conceito; exige chave e servidor; nunca foi medida a qualidade em prints reais. Custo estimado por leitura cerca de 0,07 cêntimos de dólar e por busca por texto com IA entre 0,06 e 0,16 cêntimos (estimativas pelo tamanho dos pedidos, não medidas).
+**Plano em estudo:** grátis = catálogo grande já com preços, stock básico, lotes, fiscal básico. Pago, com uma semana de teste = leitura de print, busca por texto com IA para qualquer produto fora do catálogo (preço marcado como pouco fiável), comparação de preços entre países do eBay, alertas, mais categorias, exportações. Para impor teste e pagamento seria preciso contas, servidor e pagamentos (ainda não existem).
+**O que ainda não existe:** nenhum utilizador real além do fundador; nenhuma venda registada; nenhuma validação com outros revendedores; hospedagem; contas; pagamento; vendas concluídas; análise de termos da API do eBay para uso comercial.
+Perguntas desta ronda, cada membro pela sua lente:
+1. Comparado com a ronda anterior (Offers 4/10, Monopoly 4/10, Product 6/10, todos "fund if"), o voto muda? Porquê?
+2. Vê futuro neste plano pago (print + busca por IA + mais funções)? Qual é o gancho que justifica pagar e qual é o risco?
+3. O que deve ficar grátis e o que deve ser pago, e o que falta acrescentar ao pago?
+4. Os 3 defeitos que ainda restam e as 3 próximas ações, por ordem.
+5. Qual é a primeira coisa a validar com utilizadores reais, e qual o critério para continuar ou parar?
