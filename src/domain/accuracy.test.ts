@@ -33,6 +33,6 @@ describe("buildListing", () => {
     expect(l.title).toContain("PlayStation 4 Slim");
     expect(l.title).toContain("500 GB");
     expect(l.body).toContain("120");
-    expect(l.body.toLowerCase()).toContain("marcas leves");
+    expect(l.body.toLowerCase()).toContain("light marks");
   });
 });

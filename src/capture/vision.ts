@@ -1,4 +1,5 @@
 import { CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
+import { t } from "../i18n";
 import type { Condition } from "../domain/types";
 import type { CaptureProblem, CaptureResult, ImageType } from "./types";
 
@@ -141,24 +142,21 @@ export function problemsFor(r: Pick<CaptureResult, "productId" | "price" | "cond
     out.push({
       code: "NAO_E_ANUNCIO",
       severity: "erro",
-      message:
-        r.imageType === "foto_sem_texto"
-          ? "Isto parece uma foto do aparelho, sem título nem preço. Faz print da página do anúncio, com o título e o preço visíveis."
-          : "Esta imagem não parece um anúncio. Faz print da página do anúncio, com o título e o preço visíveis.",
+      message: r.imageType === "foto_sem_texto" ? t("capture.notAdPhoto") : t("capture.notAdOther"),
     });
     return out;
   }
   if (!r.productId) {
-    out.push({ code: "SEM_PRODUTO", severity: "erro", message: "Não consegui identificar o produto. Pode não estar no catálogo, ou o título não está legível." });
+    out.push({ code: "SEM_PRODUTO", severity: "erro", message: t("capture.noProduct") });
   }
   if (r.price === null) {
-    out.push({ code: "SEM_PRECO", severity: "aviso", message: "Não encontrei o preço no print. Escreve-o à mão." });
+    out.push({ code: "SEM_PRECO", severity: "aviso", message: t("capture.noPrice") });
   }
   for (const text of r.inconsistencies) {
-    out.push({ code: "NAO_BATE", severity: "aviso", message: `Foto e texto não batem: ${text}` });
+    out.push({ code: "NAO_BATE", severity: "aviso", message: t("capture.mismatch", { text }) });
   }
   if (r.productId && !r.condition) {
-    out.push({ code: "SEM_ESTADO", severity: "aviso", message: "O anúncio não diz o estado. Escolhe-o tu." });
+    out.push({ code: "SEM_ESTADO", severity: "aviso", message: t("capture.noCondition") });
   }
   return out;
 }

@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { stagger, useFx } from "./fx";
+import { t } from "./i18n";
+import type { Key } from "./i18n";
 import { Avaliar } from "./screens/Avaliar";
 import { Stock } from "./screens/Stock";
 import { Vendas } from "./screens/Vendas";
 import { Catalogo } from "./screens/Catalogo";
 import { Config } from "./screens/Config";
+import { useApp } from "./state";
 
 type Tab = "avaliar" | "stock" | "vendas" | "catalogo" | "config";
 
@@ -26,45 +30,58 @@ const ICONS: Record<Tab, ReactNode> = {
   ),
 };
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "avaliar", label: "Avaliar" },
-  { id: "stock", label: "Stock" },
-  { id: "vendas", label: "Lucro" },
-  { id: "catalogo", label: "Catálogo" },
-  { id: "config", label: "Ajustes" },
+const TABS: { id: Tab; label: Key }[] = [
+  { id: "avaliar", label: "nav.evaluate" },
+  { id: "stock", label: "nav.stock" },
+  { id: "vendas", label: "nav.profit" },
+  { id: "catalogo", label: "nav.catalog" },
+  { id: "config", label: "nav.settings" },
 ];
 
+/** Marca: um F geométrico. A barra do meio, a azul, é o preço que se vê no meio da faixa. */
 function Logo() {
   return (
     <svg className="logo" viewBox="0 0 32 32" aria-hidden="true">
       <rect width="32" height="32" rx="7" fill="var(--ink)" />
-      <path d="M22.1 11.7A7.5 7.5 0 1 0 23.5 16" fill="none" stroke="var(--bg)" strokeWidth="3.6" />
-      <path d="M16.2 16H23.5" fill="none" stroke="var(--accent)" strokeWidth="3.6" />
+      <path d="M12 24V9.5H22.5" fill="none" stroke="var(--bg)" strokeWidth="3.6" strokeLinejoin="miter" />
+      <path d="M12 16.2H20" fill="none" stroke="var(--accent)" strokeWidth="3.6" />
     </svg>
   );
 }
 
 export function App() {
+  const { settings, updateSettings } = useApp();
   const [tab, setTab] = useState<Tab>("avaliar");
+  const main = useRef<HTMLElement>(null);
+
+  // Troca de ecrã: o conteúdo sobe em escada, como no jogo do PAS.
+  useFx(main, (root) => stagger([...(root.firstElementChild?.children ?? [])], 12, 40), [tab]);
+
   return (
     <div className="shell">
       <header className="top">
         <Logo />
-        <span className="brand">Garimpo</span>
-        <span className="tag">PT · EUR</span>
+        <span className="brand">{t("app.name")}</span>
+        <div className="langs" role="group" aria-label={t("lang.aria")}>
+          {(["en", "pt"] as const).map((l) => (
+            <button key={l} className={settings.lang === l ? "on" : ""} aria-pressed={settings.lang === l} onClick={() => updateSettings({ ...settings, lang: l })}>
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
       </header>
-      <main className="page" key={tab}>
+      <main className="page" ref={main} key={tab}>
         {tab === "avaliar" && <Avaliar goStock={() => setTab("stock")} />}
         {tab === "stock" && <Stock />}
         {tab === "vendas" && <Vendas />}
         {tab === "catalogo" && <Catalogo />}
         {tab === "config" && <Config />}
       </main>
-      <nav className="tabs" aria-label="Secções">
-        {TABS.map((t) => (
-          <button key={t.id} className={t.id === tab ? "on" : ""} onClick={() => setTab(t.id)} aria-current={t.id === tab ? "page" : undefined}>
-            {ICONS[t.id]}
-            <span>{t.label}</span>
+      <nav className="tabs" aria-label={t("nav.aria")}>
+        {TABS.map((tb) => (
+          <button key={tb.id} className={tb.id === tab ? "on" : ""} onClick={() => setTab(tb.id)} aria-current={tb.id === tab ? "page" : undefined}>
+            {ICONS[tb.id]}
+            <span>{t(tb.label)}</span>
           </button>
         ))}
       </nav>

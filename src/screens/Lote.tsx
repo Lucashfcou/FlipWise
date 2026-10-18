@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
+import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
 import { allocateCost, evaluateBundle } from "../domain/bundle";
 import type { BundleLine } from "../domain/bundle";
 import type { Condition } from "../domain/types";
+import { t } from "../i18n";
 import { money, today } from "../format";
 import { useApp } from "../state";
 
@@ -50,10 +51,10 @@ export function Lote({ goStock }: { goStock: () => void }) {
 
   return (
     <div>
-      <p className="hint">Junta as peças do lote e o preço pedido. O app soma o que cada uma vale e diz se compensa vender junto ou separado.</p>
+      <p className="hint">{t("lot.intro")}</p>
 
       <div className="panel">
-        <label className="label" htmlFor="lp">Peça</label>
+        <label className="label" htmlFor="lp">{t("lot.piece")}</label>
         <select
           id="lp"
           className="field"
@@ -64,12 +65,12 @@ export function Lote({ goStock }: { goStock: () => void }) {
           }}
         >
           {PRODUCTS.map((p) => (
-            <option key={p.id} value={p.id}>{p.name} {p.variant}</option>
+            <option key={p.id} value={p.id}>{productLabel(p)}</option>
           ))}
         </select>
         <div className="two">
           <div>
-            <label className="label" htmlFor="lc">Estado</label>
+            <label className="label" htmlFor="lc">{t("lot.condition")}</label>
             <select id="lc" className="field" value={condition} onChange={(e) => setCondition(e.target.value as Condition)}>
               {CONDITIONS[product.category].map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
@@ -77,46 +78,46 @@ export function Lote({ goStock }: { goStock: () => void }) {
             </select>
           </div>
           <div>
-            <label className="label" htmlFor="lq">Quantidade</label>
+            <label className="label" htmlFor="lq">{t("lot.qty")}</label>
             <input id="lq" className="field mono" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
           </div>
         </div>
         <div className="actions">
-          <button className="btn accent" onClick={add}>Adicionar ao lote</button>
+          <button className="btn accent" onClick={add}>{t("lot.add")}</button>
         </div>
       </div>
 
       {lines.length === 0 ? (
-        <p className="empty">Ainda sem peças. Adiciona a primeira acima.</p>
+        <p className="empty">{t("lot.empty")}</p>
       ) : (
         <ul className="plain">
           {r.items.map((it, idx) => (
             <li key={idx} className="row">
               <span>
                 {lines[idx].qty}× {it.label} <small>({lines[idx].condition})</small>
-                {!it.found && <small> · sem preço</small>}
+                {!it.found && <small> · {t("lot.noPrice")}</small>}
               </span>
               <span className="mono">
                 {it.found ? money(it.price.typical * lines[idx].qty) : "–"}
-                <button className="chip" aria-label="Remover" onClick={() => setLines((p) => p.filter((_, i) => i !== idx))}>×</button>
+                <button className="chip" aria-label={t("lot.remove")} onClick={() => setLines((p) => p.filter((_, i) => i !== idx))}>×</button>
               </span>
             </li>
           ))}
         </ul>
       )}
 
-      <label className="label" htmlFor="la">Preço pedido pelo lote (€)</label>
-      <input id="la" className="field mono" inputMode="decimal" placeholder="ex.: 180" value={asked} onChange={(e) => setAsked(e.target.value)} />
+      <label className="label" htmlFor="la">{t("lot.ask")}</label>
+      <input id="la" className="field mono" inputMode="decimal" placeholder={t("lot.askPh")} value={asked} onChange={(e) => setAsked(e.target.value)} />
 
       {r.pricedUnits > 0 && (
         <div className={`verdict ${r.decision?.light ?? ""}`} aria-live="polite">
           <div className="ticket-head">
-            <span className="label">Lote: paga no máximo</span>
-            <span className="conf media">{r.pricedUnits} de {r.totalUnits} peças com preço</span>
+            <span className="label">{t("lot.payMax")}</span>
+            <span className="conf media">{t("lot.priced", { n: r.pricedUnits, total: r.totalUnits })}</span>
           </div>
           <div className="typical">
             <span className="num">{money(r.maxBuy)}</span>
-            <span className="sub">revenda estimada das peças {money(r.sumTypical)}</span>
+            <span className="sub">{t("lot.resale", { price: money(r.sumTypical) })}</span>
           </div>
           {r.decision && (
             <div className="decision">
@@ -126,28 +127,28 @@ export function Lote({ goStock }: { goStock: () => void }) {
           )}
           <div className="facts">
             <div>
-              <span className="label">Vender separado ({r.separate.sales} vendas)</span>
-              <span className="mono">líquido {money(r.separate.net)}</span>
+              <span className="label">{t("lot.separate", { n: r.separate.sales })}</span>
+              <span className="mono">{t("lot.net", { price: money(r.separate.net) })}</span>
             </div>
             <div>
-              <span className="label">Vender junto (1 venda)</span>
-              <span className="mono">líquido {money(r.together.net)}</span>
+              <span className="label">{t("lot.together")}</span>
+              <span className="mono">{t("lot.net", { price: money(r.together.net) })}</span>
             </div>
           </div>
           <p className="hint">
-            Melhor: {r.best === "junto" ? "tudo junto" : "peça a peça"}. Vender junto assume 10% de desconto sobre a soma, hipótese
-            ainda por confirmar com as tuas vendas. O líquido já desconta envio e destaque por venda.
-            {r.missingUnits > 0 && ` ${r.missingUnits} peça(s) sem preço no catálogo ficaram fora da soma: o valor real pode ser maior.`}
+            {t("lot.best", { how: r.best === "junto" ? t("lot.bestTogether") : t("lot.bestSeparate") })}
+            {t("lot.assumption")}
+            {r.missingUnits > 0 && t("lot.missing", { n: r.missingUnits })}
           </p>
         </div>
       )}
 
       {validAsked && lines.length > 0 && (
         <div className="actions">
-          <button className="btn primary" onClick={bought}>Comprei o lote por {money(askedNum as number)}</button>
+          <button className="btn primary" onClick={bought}>{t("lot.bought", { price: money(askedNum as number) })}</button>
         </div>
       )}
-      {validAsked && lines.length > 0 && <p className="hint">O custo é repartido pelas peças, em proporção ao valor de cada uma.</p>}
+      {validAsked && lines.length > 0 && <p className="hint">{t("lot.split")}</p>}
     </div>
   );
 }

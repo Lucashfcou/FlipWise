@@ -1,4 +1,6 @@
-import { findProduct } from "./catalog";
+import { money } from "../format";
+import { t } from "../i18n";
+import { findProduct, productLabel } from "./catalog";
 import type { Condition, PriceEstimate, Settings } from "./types";
 
 export interface BundleLine {
@@ -33,7 +35,7 @@ export interface BundleResult {
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
-const eur = (n: number) => `${Math.round(n)} €`;
+
 
 export function evaluateBundle(
   lines: BundleLine[],
@@ -44,7 +46,7 @@ export function evaluateBundle(
   const items: BundleItem[] = lines.map((line) => {
     const price = priceFor(line.productId, line.condition);
     const p = findProduct(line.productId);
-    return { line, price, found: price.count > 0, label: p ? `${p.name} ${p.variant}` : line.productId };
+    return { line, price, found: price.count > 0, label: p ? productLabel(p) : line.productId };
   });
 
   let totalUnits = 0;
@@ -74,19 +76,15 @@ export function evaluateBundle(
     if (asked <= maxBuy) {
       decision = {
         light: "go",
-        title: "Comprar o lote",
-        text: `Fica ${eur(maxBuy - asked)} abaixo do teu máximo. Melhor vender ${best === "junto" ? "tudo junto" : "peça a peça"}.`,
+        title: t("lot.buyTitle"),
+        text: t("lot.buyText", { amount: money(maxBuy - asked), how: best === "junto" ? t("lot.buyTogether") : t("lot.buyApart") }),
       };
     } else if (asked <= sumSafe) {
-      decision = {
-        light: "maybe",
-        title: "Margem curta",
-        text: "Se vendesses tudo às lojas ainda não perdias, mas fica abaixo da tua margem alvo.",
-      };
+      decision = { light: "maybe", title: t("decide.thin"), text: t("lot.thinText") };
     } else if (asked <= sumTypical) {
-      decision = { light: "maybe", title: "Negociar", text: `Propõe ${eur(Math.max(maxBuy, sumSafe))} pelo lote.` };
+      decision = { light: "maybe", title: t("decide.negotiate"), text: t("lot.negText", { price: money(Math.max(maxBuy, sumSafe)) }) };
     } else {
-      decision = { light: "stop", title: "Deixar", text: `${eur(asked - sumTypical)} acima da revenda estimada das peças.` };
+      decision = { light: "stop", title: t("decide.pass"), text: t("lot.passText", { amount: money(asked - sumTypical) }) };
     }
   }
 

@@ -1,61 +1,43 @@
 import { useEffect, useRef } from "react";
-import { animate } from "motion";
+import { pop, roll } from "../fx";
+import { t } from "../i18n";
+import type { Key } from "../i18n";
 import type { PriceEstimate } from "../domain/types";
 import { money, pct } from "../format";
-
-const CONF_LABEL = { alta: "confiança alta", media: "confiança média", baixa: "confiança baixa" } as const;
 
 type Light = "go" | "maybe" | "stop";
 
 export function decide(price: PriceEstimate, asked: number | null): { light: Light; title: string; text: string } | null {
   if (asked === null || !Number.isFinite(asked) || asked <= 0 || price.count === 0) return null;
   if (asked <= price.maxBuy) {
-    return { light: "go", title: "Comprar", text: `Fica ${money(price.maxBuy - asked)} abaixo do teu máximo para a margem alvo.` };
+    return { light: "go", title: t("decide.buy"), text: t("decide.buyText", { amount: money(price.maxBuy - asked) }) };
   }
   if (price.safeBuy !== undefined && asked <= price.safeBuy) {
-    return {
-      light: "maybe",
-      title: "Margem curta",
-      text: `Se tudo correr mal, a loja paga ${money(price.floor ?? 0)} e ainda ganhas. Mas fica abaixo da tua margem alvo.`,
-    };
+    return { light: "maybe", title: t("decide.thin"), text: t("decide.thinText", { floor: money(price.floor ?? 0) }) };
   }
   if (asked <= price.typical) {
     return {
       light: "maybe",
-      title: "Negociar",
-      text: `Propõe ${money(price.safeBuy ?? price.maxBuy)}.${price.safeBuy !== undefined ? " Acima disso dependes de revender entre pessoas." : ""}`,
+      title: t("decide.negotiate"),
+      text: t("decide.negotiateText") + (price.safeBuy !== undefined ? t("decide.negotiateRisk") : ""),
     };
   }
-  return {
-    light: "stop",
-    title: "Deixar",
-    text: `${money(asked - price.typical)} acima da revenda estimada entre pessoas.`,
-  };
+  return { light: "stop", title: t("decide.pass"), text: t("decide.passText", { amount: money(asked - price.typical) }) };
 }
 
-function CountUp({ value }: { value: number }) {
+/** Preço grande com dígitos que rolam (animação do jogo do PAS). O leitor de ecrã recebe o valor em texto normal. */
+function RollingPrice({ value }: { value: number }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const prev = useRef(0);
+  const text = money(value);
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      el.textContent = money(value);
-      prev.current = value;
-      return;
-    }
-    const controls = animate(prev.current, value, {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => {
-        el.textContent = money(Math.round(v));
-      },
-    });
-    prev.current = value;
-    return () => controls.stop();
-  }, [value]);
-  return <span ref={ref} className="num">{money(value)}</span>;
+    roll(ref.current, text);
+  }, [text]);
+  return (
+    <>
+      <span ref={ref} className="num" aria-hidden="true" />
+      <span className="sr-only">{text}</span>
+    </>
+  );
 }
 
 export function Verdict({
@@ -69,18 +51,25 @@ export function Verdict({
   productLabel: string;
   margin: number;
 }) {
+  const decisionRef = useRef<HTMLDivElement>(null);
+  const d = decide(price, asked);
+  const decisionKey = d ? `${d.light}:${d.title}` : "";
+  useEffect(() => {
+    if (decisionKey) pop(decisionRef.current, 1.02);
+  }, [decisionKey]);
+
   if (price.count === 0) {
     return (
-      <div className="verdict empty" aria-live="polite">
-        <p>Sem dados para {productLabel} neste estado. Regista preços que vires para o app aprender.</p>
+      <div className="verdict empty">
+        <p>{t("verdict.noData", { product: productLabel })}</p>
       </div>
     );
   }
-  const d = decide(price, asked);
   const hasAsked = asked !== null && Number.isFinite(asked) && asked > 0;
   const headline = price.safeBuy ?? price.maxBuy;
-  const headlineLabel = price.safeBuy !== undefined ? "Compra segura até" : "Paga no máximo";
-  const resaleLabel = price.derived ? "Revenda entre pessoas (estimativa)" : "Preço típico entre pessoas";
+  const headlineLabel = d ? t("verdict.offerUpTo") : price.safeBuy !== undefined ? t("verdict.safeUpTo") : t("verdict.payAtMost");
+  const resaleLabel = price.derived ? t("verdict.resaleEst") : t("verdict.typical");
+  const conf = t(`conf.${price.confidence}` as Key);
 
   const values = [
     price.low, price.high, price.maxBuy, price.typical,
@@ -93,71 +82,71 @@ export function Verdict({
   const pos = (v: number) => `${Math.min(100, Math.max(0, ((v - lo) / (hi - lo)) * 100))}%`;
 
   return (
-    <div className={`verdict ${d?.light ?? ""}`} aria-live="polite">
-      <div className="ticket-head">
-        <span className="label">{headlineLabel}</span>
-        <span className={`conf ${price.confidence}`}>{CONF_LABEL[price.confidence]}</span>
-      </div>
-
-      <div className="typical">
-        <CountUp value={headline} />
-        {price.floor !== undefined && <span className="sub">a loja paga {money(price.floor)}</span>}
-      </div>
-
+    <div className={`verdict ${d?.light ?? ""}`}>
       {d && (
-        <div className="decision">
+        <div className="decision hero" ref={decisionRef} aria-live="polite">
           <strong>{d.title}</strong>
           <span>{d.text}</span>
         </div>
       )}
 
+      <div className="ticket-head">
+        <span className="label">{headlineLabel}</span>
+        <span className={`conf ${price.confidence}`}>{conf}</span>
+      </div>
+
+      <div className="typical">
+        <RollingPrice value={headline} />
+        {price.floor !== undefined && <span className="sub">{t("verdict.shopPays", { price: money(price.floor) })}</span>}
+      </div>
+
       <div
         className="scale"
         role="img"
-        aria-label={`Revenda estimada ${money(price.low)} a ${money(price.high)}, compra segura ${money(headline)}`}
+        aria-label={t("verdict.rulerAria", { low: money(price.low), high: money(price.high), safe: money(headline) })}
       >
         <div className="track" />
         <div className="band" style={{ left: pos(price.low), width: `calc(${pos(price.high)} - ${pos(price.low)})` }} />
         <div className="tick" style={{ left: pos(price.typical) }} />
         {hasAsked && <div className="mark asked" style={{ left: pos(asked as number) }}>{money(asked as number)}</div>}
-        <div className="mark max" style={{ left: pos(headline) }}>seguro {money(headline)}</div>
+        <div className="mark max" style={{ left: pos(headline) }}>{t("verdict.offer")}</div>
       </div>
+      <p className="legend">
+        <span className="sw band" aria-hidden="true" />
+        {t("verdict.legendBand", { low: money(price.low), high: money(price.high) })}
+        <span className="sw tick" aria-hidden="true" />
+        {t("verdict.legendTick", { price: money(price.typical) })}
+      </p>
 
       <details className="more">
-        <summary>Ver os números</summary>
+        <summary>{t("verdict.show")}</summary>
         <dl className="numbers">
           <div>
-            <dt>{resaleLabel}<small>a faixa azul na régua</small></dt>
+            <dt>{resaleLabel}<small>{t("verdict.bandHint")}</small></dt>
             <dd className="mono">{money(price.low)} – {money(price.high)}</dd>
           </div>
           <div>
-            <dt>Paga até, para {pct(margin)} de margem<small>já desconta envio e destaque</small></dt>
+            <dt>{t("verdict.marginRow", { margin: pct(margin) })}<small>{t("verdict.marginHint")}</small></dt>
             <dd className="mono">{money(price.maxBuy)}</dd>
           </div>
           {price.floor !== undefined && (
             <div>
-              <dt>A loja paga (piso)<small>o que a loja dá por ele hoje</small></dt>
+              <dt>{t("verdict.floor")}<small>{t("verdict.floorHint")}</small></dt>
               <dd className="mono">{money(price.floor)}</dd>
             </div>
           )}
           {price.ceiling !== undefined && (
             <div>
-              <dt>A loja vende (teto)<small>o que a loja pede hoje</small></dt>
+              <dt>{t("verdict.ceiling")}<small>{t("verdict.ceilingHint")}</small></dt>
               <dd className="mono">{money(price.ceiling)}</dd>
             </div>
           )}
           <div>
-            <dt>Dados usados<small>{CONF_LABEL[price.confidence]}</small></dt>
-            <dd className="mono">{price.count} obs.</dd>
+            <dt>{t("verdict.data")}<small>{conf}</small></dt>
+            <dd className="mono">{t("verdict.obs", { n: price.count })}</dd>
           </div>
         </dl>
-        <p className="hint">
-          {price.derived
-            ? "A revenda entre pessoas é uma estimativa a partir da loja: ainda não há vendas reais para a confirmar."
-            : price.firm
-              ? "Estimativa a partir de anúncios e vendas registados."
-              : "Poucos dados: usa como pista, não como regra."}
-        </p>
+        <p className="hint">{price.derived ? t("verdict.noteDerived") : price.firm ? t("verdict.noteFirm") : t("verdict.noteWeak")}</p>
       </details>
     </div>
   );

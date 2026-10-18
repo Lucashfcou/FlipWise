@@ -1,38 +1,109 @@
+import { t } from "../i18n";
+import type { Key } from "../i18n";
+import { TECH } from "./catalogTech";
 import type { Category, Condition, Product } from "./types";
 
+/** Estado com texto no idioma atual: os getters leem t() no momento em que são usados. */
+function cond(id: Condition, labelKey: Key, hintKey: Key): { id: Condition; label: string; hint: string } {
+  return {
+    id,
+    get label() {
+      return t(labelKey);
+    },
+    get hint() {
+      return t(hintKey);
+    },
+  };
+}
+
 const DEVICE_CONDITIONS = [
-  { id: "A" as const, label: "A · como novo", hint: "Completo, caixa e acessórios, sem marcas." },
-  { id: "B" as const, label: "B · bom", hint: "Marcas leves, sem caixa ou com um acessório a menos." },
-  { id: "C" as const, label: "C · gasto", hint: "Desgaste visível ou falta de acessórios." },
-  { id: "P" as const, label: "P · para peças", hint: "Não liga ou com avaria." },
+  cond("A", "cond.A", "cond.A.hint"),
+  cond("B", "cond.B", "cond.B.hint"),
+  cond("C", "cond.C", "cond.C.hint"),
+  cond("P", "cond.P", "cond.P.hint"),
+];
+
+const PHONE_CONDITIONS = [
+  cond("A", "cond.A", "cond.phoneA.hint"),
+  cond("B", "cond.B", "cond.phoneB.hint"),
+  cond("C", "cond.C", "cond.phoneC.hint"),
+  cond("P", "cond.P", "cond.phoneP.hint"),
 ];
 
 export const CONDITIONS: Record<Category, { id: Condition; label: string; hint: string }[]> = {
   console: DEVICE_CONDITIONS,
-  phone: [
-    { id: "A", label: "A · como novo", hint: "Sem riscos, bateria acima de 90%, de preferência com caixa." },
-    { id: "B", label: "B · bom", hint: "Marcas leves, bateria entre 80% e 90%." },
-    { id: "C", label: "C · gasto", hint: "Riscos visíveis ou bateria abaixo de 80%." },
-    { id: "P", label: "P · para peças", hint: "Ecrã partido, não liga ou bloqueado." },
-  ],
+  phone: PHONE_CONDITIONS,
+  tablet: PHONE_CONDITIONS,
+  laptop: PHONE_CONDITIONS,
+  watch: PHONE_CONDITIONS,
+  audio: DEVICE_CONDITIONS,
+  camera: DEVICE_CONDITIONS,
+  gpu: DEVICE_CONDITIONS,
   controller: [
-    { id: "sem-drift", label: "Sem drift", hint: "Analógicos e botões a funcionar bem." },
-    { id: "drift-leve", label: "Drift leve", hint: "Pequeno desvio, ainda usável." },
-    { id: "defeito", label: "Com defeito", hint: "Falha de botão, bateria ou drift forte." },
+    cond("sem-drift", "cond.sem-drift", "cond.sem-drift.hint"),
+    cond("drift-leve", "cond.drift-leve", "cond.drift-leve.hint"),
+    cond("defeito", "cond.defeito", "cond.defeito.hint"),
   ],
   game: [
-    { id: "lacrado", label: "Lacrado", hint: "Por abrir." },
-    { id: "completo", label: "Completo", hint: "Caixa e disco em bom estado." },
-    { id: "so-disco", label: "Só disco", hint: "Sem caixa." },
+    cond("lacrado", "cond.lacrado", "cond.lacrado.hint"),
+    cond("completo", "cond.completo", "cond.completo.hint"),
+    cond("so-disco", "cond.so-disco", "cond.so-disco.hint"),
   ],
 };
 
 export const CATEGORY_LABEL: Record<Category, string> = {
-  console: "Consolas",
-  phone: "Telemóveis",
-  controller: "Comandos",
-  game: "Jogos",
+  get console() {
+    return t("cat.console");
+  },
+  get phone() {
+    return t("cat.phone");
+  },
+  get tablet() {
+    return t("cat.tablet");
+  },
+  get laptop() {
+    return t("cat.laptop");
+  },
+  get watch() {
+    return t("cat.watch");
+  },
+  get audio() {
+    return t("cat.audio");
+  },
+  get camera() {
+    return t("cat.camera");
+  },
+  get gpu() {
+    return t("cat.gpu");
+  },
+  get controller() {
+    return t("cat.controller");
+  },
+  get game() {
+    return t("cat.game");
+  },
 };
+
+/** Variantes escritas em inglês nos dados; algumas têm tradução. */
+export function variantLabel(variant: string): string {
+  const key = `variant.${variant}` as Key;
+  const s = t(key);
+  return s === key ? variant : s;
+}
+
+/** Nome completo para mostrar: "PlayStation 5 disc" ou "PlayStation 5 com leitor". */
+export function productLabel(p: Pick<Product, "name" | "variant">): string {
+  const v = variantLabel(p.variant);
+  // Sem variante vazia nem repetida ("PlayStation 2 Slim slim", "Nintendo 3DS XL XL").
+  if (!v || p.name.toLowerCase().includes(v.toLowerCase())) return p.name;
+  return `${p.name} ${v}`;
+}
+
+/** Estado sem a letra: "B · good" -> "good". */
+export function conditionShort(category: Category, id: Condition): string {
+  const c = CONDITIONS[category].find((x) => x.id === id);
+  return c ? c.label.split("·").pop()!.trim() : id;
+}
 
 interface Seed {
   id: string;
@@ -47,9 +118,9 @@ const consoleSeeds: Seed[] = [
   { id: "ps4-slim-1tb", category: "console", brand: "Sony", name: "PlayStation 4 Slim", variant: "1 TB" },
   { id: "ps4-pro-1tb", category: "console", brand: "Sony", name: "PlayStation 4 Pro", variant: "1 TB" },
   { id: "ps4-fat-500", category: "console", brand: "Sony", name: "PlayStation 4 (original)", variant: "500 GB" },
-  { id: "ps5-disc", category: "console", brand: "Sony", name: "PlayStation 5", variant: "com leitor" },
+  { id: "ps5-disc", category: "console", brand: "Sony", name: "PlayStation 5", variant: "disc" },
   { id: "ps5-digital", category: "console", brand: "Sony", name: "PlayStation 5", variant: "digital" },
-  { id: "ps5-slim-disc", category: "console", brand: "Sony", name: "PlayStation 5 Slim", variant: "1 TB com leitor" },
+  { id: "ps5-slim-disc", category: "console", brand: "Sony", name: "PlayStation 5 Slim", variant: "1 TB disc" },
   { id: "ps5-slim-digital", category: "console", brand: "Sony", name: "PlayStation 5 Slim", variant: "1 TB digital" },
   { id: "ps5-pro", category: "console", brand: "Sony", name: "PlayStation 5 Pro", variant: "2 TB" },
   { id: "ps3-slim-500", category: "console", brand: "Sony", name: "PlayStation 3 Slim", variant: "500 GB" },
@@ -61,7 +132,7 @@ const consoleSeeds: Seed[] = [
   { id: "switch-oled", category: "console", brand: "Nintendo", name: "Switch OLED", variant: "64 GB" },
   { id: "switch-lite", category: "console", brand: "Nintendo", name: "Switch Lite", variant: "32 GB" },
   { id: "switch-2", category: "console", brand: "Nintendo", name: "Switch 2", variant: "256 GB" },
-  { id: "wii", category: "console", brand: "Nintendo", name: "Wii", variant: "com comando" },
+  { id: "wii", category: "console", brand: "Nintendo", name: "Wii", variant: "with controller" },
   { id: "wii-u", category: "console", brand: "Nintendo", name: "Wii U", variant: "32 GB" },
   { id: "3ds-xl", category: "console", brand: "Nintendo", name: "Nintendo 3DS XL", variant: "XL" },
   { id: "xbox-series-s", category: "console", brand: "Microsoft", name: "Xbox Series S", variant: "512 GB" },
@@ -76,10 +147,10 @@ const consoleSeeds: Seed[] = [
 const controllerSeeds: Seed[] = [
   { id: "ds4-v2", category: "controller", brand: "Sony", name: "DualShock 4", variant: "v2" },
   { id: "dualsense", category: "controller", brand: "Sony", name: "DualSense", variant: "PS5" },
-  { id: "joycon-pair", category: "controller", brand: "Nintendo", name: "Joy-Con", variant: "par" },
+  { id: "joycon-pair", category: "controller", brand: "Nintendo", name: "Joy-Con", variant: "pair" },
   { id: "switch-pro-controller", category: "controller", brand: "Nintendo", name: "Pro Controller", variant: "Switch" },
-  { id: "xbox-controller", category: "controller", brand: "Microsoft", name: "Comando Xbox", variant: "Series" },
-  { id: "xbox-one-controller", category: "controller", brand: "Microsoft", name: "Comando Xbox One", variant: "One" },
+  { id: "xbox-controller", category: "controller", brand: "Microsoft", name: "Xbox Controller", variant: "Series" },
+  { id: "xbox-one-controller", category: "controller", brand: "Microsoft", name: "Xbox One Controller", variant: "One" },
 ];
 
 /** [id, nome, armazenamento]. Só modelos base ou Pro, sem Max, Plus nem mini. */
@@ -143,9 +214,12 @@ function gameSeeds(titles: string[], platform: Platform, suffix: string): Seed[]
   return titles.map((name) => ({ id: `game-${slug(name)}${suffix}`, category: "game" as const, brand: platform, name, variant: platform }));
 }
 
+const techSeeds: Seed[] = TECH.map(({ id, category, brand, name, variant }) => ({ id, category, brand, name, variant }));
+
 const SEEDS: Seed[] = [
   ...consoleSeeds,
   ...phoneSeeds,
+  ...techSeeds,
   ...controllerSeeds,
   ...gameSeeds(PS4_GAMES, "PS4", ""),
   ...gameSeeds(SWITCH_GAMES, "Switch", "-switch"),

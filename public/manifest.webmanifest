@@ -1,11 +1,11 @@
 {
-  "name": "Garimpo",
-  "short_name": "Garimpo",
-  "description": "Preço de mercado e lucro para revendedores de eletrónicos usados.",
+  "name": "Flipwise",
+  "short_name": "Flipwise",
+  "description": "Market price, safe buy price and real profit for used-electronics resellers.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#E4E6EE",
-  "theme_color": "#E4E6EE",
-  "lang": "pt-PT",
+  "background_color": "#f3f4f7",
+  "theme_color": "#f3f4f7",
+  "lang": "en",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

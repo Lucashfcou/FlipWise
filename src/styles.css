@@ -1,4 +1,4 @@
-/* Garimpo: ferramenta de trabalho. Superfícies planas, linhas finas, um acento, cor semântica só para veredito. */
+/* Flipwise: ferramenta de trabalho. Superfícies planas, linhas finas, um acento, cor semântica só para veredito. */
 :root {
   --bg: #f3f4f7;
   --surface: #ffffff;
@@ -9,13 +9,13 @@
   --line-strong: #b9bece;
   --accent: #2e56e8;
   --on-accent: #ffffff;
-  --good: #1f7a47;
+  --good: #1a6e3f;
   --warn: #8a5f00;
   --bad: #c23b35;
   --tone-bg: #eceef3;
   --shadow: 0 1px 2px rgba(20, 22, 31, 0.06), 0 8px 24px -12px rgba(20, 22, 31, 0.18);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring: cubic-bezier(0.16, 1, 0.3, 1);
   --display: "Anybody Variable", "Arial Narrow", system-ui, sans-serif;
   --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --mono: "Spline Sans Mono", ui-monospace, Consolas, monospace;
@@ -285,8 +285,6 @@ span.chip {
   padding: 0;
   display: grid;
   gap: 6px;
-  max-height: 264px;
-  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
@@ -496,7 +494,7 @@ span.chip {
   border-radius: 14px;
   box-shadow: var(--shadow);
   padding: 18px 18px 20px;
-  animation: reveal 0.7s var(--ease) both;
+  animation: reveal 0.35s var(--ease) both;
 }
 
 .verdict.empty {
@@ -763,8 +761,7 @@ span.chip {
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.985);
-    filter: blur(6px);
+    transform: translateY(8px);
   }
 }
 
@@ -813,7 +810,7 @@ span.chip {
 /* Início da avaliação: categorias e produto escolhido */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin: 12px 0 0;
 }
@@ -995,4 +992,133 @@ span.chip {
 
 .problems li.aviso {
   background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+}
+
+/* Animações portadas do jogo do PAS */
+.fx-d {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.fx-col {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.fx-col > span {
+  height: 1em;
+  display: block;
+}
+
+/* Seletor de idioma */
+.langs {
+  margin-left: auto;
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.langs button {
+  min-width: 40px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 700 12px var(--mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.langs button.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* Revisão de design: decisão em destaque, régua legível, alvos de toque de 44px */
+.decision.hero {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+}
+
+.decision.hero strong {
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+}
+
+.decision.hero span {
+  font-size: 15px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.scale .track {
+  background: var(--line);
+}
+
+.scale .mark {
+  font-size: 12px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin: 6px 0 0;
+  font: 400 12.5px var(--mono);
+  color: var(--muted);
+}
+
+.legend .sw {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.legend .sw.band {
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 45%, var(--sunk));
+}
+
+.legend .sw.tick {
+  width: 2px;
+  height: 14px;
+  background: var(--ink);
+}
+
+.chip {
+  min-height: 44px;
+}
+
+span.chip {
+  min-height: 0;
+}
+
+.langs button {
+  min-width: 44px;
+  min-height: 40px;
+}
+
+.recent {
+  margin-top: 12px;
 }

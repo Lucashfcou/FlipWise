@@ -22,12 +22,12 @@ describe("catálogo", () => {
     expect(new Set(ids).size).toBe(ids.length);
     expect(PRODUCTS.length).toBeGreaterThan(150);
     const semConsulta = PRODUCTS.filter((p) => !queryFor(p.id)).map((p) => p.id);
-    expect(semConsulta.sort()).toEqual(["ps5-pro", "switch-2"]);
+    expect(semConsulta.sort()).toEqual(["gpu-rtx-3060-12", "gpu-rtx-4060", "gpu-rtx-4060ti", "gpu-rtx-4070", "ps5-pro", "switch-2"]);
   });
 
   it("tem telemóveis, consolas, comandos e jogos de três plataformas", () => {
     const cats = new Set(PRODUCTS.map((p) => p.category));
-    expect([...cats].sort()).toEqual(["console", "controller", "game", "phone"]);
+    expect([...cats].sort()).toEqual(["audio", "camera", "console", "controller", "game", "gpu", "laptop", "phone", "tablet", "watch"]);
     expect(new Set(PRODUCTS.filter((p) => p.category === "game").map((p) => p.variant))).toEqual(new Set(["PS4", "PS5", "Switch"]));
   });
 });
@@ -124,5 +124,39 @@ describe("jogos por plataforma", () => {
   it("PS5 não aceita a versão PS4 nem Switch", async () => {
     const items = [it_("1", "God of War Ragnarök PS5", "35"), it_("2", "God of War Ragnarök PS4", "25"), it_("3", "God of War Ragnarok Nintendo Switch", "30")];
     expect((await accepted("game-god-of-war-ragnarok-ps5", items)).ids).toEqual(["1"]);
+  });
+});
+
+describe("produtos de tecnologia", () => {
+  it("AirPods Pro 2 aceita o certo e recusa 1.ª geração, estojo isolado e lotes", async () => {
+    const items = [
+      it_("1", "Apple AirPods Pro 2nd generation con estuche MagSafe", "170"),
+      it_("2", "AirPods Pro 2 segunda generación", "165"),
+      it_("3", "AirPods Pro 1st generation", "110"),
+      it_("4", "AirPods Max plata", "350"),
+      it_("5", "Funda para AirPods Pro 2", "8"),
+    ];
+    expect((await accepted("airpods-pro-2", items)).ids).toEqual(["1", "2"]);
+  });
+
+  it("GPU 3070 recusa Ti e portáteis; MacBook Air M1 recusa Pro e M2", async () => {
+    const gpu = [it_("1", "MSI GeForce RTX 3070 8GB", "280"), it_("2", "RTX 3070 Ti 8GB", "330"), it_("3", "Portatil RTX 3070 laptop", "900")];
+    expect((await accepted("gpu-rtx-3070", gpu)).ids).toEqual(["1"]);
+    const mac = [it_("1", "Apple MacBook Air M1 256GB 2020", "550"), it_("2", "MacBook Air M2 256GB", "750"), it_("3", "MacBook Pro M1 256 GB", "700")];
+    expect((await accepted("macbook-air-m1-256", mac)).ids).toEqual(["1"]);
+  });
+
+  it("Galaxy S23 recusa Ultra, Plus e FE; Pixel 7 recusa Pro e 7a", async () => {
+    const s = [it_("1", "Samsung Galaxy S23 128GB negro", "380"), it_("2", "Samsung Galaxy S23 Ultra 256GB", "620"), it_("3", "Galaxy S23+ 128GB", "450"), it_("4", "Galaxy S23 FE 128GB", "300")];
+    expect((await accepted("galaxy-s23-128", s)).ids).toEqual(["1"]);
+    const p = [it_("1", "Google Pixel 7 128GB", "230"), it_("2", "Google Pixel 7 Pro 128GB", "340"), it_("3", "Pixel 7a 128GB", "250")];
+    expect((await accepted("pixel-7-128", p)).ids).toEqual(["1"]);
+  });
+
+  it("rótulos dos produtos não repetem a variante", async () => {
+    const { productLabel, PRODUCTS: ALL } = await import("../domain/catalog");
+    const ps2 = ALL.find((p) => p.id === "ps2-slim")!;
+    expect(productLabel(ps2)).toBe("PlayStation 2 Slim");
+    expect(productLabel(ALL.find((p) => p.id === "3ds-xl")!)).toBe("Nintendo 3DS XL");
   });
 });

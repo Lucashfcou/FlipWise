@@ -1,4 +1,4 @@
-# Garimpo
+# Flipwise
 
 PWA para revendedores de eletrónicos usados (Portugal/Europa). Faixa de preço por estado, preço máximo de compra, stock e lucro real. Dados locais no aparelho.
 

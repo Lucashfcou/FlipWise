@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
-import { findProduct } from "../domain/catalog";
+import { useMemo, useRef, useState } from "react";
+import { findProduct, productLabel } from "../domain/catalog";
 import { accuracy, daysHeld, itemProfit, monthlySummary } from "../domain/profit";
-import { money, pct } from "../format";
 import { salesCsv, taxSummary, THRESHOLDS } from "../domain/tax";
+import { stagger, useFx } from "../fx";
+import { t } from "../i18n";
+import type { Key } from "../i18n";
+import { money, pct } from "../format";
 import { useApp } from "../state";
 
-const STATUS_TEXT = { ok: "dentro do limite", perto: "perto do limite", acima: "acima do limite" } as const;
+const STATUS_KEY = { ok: "tax.ok", perto: "tax.near", acima: "tax.over" } as const satisfies Record<string, Key>;
 
 function Fiscal({ year }: { year: string }) {
   const { stock } = useApp();
@@ -19,7 +22,7 @@ function Fiscal({ year }: { year: string }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `garimpo-vendas-${year}.csv`;
+      a.download = `flipwise-sales-${year}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -38,33 +41,30 @@ function Fiscal({ year }: { year: string }) {
 
   return (
     <>
-      <h2>Fiscal {year}</h2>
+      <h2>{t("tax.title", { year })}</h2>
       <div className="panel">
         <div className="two">
-          <div><span className="label">Faturado</span><span className="mono big">{money(s.revenue)}</span></div>
-          <div><span className="label">Lucro</span><span className={`mono big ${s.profit >= 0 ? "gain" : "loss"}`}>{money(s.profit)}</span></div>
+          <div><span className="label">{t("tax.revenue")}</span><span className="mono big">{money(s.revenue)}</span></div>
+          <div><span className="label">{t("tax.profit")}</span><span className={`mono big ${s.profit >= 0 ? "gain" : "loss"}`}>{money(s.profit)}</span></div>
         </div>
-        <p className="hint">{s.sales} vendas no ano. Investido nas peças vendidas: {money(s.invested)}.</p>
+        <p className="hint">{t("tax.salesYear", { n: s.sales, price: money(s.invested) })}</p>
         {s.platforms.length > 0 && (
           <ul className="plain">
             {s.platforms.map((p) => (
               <li key={p.platform} className="row">
                 <span>{p.platform}</span>
                 <span className="mono">
-                  {p.count}/{THRESHOLDS.count} vendas · {money(p.revenue)}/{money(THRESHOLDS.revenue)}
-                  <span className={`chip ${p.status === "ok" ? "" : "on"}`}>{STATUS_TEXT[p.status]}</span>
+                  {t("tax.row", { count: p.count, limitCount: THRESHOLDS.count, rev: money(p.revenue), limitRev: money(THRESHOLDS.revenue) })}
+                  <span className={`chip ${p.status === "ok" ? "" : "on"}`}>{t(STATUS_KEY[p.status])}</span>
                 </span>
               </li>
             ))}
           </ul>
         )}
-        <p className="hint">
-          Referência informativa: na UE, as plataformas comunicam ao fisco quem faz 30 ou mais vendas, ou 2000 € ou mais, num ano
-          (regra DAC7). Confirma os limites atuais e o que se aplica a ti com um contabilista. Isto não é aconselhamento fiscal.
-        </p>
+        <p className="hint">{t("tax.note")}</p>
         <div className="actions">
-          <button className="btn primary" onClick={save} disabled={s.sales === 0}>Exportar CSV</button>
-          <button className="btn ghost" onClick={copy} disabled={s.sales === 0}>{copied ? "Copiado" : "Copiar CSV"}</button>
+          <button className="btn primary" onClick={save} disabled={s.sales === 0}>{t("tax.export")}</button>
+          <button className="btn ghost" onClick={copy} disabled={s.sales === 0}>{copied ? t("tax.copied") : t("tax.copy")}</button>
         </div>
       </div>
     </>
@@ -82,6 +82,8 @@ export function Vendas() {
   const summary = monthlySummary(stock, month);
   const acc = accuracy(stock);
   const sold = stock.filter((i) => i.sale && i.sale.date.startsWith(month));
+  const listRef = useRef<HTMLUListElement>(null);
+  useFx(listRef, (root) => stagger([...root.children], 10, 40), [month, sold.length]);
 
   const byPlatform = useMemo(() => {
     const m = new Map<string, { n: number; profit: number }>();
@@ -95,38 +97,38 @@ export function Vendas() {
 
   return (
     <section>
-      <h1>Vendas e lucro</h1>
-      <select className="field" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Mês">
+      <h1>{t("profit.title")}</h1>
+      <select className="field" value={month} onChange={(e) => setMonth(e.target.value)} aria-label={t("profit.month")}>
         {months.map((m) => (
           <option key={m} value={m}>{m}</option>
         ))}
       </select>
 
       <div className="kpis">
-        <div className="kpi"><span className="label">Lucro</span><span className={`mono big ${summary.profit >= 0 ? "gain" : "loss"}`}>{money(summary.profit)}</span></div>
-        <div className="kpi"><span className="label">Vendidos</span><span className="mono big">{summary.sold}</span></div>
-        <div className="kpi"><span className="label">Faturado</span><span className="mono big">{money(summary.revenue)}</span></div>
-        <div className="kpi"><span className="label">Dias até vender</span><span className="mono big">{summary.avgDays}</span></div>
+        <div className="kpi"><span className="label">{t("profit.profit")}</span><span className={`mono big ${summary.profit >= 0 ? "gain" : "loss"}`}>{money(summary.profit)}</span></div>
+        <div className="kpi"><span className="label">{t("profit.sold")}</span><span className="mono big">{summary.sold}</span></div>
+        <div className="kpi"><span className="label">{t("profit.revenue")}</span><span className="mono big">{money(summary.revenue)}</span></div>
+        <div className="kpi"><span className="label">{t("profit.days")}</span><span className="mono big">{summary.avgDays}</span></div>
       </div>
 
       <div className="panel proof">
-        <span className="label">O app acertou?</span>
+        <span className="label">{t("profit.right")}</span>
         {acc.total === 0 ? (
-          <p className="hint">Aparece depois da primeira venda de um artigo comprado pela aba Avaliar.</p>
+          <p className="hint">{t("profit.rightNone")}</p>
         ) : (
           <>
-            <span className="big mono">{acc.hits} de {acc.total}</span>
-            <p className="hint">vendas ficaram a menos de 15% do preço típico indicado na compra. Meta: 7 em cada 10.</p>
+            <span className="big mono">{t("profit.rightCount", { hits: acc.hits, total: acc.total })}</span>
+            <p className="hint">{t("profit.rightText")}</p>
           </>
         )}
       </div>
 
       {byPlatform.length > 0 && (
         <>
-          <h2>Por plataforma</h2>
+          <h2>{t("profit.byPlatform")}</h2>
           <ul className="plain">
             {byPlatform.map(([name, v]) => (
-              <li key={name} className="row"><span>{name}</span><span className="mono">{v.n}× · {money(v.profit)}</span></li>
+              <li key={name} className="row"><span>{name}</span><span className="mono">{t("profit.platformRow", { n: v.n, price: money(v.profit) })}</span></li>
             ))}
           </ul>
         </>
@@ -134,22 +136,22 @@ export function Vendas() {
 
       <Fiscal year={month.slice(0, 4)} />
 
-      <h2>Vendas do mês</h2>
-      {sold.length === 0 && <p className="empty">Ainda sem vendas neste mês.</p>}
-      <ul className="cards">
+      <h2>{t("profit.monthSales")}</h2>
+      {sold.length === 0 && <p className="empty">{t("profit.noSales")}</p>}
+      <ul className="cards" ref={listRef}>
         {sold.map((i) => {
           const r = itemProfit(i)!;
           const p = findProduct(i.productId);
           return (
             <li key={i.id} className="stockcard">
               <div className="row">
-                <strong>{p?.name} <small>{p?.variant}</small></strong>
+                <strong>{p ? productLabel(p) : i.productId}</strong>
                 <span className={`mono ${r.profit >= 0 ? "gain" : "loss"}`}>{r.profit >= 0 ? "+" : ""}{money(r.profit)}</span>
               </div>
               <div className="stats mono">
                 <span>{i.sale!.platform}</span>
-                <span>margem {pct(r.margin)}</span>
-                <span>{daysHeld(i)} dias</span>
+                <span>{t("profit.margin", { pct: pct(r.margin) })}</span>
+                <span>{t("profit.daysShort", { n: daysHeld(i) })}</span>
               </div>
             </li>
           );

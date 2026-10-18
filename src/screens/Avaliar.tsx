@@ -1,18 +1,20 @@
-import { useMemo, useState } from "react";
-import { CATEGORY_LABEL, CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CATEGORY_LABEL, CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
 import type { Category, Condition } from "../domain/types";
+import { pop, stagger, useFx } from "../fx";
+import { t } from "../i18n";
 import { money, today } from "../format";
 import { useApp } from "../state";
 import { Lote } from "./Lote";
 import { Print } from "./Print";
 import type { PrintPick } from "./Print";
 import { SourceNote } from "../ui/SourceNote";
-import { Verdict } from "../ui/Verdict";
+import { Verdict, decide } from "../ui/Verdict";
 
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as Category[];
 
 export function Avaliar({ goStock }: { goStock: () => void }) {
-  const { priceFor, settings, contribute, addStock } = useApp();
+  const { priceFor, settings, contribute, addStock, recent, pushRecent } = useApp();
   const [mode, setMode] = useState<"item" | "lote">("item");
   const [category, setCategory] = useState<Category | null>(null);
   const [query, setQuery] = useState("");
@@ -20,23 +22,37 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   const [condition, setCondition] = useState<Condition>("B");
   const [asked, setAsked] = useState("");
   const [saved, setSaved] = useState(false);
+  const listRef = useRef<HTMLUListElement>(null);
+  const chosenRef = useRef<HTMLDivElement>(null);
+  const verdictRef = useRef<HTMLDivElement>(null);
 
   const searching = query.trim().length > 0;
   const list = useMemo(() => {
     if (searching) {
       const q = query.toLowerCase();
-      return PRODUCTS.filter((p) => `${p.name} ${p.variant}`.toLowerCase().includes(q));
+      return PRODUCTS.filter((p) => `${p.name} ${p.variant} ${productLabel(p)}`.toLowerCase().includes(q));
     }
     return category ? PRODUCTS.filter((p) => p.category === category) : [];
   }, [category, query, searching]);
+
+  // A lista abre em onda; o produto escolhido salta ao entrar.
+  useFx(listRef, (root) => stagger([...root.children], 8, 22), [category, query]);
+  useFx(chosenRef, (el) => pop(el, 1.02), [productId]);
 
   const product = productId ? findProduct(productId)! : null;
   const askedNum = asked === "" ? null : Number(asked.replace(",", "."));
   const validAsked = askedNum !== null && Number.isFinite(askedNum) && askedNum > 0;
   const price = product ? priceFor(product.id, condition) : null;
+  const decision = price ? decide(price, validAsked ? askedNum : null) : null;
+
+  // Com o teclado aberto o resultado ficava fora do ecrã: traz-o para a vista quando o preço passa a ser válido.
+  useEffect(() => {
+    if (validAsked) verdictRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [validAsked]);
 
   function pick(id: string) {
     const p = findProduct(id)!;
+    pushRecent(id);
     setProductId(id);
     const conds = CONDITIONS[p.category];
     setCondition(conds[Math.min(1, conds.length - 1)].id);
@@ -45,6 +61,7 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   }
 
   function usePrint(p: PrintPick) {
+    pushRecent(p.productId);
     setProductId(p.productId);
     setCondition(p.condition);
     setAsked(p.price ? String(p.price) : "");
@@ -80,10 +97,10 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
 
   return (
     <section>
-      <h1>Vale a pena comprar?</h1>
-      <div className="chips" role="tablist" aria-label="Tipo de avaliação">
-        <button role="tab" aria-selected={mode === "item"} className={mode === "item" ? "chip on" : "chip"} onClick={() => setMode("item")}>Um item</button>
-        <button role="tab" aria-selected={mode === "lote"} className={mode === "lote" ? "chip on" : "chip"} onClick={() => setMode("lote")}>Lote</button>
+      <h1>{t("eval.title")}</h1>
+      <div className="chips" role="group" aria-label={t("eval.modeAria")}>
+        <button aria-pressed={mode === "item"} className={mode === "item" ? "chip on" : "chip"} onClick={() => setMode("item")}>{t("eval.one")}</button>
+        <button aria-pressed={mode === "lote"} className={mode === "lote" ? "chip on" : "chip"} onClick={() => setMode("lote")}>{t("eval.lot")}</button>
       </div>
 
       {mode === "lote" ? (
@@ -93,56 +110,69 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
           <input
             className="field"
             type="search"
-            placeholder="Procurar produto (ex.: PS4 Slim, DualSense)"
+            placeholder={t("eval.search")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Procurar produto"
+            aria-label={t("eval.searchAria")}
           />
 
+          {!searching && recent.length > 0 && (
+            <div className="recent">
+              <span className="label">{t("eval.recent")}</span>
+              <div className="chips">
+                {recent.map((id) => {
+                  const rp = findProduct(id);
+                  return rp ? (
+                    <button key={id} className="chip" onClick={() => pick(id)}>{productLabel(rp)}</button>
+                  ) : null;
+                })}
+              </div>
+            </div>
+          )}
+
           {!searching && (
-            <div className="tiles" role="tablist" aria-label="Categoria">
+            <div className="tiles" role="group" aria-label={t("eval.categoryAria")}>
               {CATEGORIES.map((c) => (
                 <button
                   key={c}
-                  role="tab"
-                  aria-selected={c === category}
+                  aria-pressed={c === category}
                   className={c === category ? "tile on" : "tile"}
                   onClick={() => setCategory(c === category ? null : c)}
                 >
                   <strong>{CATEGORY_LABEL[c]}</strong>
-                  <small>{PRODUCTS.filter((p) => p.category === c).length} produtos</small>
+                  <small>{t("eval.products", { n: PRODUCTS.filter((p) => p.category === c).length })}</small>
                 </button>
               ))}
             </div>
           )}
 
           {(searching || category) && (
-            <ul className="picklist">
+            <ul className="picklist" ref={listRef}>
               {list.map((p) => (
                 <li key={p.id}>
                   <button className="pick" onClick={() => pick(p.id)}>
                     <span>{p.name}</span>
-                    <small>{p.variant}</small>
+                    <small>{productLabel({ name: "", variant: p.variant }).trim()}</small>
                   </button>
                 </li>
               ))}
-              {list.length === 0 && <li className="empty">Nada encontrado neste catálogo inicial.</li>}
+              {list.length === 0 && <li className="empty">{t("eval.none")}</li>}
             </ul>
           )}
-          {!searching && !category && <p className="hint">Escolhe uma categoria ou procura pelo nome.</p>}
+          {!searching && !category && <p className="hint">{t("eval.pick")}</p>}
           {!searching && <Print onUse={usePrint} />}
         </>
       ) : (
         <>
-          <div className="chosen">
+          <div className="chosen" ref={chosenRef}>
             <div>
-              <small>Produto</small>
-              <strong>{product.name} {product.variant}</strong>
+              <small>{t("eval.product")}</small>
+              <strong>{productLabel(product)}</strong>
             </div>
-            <button className="btn ghost" onClick={reset}>Trocar</button>
+            <button className="btn ghost" onClick={reset}>{t("eval.change")}</button>
           </div>
 
-          <span className="label">Estado</span>
+          <span className="label">{t("eval.condition")}</span>
           <div className="chips">
             {CONDITIONS[product.category].map((c) => (
               <button
@@ -156,30 +186,32 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
           </div>
           <p className="hint">{CONDITIONS[product.category].find((c) => c.id === condition)?.hint}</p>
 
-          <label className="label" htmlFor="asked">Preço do anúncio (€)</label>
+          <label className="label" htmlFor="asked">{t("eval.price")}</label>
           <input
             id="asked"
             className="field mono"
             inputMode="decimal"
-            placeholder="ex.: 140"
+            placeholder={t("eval.pricePh")}
             value={asked}
             onChange={(e) => { setAsked(e.target.value); setSaved(false); }}
           />
 
           {price && (
+            <div ref={verdictRef}>
             <Verdict
               price={price}
               asked={validAsked ? askedNum : null}
-              productLabel={`${product.name} ${product.variant}`}
+              productLabel={productLabel(product)}
               margin={settings.targetMargin}
             />
+            </div>
           )}
 
           {validAsked && (
             <div className="actions">
-              <button className="btn primary" onClick={bought}>Comprei por {money(askedNum as number)}</button>
+              <button className={decision && decision.light !== "go" ? "btn ghost" : "btn primary"} onClick={bought}>{t("eval.bought", { price: money(askedNum as number) })}</button>
               <button className="btn ghost" onClick={saveObservation} disabled={saved}>
-                {saved ? "Guardado" : "Guardar este preço"}
+                {saved ? t("eval.saved") : t("eval.save")}
               </button>
             </div>
           )}

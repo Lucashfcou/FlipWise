@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CSV_TEMPLATE, parseCsv } from "../domain/csv";
+import { t } from "../i18n";
 import { useApp } from "../state";
 
 function ImportPanel() {
@@ -8,8 +9,8 @@ function ImportPanel() {
   const [msg, setMsg] = useState<{ ok: number; errors: string[] } | null>(null);
   return (
     <div className="panel">
-      <p className="hint">Uma linha por preço: produto, estado, tipo, valor, fonte, data. Tipos: new, refurb, buyback, ask, sold. O produto é o id do catálogo (ex.: ps4-slim-500).</p>
-      <label className="label" htmlFor="csv">Linhas CSV</label>
+      <p className="hint">{t("settings.importHint")}</p>
+      <label className="label" htmlFor="csv">{t("settings.csvLabel")}</label>
       <textarea id="csv" className="field mono" rows={6} placeholder={CSV_TEMPLATE} value={text} onChange={(e) => setText(e.target.value)} />
       <div className="actions">
         <button
@@ -22,12 +23,12 @@ function ImportPanel() {
             if (!r.errors.length) setText("");
           }}
         >
-          Importar
+          {t("settings.importBtn")}
         </button>
       </div>
       {msg && (
         <div role="status">
-          <p>{msg.ok} preços importados.</p>
+          <p>{t("settings.imported", { n: msg.ok })}</p>
           {msg.errors.map((e) => (
             <p key={e} className="loss">{e}</p>
           ))}
@@ -59,54 +60,58 @@ export function Config() {
 
   return (
     <section>
-      <h1>Ajustes</h1>
+      <h1>{t("settings.title")}</h1>
       <form
         className="panel"
         onSubmit={(e) => {
           e.preventDefault();
           if (!valid) return;
-          updateSettings({ ...settings, targetMargin: num(margin) / 100, shipping: num(shipping), promo: num(promo), staleDays: Math.max(1, Math.round(num(stale))) });
+          updateSettings({
+            ...settings,
+            targetMargin: num(margin) / 100,
+            shipping: num(shipping),
+            promo: num(promo),
+            staleDays: Math.max(1, Math.round(num(stale))),
+          });
         }}
       >
-        <label className="label" htmlFor="m">Margem alvo (%)</label>
+        <label className="label" htmlFor="m">{t("settings.margin")}</label>
         <input id="m" className="field mono" inputMode="decimal" value={margin} onChange={(e) => setMargin(e.target.value)} />
-        <label className="label" htmlFor="s">Envio habitual (€)</label>
+        <label className="label" htmlFor="s">{t("settings.shipping")}</label>
         <input id="s" className="field mono" inputMode="decimal" value={shipping} onChange={(e) => setShipping(e.target.value)} />
-        <label className="label" htmlFor="pr">Destaque do anúncio (€)</label>
+        <label className="label" htmlFor="pr">{t("settings.promo")}</label>
         <input id="pr" className="field mono" inputMode="decimal" value={promo} onChange={(e) => setPromo(e.target.value)} />
-        <label className="label" htmlFor="st">Considerar parado ao fim de (dias)</label>
+        <label className="label" htmlFor="st">{t("settings.stale")}</label>
         <input id="st" className="field mono" inputMode="numeric" value={stale} onChange={(e) => setStale(e.target.value)} />
-        <button className="btn primary" type="submit" disabled={!valid}>Guardar</button>
+        <button className="btn primary" type="submit" disabled={!valid}>{t("settings.save")}</button>
       </form>
 
       <label className="check">
         <input type="checkbox" checked={settings.contribute} onChange={(e) => updateSettings({ ...settings, contribute: e.target.checked })} />
-        <span>Usar as minhas vendas para melhorar o preço de mercado (só modelo, estado e preço)</span>
+        <span>{t("settings.contribute")}</span>
       </label>
 
-      <h2>Importar preços</h2>
+      <h2>{t("settings.import")}</h2>
       <ImportPanel />
 
-      <h2>Os teus dados</h2>
-      <p className="hint">Tudo fica guardado neste aparelho. Não há conta nem servidor.</p>
+      <h2>{t("settings.data")}</h2>
+      <p className="hint">{t("settings.dataHint")}</p>
       <div className="actions">
-        <button className="btn ghost" onClick={() => download("garimpo-dados.json", { stock, observations: observations.filter((o) => o.source === "eu") })}>
-          Exportar cópia
+        <button className="btn ghost" onClick={() => download("flipwise-data.json", { stock, observations: observations.filter((o) => o.source === "eu") })}>
+          {t("settings.export")}
         </button>
         <button
           className="btn ghost"
           onClick={() => {
-            if (confirm("Apagar stock, vendas e preços guardados neste aparelho? Isto não se pode desfazer.")) resetAll();
+            if (confirm(t("settings.wipeConfirm"))) resetAll();
           }}
         >
-          Apagar tudo
+          {t("settings.wipe")}
         </button>
       </div>
 
-      <h2>Sobre</h2>
-      <p className="hint">
-        Garimpo v0.2. Os preços de arranque vêm do CeX Portugal. As tuas vendas e as que importares passam a pesar mais que eles.
-      </p>
+      <h2>{t("settings.about")}</h2>
+      <p className="hint">{t("settings.aboutText")}</p>
     </section>
   );
 }

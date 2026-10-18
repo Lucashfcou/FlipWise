@@ -1,4 +1,5 @@
 import type { CaptureResult, CaptureStatus } from "./types";
+import { getLang } from "../i18n";
 import { problemsFor } from "./vision";
 
 export async function captureStatus(): Promise<CaptureStatus> {
@@ -42,16 +43,16 @@ export type DemoKind = "ok" | "foto" | "naobate";
 export function demoResult(kind: DemoKind = "ok"): CaptureResult {
   const base = {
     productId: "ps4-slim-500" as string | null,
-    title: "PlayStation 4 Slim 500GB preta com 1 comando",
+    title: getLang() === "pt" ? "PlayStation 4 Slim 500GB preta com 1 comando" : "PlayStation 4 Slim 500GB black with 1 controller",
     price: 140 as number | null,
     currency: "EUR",
     condition: "B" as CaptureResult["condition"],
-    conditionReason: "Sem caixa, com 1 comando e pequenos riscos (exemplo).",
+    conditionReason: getLang() === "pt" ? "Sem caixa, com 1 comando e pequenos riscos (exemplo)." : "No box, 1 controller and small scratches (example).",
     platform: "Vinted" as string | null,
-    includes: ["1 comando", "cabos"],
+    includes: getLang() === "pt" ? ["1 comando", "cabos"] : ["1 controller", "cables"],
     defects: [] as string[],
     confidence: "media" as const,
-    notes: "Resultado de exemplo para testar o fluxo. Não veio de nenhum print.",
+    notes: "",
     imageType: "anuncio" as CaptureResult["imageType"],
     inconsistencies: [] as string[],
     demo: true,
@@ -65,10 +66,10 @@ export function demoResult(kind: DemoKind = "ok"): CaptureResult {
     base.platform = null;
     base.includes = [];
     base.imageType = "foto_sem_texto";
-    base.notes = "Exemplo: foto de um portátil sem título nem preço.";
+    base.notes = getLang() === "pt" ? "Exemplo: foto de um portátil sem título nem preço." : "Example: photo of a laptop with no title or price.";
   }
   if (kind === "naobate") {
-    base.inconsistencies = ["o título diz PS4 Slim 500 GB, mas a foto mostra um PS4 Pro; a descrição fala em 1 TB"];
+    base.inconsistencies = [getLang() === "pt" ? "o título diz PS4 Slim 500 GB, mas a foto mostra um PS4 Pro; a descrição fala em 1 TB" : "the title says PS4 Slim 500 GB, but the photo shows a PS4 Pro; the description mentions 1 TB"];
     // Como no uso real: foto e texto que não batem tiram a confiança.
     (base as { confidence: CaptureResult["confidence"] }).confidence = "baixa";
   }

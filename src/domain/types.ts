@@ -1,4 +1,4 @@
-export type Category = "console" | "phone" | "controller" | "game";
+export type Category = "console" | "phone" | "tablet" | "laptop" | "watch" | "audio" | "camera" | "gpu" | "controller" | "game";
 
 export type Condition =
   | "A" | "B" | "C" | "P"
@@ -72,6 +72,8 @@ export interface Settings {
   contribute: boolean;
   /** Dias em stock a partir dos quais o item conta como parado. */
   staleDays: number;
+  /** Idioma da interface. */
+  lang: "en" | "pt";
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -80,4 +82,5 @@ export const DEFAULT_SETTINGS: Settings = {
   promo: 0,
   contribute: true,
   staleDays: 14,
+  lang: "en",
 };

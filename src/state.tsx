@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { localRepo } from "./data/repo";
+import { setLang } from "./i18n";
 import { estimate } from "./domain/priceEngine";
 import type { Condition, Observation, PriceEstimate, Settings, StockItem } from "./domain/types";
 
@@ -8,6 +9,8 @@ interface AppState {
   stock: StockItem[];
   settings: Settings;
   observations: Observation[];
+  recent: string[];
+  pushRecent: (productId: string) => void;
   sourcesFor: (productId: string) => string[];
   importObservations: (list: Observation[]) => void;
   priceFor: (productId: string, condition: Condition) => PriceEstimate;
@@ -32,6 +35,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [stock, setStock] = useState(() => localRepo.loadStock());
   const [settings, setSettings] = useState(() => localRepo.loadSettings());
   const [observations, setObservations] = useState(() => localRepo.loadObservations());
+  const [recent, setRecent] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("garimpo.recent") ?? "[]") as string[];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.lang = settings.lang;
+  }, [settings.lang]);
+  // O idioma tem de estar certo antes de desenhar, para t() funcionar em todo o lado (também no domínio).
+  setLang(settings.lang);
 
   const priceFor = useCallback(
     (productId: string, condition: Condition) =>
@@ -51,6 +67,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stock,
       settings,
       observations,
+      recent,
+      pushRecent: (id) => {
+        const next = [id, ...recent.filter((x) => x !== id)].slice(0, 5);
+        setRecent(next);
+        try {
+          localStorage.setItem("garimpo.recent", JSON.stringify(next));
+        } catch {
+          /* sem armazenamento: a lista de recentes só dura esta sessão */
+        }
+      },
       sourcesFor: (productId) => [...new Set(observations.filter((o) => o.productId === productId && o.source !== "eu").map((o) => o.source))],
       importObservations: (list) => {
         localRepo.addObservations(list);
@@ -95,7 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setObservations(localRepo.loadObservations());
       },
     };
-  }, [stock, settings, observations, priceFor]);
+  }, [stock, settings, observations, priceFor, recent]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

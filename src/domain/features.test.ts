@@ -118,7 +118,7 @@ describe("taxSummary e salesCsv", () => {
     const csv = salesCsv([sold("x", 100, "Vinted", "2026-02-02"), sold("y", 90, "OLX", "2025-02-02")], "2026");
     const lines = csv.split("\n");
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toContain("preco_venda");
+    expect(lines[0]).toContain("sale_price");
     expect(lines[1]).toContain("100,00");
     expect(lines[1]).toContain("Vinted");
     expect(lines[1]).toContain("46,00");

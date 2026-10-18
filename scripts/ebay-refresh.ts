@@ -4,6 +4,7 @@
 //        EBAY_MAX_CALLS=400            (opcional; teto de pedidos por corrida)
 //   2. npm run ebay:refresh              (tudo)
 //      npm run ebay:refresh -- --only iphone-13-128     (um produto)
+//      npm run ebay:refresh -- --ids a,b,c              (vários produtos)
 //      npm run ebay:refresh -- --category phone         (uma categoria: console, phone, controller, game)
 //      npm run ebay:refresh -- --no-parts               (salta a busca de "para peças")
 //      npm run ebay:refresh -- --missing                (só os produtos que ainda não têm dados)
@@ -29,8 +30,11 @@ const arg = (name: string) => {
   return i > -1 ? process.argv[i + 1] : undefined;
 };
 const sites = (process.env.EBAY_SITES ?? "EBAY_ES").split(",").map((s) => s.trim()).filter((s): s is MarketplaceId => s in MARKETPLACES);
-const maxCalls = Number(process.env.EBAY_MAX_CALLS ?? 400);
+const maxCalls = Number(process.env.EBAY_MAX_CALLS ?? 800);
+/** Menos anúncios válidos do que isto = dado pouco fiável (como o PS5 Pro e o Switch 2): o produto fica sem dados. */
+const MIN_VALID = 6;
 const only = arg("--only");
+const onlyIds = arg("--ids")?.split(",").map((x) => x.trim()).filter(Boolean);
 const category = arg("--category");
 const withParts = !process.argv.includes("--no-parts");
 const missingOnly = process.argv.includes("--missing");
@@ -43,7 +47,7 @@ const current = existsSync(FILE) ? JSON.parse(readFileSync(FILE, "utf8")) : { pr
 type Entry = { prices: number[]; captured: number; validated: number; parts?: number[]; partsCaptured?: number };
 const products: Record<string, Record<string, Entry>> = current.products ?? {};
 
-const MAIN_CONDITION = { console: "B", phone: "B", controller: "sem-drift", game: "completo" } as const;
+const MAIN_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo" } as const;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let calls = 0;
 let stop = false;
@@ -56,6 +60,7 @@ async function search(site: MarketplaceId, q: string, condition: EbayCondition) 
 for (const p of PRODUCTS) {
   if (stop) break;
   if (only && p.id !== only) continue;
+  if (onlyIds && !onlyIds.includes(p.id)) continue;
   if (category && p.category !== category) continue;
   const q = queryFor(p.id);
   if (!q) continue;
@@ -70,7 +75,7 @@ for (const p of PRODUCTS) {
     try {
       // Usados: limites de plausibilidade a partir do CeX (se existir). Abaixo do que a loja paga ou acima do que vende = suspeito.
       const ref = referenceFor(p.id, MAIN_CONDITION[p.category]);
-      const bounds = { min: ref.floor !== undefined ? ref.floor * 0.8 : undefined, max: ref.ceiling };
+      const bounds = { min: Math.max(ref.floor !== undefined ? ref.floor * 0.8 : 0, q.min ?? 0) || undefined, max: ref.ceiling };
       const items = await search(site, q.q, "USED");
       const r = await runPipeline(`${p.name} ${p.variant}`, toRaw(items), productClassifier(q), "EUR", bounds);
       const entry: Entry = { prices: r.prices, captured: r.counts.captured, validated: r.counts.validated };
@@ -86,6 +91,12 @@ for (const p of PRODUCTS) {
         partsInfo = `  | peças: ${rp.counts.final}/${rp.counts.captured}` + (rp.stats ? ` med ${rp.stats.median}` : "");
       }
 
+      if (r.counts.final < MIN_VALID) {
+        delete products[p.id]?.[site];
+        console.log(`${p.id.padEnd(34)} ${site.slice(5)}  só ${r.counts.final} válidos de ${r.counts.captured}: ignorado (sem dados)`);
+        await sleep(250);
+        continue;
+      }
       (products[p.id] ??= {})[site] = entry;
       console.log(
         `${p.id.padEnd(34)} ${site.slice(5)}  ${String(r.counts.final).padStart(3)}/${String(r.counts.captured).padStart(3)} usados` +

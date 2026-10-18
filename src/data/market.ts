@@ -75,7 +75,7 @@ function pair(productId: string, condition: Condition, sell: number, buy: number
  * misturava versões e lotes. Descartados valores abaixo do que o CeX paga e acima de 1,5x o que o CeX vende
  * (provável lote ou outro modelo). Estado assumido B. As vendas concluídas do eBay exigem login e não foram usadas.
  */
-export const EBAY_SOURCE = "eBay.es (anúncios)";
+export const EBAY_SOURCE = "eBay.es (listings)";
 const EBAY_ASKS: Record<string, number[]> = {
   "ps4-slim-500": [124.32, 79.9, 99.9, 140, 161.96, 120, 170, 150, 90, 109, 99.99, 229.9, 110, 104.9, 100, 137.31, 79.83, 159.99],
   "ps4-pro-1tb": [139.9, 167.9, 179.9, 134.9, 354.9, 134.9, 190, 135.07, 179, 218.99, 244.7, 327.99, 170, 148.76, 200, 153.08, 133.69],
@@ -87,9 +87,9 @@ export interface EbayFile {
 }
 
 /** Estado assumido para anúncios do eBay ("usado"): consolas e telemóveis B, comandos sem drift, jogos completos. */
-const EBAY_CONDITION = { console: "B", phone: "B", controller: "sem-drift", game: "completo" } as const;
+const EBAY_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo" } as const;
 /** Anúncios "para peças ou sem funcionar" do eBay. Jogos não têm este estado. */
-const EBAY_PARTS_CONDITION = { console: "P", phone: "P", controller: "defeito" } as const;
+const EBAY_PARTS_CONDITION = { console: "P", phone: "P", tablet: "P", laptop: "P", watch: "P", audio: "P", camera: "P", gpu: "P", controller: "defeito" } as const;
 
 /** Preço de referência do CeX (piso e teto) para um produto e estado, quando existir. */
 export function referenceFor(productId: string, condition: Condition): { floor?: number; ceiling?: number } {
@@ -113,11 +113,11 @@ export function ebayFileObservations(file: EbayFile): Observation[] {
     for (const [site, v] of Object.entries(sites)) {
       const label = (MARKETPLACES as Record<string, { label: string }>)[site as MarketplaceId]?.label ?? site;
       for (const value of v.prices ?? []) {
-        out.push({ productId: id, condition: EBAY_CONDITION[p.category], kind: "ask", value, source: `${label} (anúncios)`, date });
+        out.push({ productId: id, condition: EBAY_CONDITION[p.category], kind: "ask", value, source: `${label} (listings)`, date });
       }
       if (p.category !== "game") {
         for (const value of v.parts ?? []) {
-          out.push({ productId: id, condition: EBAY_PARTS_CONDITION[p.category], kind: "ask", value, source: `${label} (para peças)`, date });
+          out.push({ productId: id, condition: EBAY_PARTS_CONDITION[p.category], kind: "ask", value, source: `${label} (parts)`, date });
         }
       }
     }

@@ -1,4 +1,5 @@
 import { PRODUCTS } from "../domain/catalog";
+import { TECH } from "../domain/catalogTech";
 import { createRulesClassifier, rulesClassifier } from "../pipeline/rulesClassifier";
 import type { Classifier, Listing, Verdict } from "../pipeline/types";
 
@@ -9,11 +10,13 @@ export interface ProductQuery {
   must: RegExp[];
   /** O título não pode cumprir NENHUMA. */
   mustNot: RegExp[];
+  /** Piso de preço em euros, quando o catálogo o define. */
+  min?: number;
 }
 
 /** Acessórios em PT, ES, EN, DE, FR e IT. */
 const ACCESSORY_WORDS =
-  /\b(funda|carcasa|soporte|cargador|cable|skin|stand|base de carga|hülle|tasche|ladeger[aä]t|kabel|coque|housse|chargeur|custodia|caricatore|cavo|capa|suporte|carregador|case|cover|protector|l[aá]mina|auricular|airpods)\b/i;
+  /\b(funda|carcasa|soporte|cargador|cable|skin|stand|base de carga|hülle|tasche|ladeger[aä]t|kabel|coque|housse|chargeur|custodia|caricatore|cavo|capa|suporte|carregador|case|cover|protector|l[aá]mina)\b/i;
 
 /** Lotes: consola com jogos ou vários extras distorce o preço. */
 const BUNDLE_WORDS =
@@ -84,7 +87,7 @@ function phoneQuery(productId: string): ProductQuery | undefined {
   return {
     q: `iPhone ${gen}${pro ? " Pro" : ""} ${gb}GB`,
     must: [new RegExp(`iphone\\s?${gen}\\b`, "i"), pro ? /\bpro\b/i : /./, new RegExp(`\\b${gb}\\s?gb`, "i")],
-    mustNot: [new RegExp(`\\b(${variants})\\b`, "i"), new RegExp(`\\b(${others}|1\\s?tb)\\b`, "i"), ACCESSORY_WORDS, BUNDLE_WORDS],
+    mustNot: [new RegExp(`\\b(${variants})\\b`, "i"), new RegExp(`\\b(${others}|1\\s?tb)\\b`, "i"), ACCESSORY_WORDS, BUNDLE_WORDS, /(airpods|auriculares?)/i],
   };
 }
 
@@ -113,8 +116,23 @@ function gameQuery(productId: string): ProductQuery | undefined {
   };
 }
 
+const TECH_BY_ID = new Map(TECH.map((x) => [x.id, x]));
+
+/** Produtos de catalogTech: o título tem de cumprir o que está definido; acessórios e lotes saem sempre. */
+function techQuery(productId: string): ProductQuery | undefined {
+  const seed = TECH_BY_ID.get(productId);
+  if (!seed || seed.opts.skip) return undefined;
+  const { q, must = [], not = [], min } = seed.opts;
+  return {
+    q: q ?? `${seed.name} ${seed.variant}`.trim(),
+    must,
+    mustNot: [...not, ACCESSORY_WORDS, BUNDLE_WORDS],
+    min,
+  };
+}
+
 export function queryFor(productId: string): ProductQuery | undefined {
-  return CONSOLES[productId] ?? CONTROLLERS[productId] ?? phoneQuery(productId) ?? gameQuery(productId);
+  return CONSOLES[productId] ?? CONTROLLERS[productId] ?? techQuery(productId) ?? phoneQuery(productId) ?? gameQuery(productId);
 }
 
 /**

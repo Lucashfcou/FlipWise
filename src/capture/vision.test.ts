@@ -69,7 +69,7 @@ describe("parseVisionResponse", () => {
     );
     expect(result.problems.map((p) => p.code)).toEqual(["NAO_E_ANUNCIO"]);
     expect(result.problems[0].severity).toBe("erro");
-    expect(result.problems[0].message).toContain("página do anúncio");
+    expect(result.problems[0].message).toContain("listing page");
     expect(result.confidence).toBe("baixa");
   });
 
@@ -88,7 +88,7 @@ describe("parseVisionResponse", () => {
     );
     const mismatch = result.problems.find((p) => p.code === "NAO_BATE")!;
     expect(mismatch.severity).toBe("aviso");
-    expect(mismatch.message).toContain("Foto e texto não batem");
+    expect(mismatch.message).toContain("Photo and text do not match");
     expect(result.confidence).toBe("baixa");
     expect(result.productId).toBe("ps4-slim-500");
   });

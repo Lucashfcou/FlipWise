@@ -1,4 +1,5 @@
-import { findProduct } from "./catalog";
+import { t } from "../i18n";
+import { findProduct, productLabel } from "./catalog";
 import { itemProfit } from "./profit";
 import type { StockItem } from "./types";
 
@@ -68,7 +69,7 @@ const csvCell = (v: string | number) => {
 /** Vendas do ano em CSV, com ";" e vírgula decimal (abre direto no Excel em português). */
 export function salesCsv(items: StockItem[], year: string): string {
   const num = (n: number) => n.toFixed(2).replace(".", ",");
-  const header = ["data_compra", "data_venda", "produto", "estado", "onde_comprou", "plataforma", "custo", "extras", "preco_venda", "envio", "lucro"];
+  const header = t("tax.csv.header").split(";");
   const rows = items
     .filter((i) => i.sale && i.sale.date.startsWith(year))
     .sort((a, b) => a.sale!.date.localeCompare(b.sale!.date))
@@ -76,7 +77,7 @@ export function salesCsv(items: StockItem[], year: string): string {
       const p = findProduct(i.productId);
       const s = i.sale!;
       return [
-        i.boughtDate, s.date, p ? `${p.name} ${p.variant}` : i.productId, i.condition, i.boughtAt,
+        i.boughtDate, s.date, p ? productLabel(p) : i.productId, i.condition, i.boughtAt,
         s.platform, num(i.cost), num(i.extraCosts), num(s.price), num(s.shipping), num(itemProfit(i)?.profit ?? 0),
       ].map(csvCell).join(";");
     });

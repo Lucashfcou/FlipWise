@@ -89,8 +89,8 @@ describe("ficheiro de preços do eBay", () => {
       products: { "ps4-slim-500": { EBAY_ES: { prices: [100, 110] } }, "ds4-v2": { EBAY_DE: { prices: [25] } } },
     });
     expect(obs).toHaveLength(3);
-    expect(obs[0]).toMatchObject({ productId: "ps4-slim-500", condition: "B", kind: "ask", value: 100, source: "eBay.es (anúncios)", date: "2026-10-18" });
-    expect(obs[2]).toMatchObject({ productId: "ds4-v2", condition: "sem-drift", source: "eBay.de (anúncios)" });
+    expect(obs[0]).toMatchObject({ productId: "ps4-slim-500", condition: "B", kind: "ask", value: 100, source: "eBay.es (listings)", date: "2026-10-18" });
+    expect(obs[2]).toMatchObject({ productId: "ds4-v2", condition: "sem-drift", source: "eBay.de (listings)" });
   });
 
   it("ficheiro vazio não gera observações", () => {

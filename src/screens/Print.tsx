@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { captureStatus, demoResult, readPrint, shrinkImage } from "../capture/client";
 import type { CaptureResult, CaptureStatus } from "../capture/types";
-import { CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
+import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
 import type { Condition } from "../domain/types";
+import { pop, stagger, useFx } from "../fx";
+import { t } from "../i18n";
+import type { Key } from "../i18n";
 
 export interface PrintPick {
   productId: string;
   condition: Condition;
   price: number | null;
 }
-
-const CONF = { alta: "confiança alta", media: "confiança média", baixa: "confiança baixa" } as const;
 
 export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const [open, setOpen] = useState(false);
@@ -24,10 +25,15 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const [productId, setProductId] = useState("");
   const [condition, setCondition] = useState<Condition | "">("");
   const [price, setPrice] = useState("");
+  const confirmRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open && status === null) captureStatus().then(setStatus);
   }, [open, status]);
+
+  useFx(panelRef, (el) => pop(el, 1.01), [open]);
+  useFx(confirmRef, (el) => stagger([...el.children], 8, 35), [result]);
 
   function load(r: CaptureResult) {
     setResult(r);
@@ -45,7 +51,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
       setImage(data);
       setPreview(data);
     } catch {
-      setError("Não consegui abrir esta imagem. Tenta um print em JPEG ou PNG.");
+      setError(t("print.fileError"));
     }
   }
 
@@ -58,7 +64,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
       load(r);
       setStatus((s) => (s ? { ...s, usedToday, dailyLimit } : s));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "A leitura falhou.");
+      setError(e instanceof Error ? e.message : t("print.readError"));
     } finally {
       setBusy(false);
     }
@@ -73,59 +79,53 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
     return (
       <button className="printcard" onClick={() => setOpen(true)}>
         <span>
-          <strong>Avaliar por print</strong>
-          <small>Tira um print do anúncio e o app lê o produto, o estado e o preço.</small>
+          <strong>{t("print.card")}</strong>
+          <small>{t("print.cardText")}</small>
         </span>
-        <span className="chip on">Pago</span>
+        <span className="chip on">{t("print.paid")}</span>
       </button>
     );
   }
 
   return (
-    <div className="panel capture">
+    <div className="panel capture" ref={panelRef}>
       <div className="row">
-        <strong>Avaliar por print</strong>
-        <button className="btn ghost small" onClick={() => setOpen(false)}>Fechar</button>
+        <strong>{t("print.card")}</strong>
+        <button className="btn ghost small" onClick={() => setOpen(false)}>{t("print.close")}</button>
       </div>
 
       {status === null ? (
-        <p className="hint">A verificar o serviço…</p>
+        <p className="hint">{t("print.checking")}</p>
       ) : status.enabled ? (
-        <p className="hint">Leitura ativa. Hoje: {status.usedToday ?? 0} de {status.dailyLimit ?? "?"} leituras.</p>
+        <p className="hint">{t("print.on", { used: status.usedToday ?? 0, limit: status.dailyLimit ?? "?" })}</p>
       ) : (
-        <p className="note">
-          A leitura por print está <strong>desligada</strong>: não há servidor nem chave configurados, por isso não custa nada.
-          Podes ver o fluxo com um resultado de exemplo.
-        </p>
+        <p className="note">{t("print.off")}</p>
       )}
 
       {status?.enabled && (
         <>
-          <label className="label" htmlFor="printfile">Print do anúncio</label>
+          <label className="label" htmlFor="printfile">{t("print.file")}</label>
           <input id="printfile" className="field" type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
-          {preview && <img className="printpreview" src={preview} alt="Pré-visualização do print" />}
-          <p className="hint">A imagem é reduzida no aparelho, enviada para leitura e não é guardada.</p>
+          {preview && <img className="printpreview" src={preview} alt={t("print.preview")} />}
+          <p className="hint">{t("print.privacy")}</p>
           <div className="actions">
-            <button className="btn primary" onClick={read} disabled={!image || busy}>{busy ? "A ler…" : "Ler print"}</button>
+            <button className="btn primary" onClick={read} disabled={!image || busy}>{busy ? t("print.reading") : t("print.read")}</button>
           </div>
         </>
       )}
 
       <div className="guide">
-        <strong>O que enviar</strong>
-        <p>
-          Um print da <b>página do anúncio</b>, com o título e o preço visíveis. Uma foto solta do aparelho, por exemplo
-          tirada numa feira, não chega para identificar o produto nem o preço.
-        </p>
+        <strong>{t("print.guideTitle")}</strong>
+        <p>{t("print.guide")}</p>
       </div>
 
       {status && !status.enabled && !result && (
         <>
-          <p className="hint">Exemplos para ver como o app reage:</p>
+          <p className="hint">{t("print.examples")}</p>
           <div className="actions">
-            <button className="btn accent" onClick={() => load(demoResult("ok"))}>Anúncio lido</button>
-            <button className="btn ghost" onClick={() => load(demoResult("foto"))}>Foto solta</button>
-            <button className="btn ghost" onClick={() => load(demoResult("naobate"))}>Foto não bate</button>
+            <button className="btn accent" onClick={() => load(demoResult("ok"))}>{t("print.exOk")}</button>
+            <button className="btn ghost" onClick={() => load(demoResult("foto"))}>{t("print.exPhoto")}</button>
+            <button className="btn ghost" onClick={() => load(demoResult("naobate"))}>{t("print.exMismatch")}</button>
           </div>
         </>
       )}
@@ -133,8 +133,8 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
       {error && <p className="loss" role="alert">{error}</p>}
 
       {result && notAd && (
-        <div className="confirm">
-          {result.demo && <p className="note">Resultado de exemplo: não veio de nenhum print.</p>}
+        <div className="confirm" ref={confirmRef}>
+          {result.demo && <p className="note">{t("print.demoNote")}</p>}
           <ul className="problems" role="alert">
             {result.problems.map((p) => (
               <li key={p.code} className={p.severity}>{p.message}</li>
@@ -149,19 +149,19 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
                 setPreview(null);
               }}
             >
-              Tentar outro print
+              {t("print.tryAgain")}
             </button>
           </div>
         </div>
       )}
 
       {result && !notAd && (
-        <div className="confirm">
+        <div className="confirm" ref={confirmRef}>
           <div className="row">
-            <strong>{result.title || "Anúncio lido"}</strong>
-            <span className={`conf ${result.confidence}`}>{CONF[result.confidence]}</span>
+            <strong>{result.title || t("print.read1")}</strong>
+            <span className={`conf ${result.confidence}`}>{t(`conf.${result.confidence}` as Key)}</span>
           </div>
-          {result.demo && <p className="note">Resultado de exemplo: não veio de nenhum print.</p>}
+          {result.demo && <p className="note">{t("print.demoNote")}</p>}
           {result.problems.length > 0 && (
             <ul className="problems" role="alert">
               {result.problems.map((p) => (
@@ -169,13 +169,16 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               ))}
             </ul>
           )}
+          {!result.productId && (
+            <p className="note"><strong>{t("print.unknownTitle")}.</strong> {t("print.unknownText")}</p>
+          )}
           {result.notes && <p className="hint">{result.notes}</p>}
-          {result.defects.length > 0 && <p className="loss">Defeitos mencionados: {result.defects.join(", ")}</p>}
-          {result.includes.length > 0 && <p className="hint">Inclui: {result.includes.join(", ")}</p>}
+          {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
+          {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}
 
-          <p className="hint">Confirma antes de usar. O app pode errar o modelo, a capacidade ou o estado.</p>
+          <p className="hint">{t("print.confirm")}</p>
 
-          <label className="label" htmlFor="cp">Produto</label>
+          <label className="label" htmlFor="cp">{t("eval.product")}</label>
           <select
             id="cp"
             className="field"
@@ -185,28 +188,28 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               setCondition("");
             }}
           >
-            <option value="">Escolher…</option>
+            <option value="">{t("print.choose")}</option>
             {PRODUCTS.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} {p.variant}</option>
+              <option key={p.id} value={p.id}>{productLabel(p)}</option>
             ))}
           </select>
 
           <div className="two">
             <div>
-              <label className="label" htmlFor="cc">Estado</label>
+              <label className="label" htmlFor="cc">{t("eval.condition")}</label>
               <select id="cc" className="field" value={condition} onChange={(e) => setCondition(e.target.value as Condition)} disabled={!product}>
-                <option value="">Escolher…</option>
+                <option value="">{t("print.choose")}</option>
                 {product && CONDITIONS[product.category].map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="label" htmlFor="cpr">Preço (€)</label>
+              <label className="label" htmlFor="cpr">{t("eval.price")}</label>
               <input id="cpr" className="field mono" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
           </div>
-          {result.conditionReason && <p className="hint">Estado: {result.conditionReason}</p>}
+          {result.conditionReason && <p className="hint">{t("print.conditionNote", { note: result.conditionReason })}</p>}
 
           <div className="actions">
             <button
@@ -214,7 +217,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               disabled={!canUse}
               onClick={() => onUse({ productId, condition: condition as Condition, price: priceNum !== null && Number.isFinite(priceNum) && priceNum > 0 ? priceNum : null })}
             >
-              Usar na avaliação
+              {t("print.use")}
             </button>
           </div>
         </div>
