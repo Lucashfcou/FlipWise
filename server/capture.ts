@@ -1,8 +1,12 @@
 // Servidor local de leitura de prints. Guarda a chave fora do app e limita o uso para não haver surpresas na fatura.
 //   PowerShell:  $env:ANTHROPIC_API_KEY="..." ; npm run capture:server
 // Sem chave, arranca na mesma e responde "desativado": nada é enviado a lado nenhum, nada custa.
+import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { DEFAULT_MODEL, MAX_IMAGE_BYTES, buildVisionRequest, parseVisionResponse } from "../src/capture/vision";
+
+// As chaves vêm do ficheiro .env (fora do git), se existir.
+if (existsSync(".env")) process.loadEnvFile(".env");
 
 const PORT = Number(process.env.CAPTURE_PORT ?? 8787);
 const KEY = process.env.ANTHROPIC_API_KEY ?? "";
