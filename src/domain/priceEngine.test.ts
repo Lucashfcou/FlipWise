@@ -71,6 +71,14 @@ describe("estimate", () => {
     expect(r.safeBuy).toBeCloseTo(60 * 0.92, 1);
   });
 
+  it("o típico nunca fica abaixo do piso da loja", () => {
+    const list = [300, 310, 305, 300].map((v, i) => obs(v, "ask", "2026-10-10", `a${i}`));
+    const r = estimate([...list, obs(400, "buyback", "2026-10-10", "cex"), obs(600, "refurb", "2026-10-10", "cex2")], costs, TODAY);
+    expect(r.typical).toBe(400);
+    expect(r.low).toBe(400);
+    expect(r.safeBuy).toBeCloseTo(400 * 0.92, 1);
+  });
+
   it("limita o típico ao teto de loja", () => {
     const list = [300, 310, 305, 300].map((v, i) => obs(v, "sold", "2026-10-10", `s${i}`));
     const r = estimate([...list, obs(200, "refurb", "2026-10-10", "bm")], costs, TODAY);

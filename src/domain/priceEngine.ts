@@ -109,6 +109,14 @@ export function estimate(observations: Observation[], costs: Costs, today = new 
     return EMPTY;
   }
 
+  // A revenda entre pessoas nunca fica abaixo do que a loja paga: há sempre a saída de vender à loja.
+  // Se os anúncios dizem menos, o mais provável é dado contaminado (outro modelo), e o piso protege o resultado.
+  if (floor !== undefined) {
+    low = Math.max(low, floor);
+    typical = Math.max(typical, floor);
+    high = Math.max(high, floor);
+  }
+
   if (ceiling !== undefined) {
     low = Math.min(low, ceiling);
     typical = Math.min(typical, ceiling);
