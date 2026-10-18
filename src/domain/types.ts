@@ -1,4 +1,4 @@
-export type Category = "console" | "controller" | "game";
+export type Category = "console" | "phone" | "controller" | "game";
 
 export type Condition =
   | "A" | "B" | "C" | "P"

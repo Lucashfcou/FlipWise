@@ -11,6 +11,7 @@ export async function runPipeline(
   rawItems: unknown,
   classifier: Classifier,
   defaultCurrency = "EUR",
+  bounds: { min?: number; max?: number } = {},
 ): Promise<PipelineResult> {
   const listings = sanitize(rawItems, defaultCurrency);
   const verdicts = await classifier.classify(query, listings);
@@ -34,8 +35,17 @@ export async function runPipeline(
     return false;
   });
 
-  const filter = iqrFilter(inCurrency.map((l) => l.price));
-  const outliers = inCurrency
+  // Preços fora do plausível para este produto: abaixo do mínimo costuma ser golpe, acima do máximo costuma ser edição especial ou lote.
+  const plausible = inCurrency.filter((l) => {
+    const low = bounds.min !== undefined && l.price < bounds.min;
+    const high = bounds.max !== undefined && l.price > bounds.max;
+    if (low) rejected.push({ id: l.id, title: l.title, reason: `preço demasiado baixo (${l.price}): possível golpe` });
+    if (high) rejected.push({ id: l.id, title: l.title, reason: `preço demasiado alto (${l.price}): possível edição especial ou lote` });
+    return !low && !high;
+  });
+
+  const filter = iqrFilter(plausible.map((l) => l.price));
+  const outliers = plausible
     .filter((l) => filter.applied && (l.price < filter.lower || l.price > filter.upper))
     .map((l) => ({ id: l.id, title: l.title, price: l.price }));
   const stats = summarize(filter.kept);

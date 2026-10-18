@@ -10,7 +10,7 @@ export interface Costs {
 const KIND_WEIGHT = { sold: 1, ask: 0.5 } as const;
 
 /** Preço pedido costuma ficar acima do preço pago. Valor a calibrar com as vendas reais dos utilizadores. */
-export const ASK_DISCOUNT = 0.85;
+export const ASK_DISCOUNT = 0.9;
 /**
  * Sem vendas nem anúncios, a revenda entre pessoas fica numa faixa entre o piso (o que a loja paga) e o teto
  * (o que a loja vende), em fração do caminho. Calibrado a olho com o PS5 na Vinted (450 a 500) e com os anúncios do

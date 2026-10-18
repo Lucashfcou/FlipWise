@@ -81,13 +81,27 @@ const EBAY_ASKS: Record<string, number[]> = {
   "ps4-pro-1tb": [139.9, 167.9, 179.9, 134.9, 354.9, 134.9, 190, 135.07, 179, 218.99, 244.7, 327.99, 170, 148.76, 200, 153.08, 133.69],
 };
 
-interface EbayFile {
+export interface EbayFile {
   updated?: string | null;
-  products?: Record<string, Record<string, { prices: number[] }>>;
+  products?: Record<string, Record<string, { prices: number[]; parts?: number[] }>>;
 }
 
-/** Estado assumido para anúncios do eBay ("usado"): consolas B, comandos sem drift, jogos completos. */
-const EBAY_CONDITION = { console: "B", controller: "sem-drift", game: "completo" } as const;
+/** Estado assumido para anúncios do eBay ("usado"): consolas e telemóveis B, comandos sem drift, jogos completos. */
+const EBAY_CONDITION = { console: "B", phone: "B", controller: "sem-drift", game: "completo" } as const;
+/** Anúncios "para peças ou sem funcionar" do eBay. Jogos não têm este estado. */
+const EBAY_PARTS_CONDITION = { console: "P", phone: "P", controller: "defeito" } as const;
+
+/** Preço de referência do CeX (piso e teto) para um produto e estado, quando existir. */
+export function referenceFor(productId: string, condition: Condition): { floor?: number; ceiling?: number } {
+  const row = CONSOLES[productId]?.find((r) => r[0] === condition);
+  if (row) return { ceiling: row[1], floor: row[2] };
+  const p = PRODUCTS.find((x) => x.id === productId);
+  if (p?.category === "game" && p.variant === "PS4" && condition === "completo") {
+    const g = GAMES.find(([name]) => name === p.name);
+    if (g) return { ceiling: g[1], floor: g[2] };
+  }
+  return {};
+}
 
 /** Anúncios guardados por npm run ebay:refresh. */
 export function ebayFileObservations(file: EbayFile): Observation[] {
@@ -100,6 +114,11 @@ export function ebayFileObservations(file: EbayFile): Observation[] {
       const label = (MARKETPLACES as Record<string, { label: string }>)[site as MarketplaceId]?.label ?? site;
       for (const value of v.prices ?? []) {
         out.push({ productId: id, condition: EBAY_CONDITION[p.category], kind: "ask", value, source: `${label} (anúncios)`, date });
+      }
+      if (p.category !== "game") {
+        for (const value of v.parts ?? []) {
+          out.push({ productId: id, condition: EBAY_PARTS_CONDITION[p.category], kind: "ask", value, source: `${label} (para peças)`, date });
+        }
       }
     }
   }
@@ -121,7 +140,7 @@ export function marketObservations(): Observation[] {
     for (const [cond, sell, buy] of rows) out.push(...pair(id, cond, sell, buy));
   }
   for (const [name, sell, buy] of GAMES) {
-    const p = PRODUCTS.find((x) => x.category === "game" && x.name === name);
+    const p = PRODUCTS.find((x) => x.category === "game" && x.variant === "PS4" && x.name === name);
     if (p) out.push(...pair(p.id, "completo", sell, buy));
   }
   return out;

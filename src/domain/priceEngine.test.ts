@@ -42,7 +42,7 @@ describe("estimate", () => {
   it("aplica desconto ao preço pedido", () => {
     const list = [200, 200, 200, 200].map((v, i) => obs(v, "ask", "2026-10-10", `a${i}`));
     const r = estimate(list, costs, TODAY);
-    expect(r.typical).toBeCloseTo(170, 0);
+    expect(r.typical).toBeCloseTo(180, 0);
     expect(r.confidence).toBe("media");
   });
 

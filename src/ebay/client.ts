@@ -48,11 +48,14 @@ export async function getToken(creds: EbayCredentials, fetchImpl: typeof fetch =
   return { token: data.access_token, expiresIn: data.expires_in ?? 7200 };
 }
 
-export function buildSearchUrl(query: string, limit = 50): string {
+/** USED = usados a funcionar; PARTS = "para peças ou sem funcionar" (código de condição 7000 do eBay). */
+export type EbayCondition = "USED" | "PARTS";
+
+export function buildSearchUrl(query: string, limit = 50, condition: EbayCondition = "USED"): string {
   const params = new URLSearchParams({
     q: query,
     limit: String(Math.min(200, Math.max(1, limit))),
-    filter: "buyingOptions:{FIXED_PRICE},conditions:{USED}",
+    filter: condition === "PARTS" ? "buyingOptions:{FIXED_PRICE},conditionIds:{7000}" : "buyingOptions:{FIXED_PRICE},conditions:{USED}",
   });
   return `${SEARCH_URL}?${params.toString()}`;
 }
@@ -63,8 +66,9 @@ export async function searchItems(
   query: string,
   limit = 50,
   fetchImpl: typeof fetch = fetch,
+  condition: EbayCondition = "USED",
 ): Promise<EbayItem[]> {
-  const res = await fetchImpl(buildSearchUrl(query, limit), {
+  const res = await fetchImpl(buildSearchUrl(query, limit, condition), {
     headers: { Authorization: `Bearer ${token}`, "X-EBAY-C-MARKETPLACE-ID": marketplace },
   });
   if (!res.ok) throw new EbayError(`eBay search ${res.status}: ${(await res.text()).slice(0, 200)}`, res.status);
@@ -79,5 +83,7 @@ export function toRaw(items: EbayItem[]): unknown[] {
     title: i.title,
     price: i.price ? { value: i.price.value, currency: i.price.currency } : undefined,
     url: i.itemWebUrl,
+    // O estado declarado pelo vendedor ajuda o classificador a apanhar "para peças" escondido.
+    description: i.condition ?? "",
   }));
 }
