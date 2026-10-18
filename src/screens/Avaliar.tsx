@@ -98,9 +98,9 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   return (
     <section>
       <h1>{t("eval.title")}</h1>
-      <div className="chips" role="group" aria-label={t("eval.modeAria")}>
-        <button aria-pressed={mode === "item"} className={mode === "item" ? "chip on" : "chip"} onClick={() => setMode("item")}>{t("eval.one")}</button>
-        <button aria-pressed={mode === "lote"} className={mode === "lote" ? "chip on" : "chip"} onClick={() => setMode("lote")}>{t("eval.lot")}</button>
+      <div className="seg" role="group" aria-label={t("eval.modeAria")}>
+        <button aria-pressed={mode === "item"} onClick={() => setMode("item")}>{t("eval.one")}</button>
+        <button aria-pressed={mode === "lote"} onClick={() => setMode("lote")}>{t("eval.lot")}</button>
       </div>
 
       {mode === "lote" ? (

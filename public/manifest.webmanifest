@@ -4,8 +4,8 @@
   "description": "Market price, safe buy price and real profit for used-electronics resellers.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f3f4f7",
-  "theme_color": "#f3f4f7",
+  "background_color": "#eef1ed",
+  "theme_color": "#eef1ed",
   "lang": "en",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

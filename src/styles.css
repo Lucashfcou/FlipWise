@@ -1,19 +1,21 @@
-/* Flipwise: ferramenta de trabalho. Superfícies planas, linhas finas, um acento, cor semântica só para veredito. */
+/* Flipwise: ferramenta de trabalho com mundo próprio, o da etiqueta de preço e do livro de contas.
+   Neutros com um fundo verde-salva, tinta quase preta esverdeada e um só acento, o verde-petróleo.
+   Cor semântica (verde, âmbar, vermelho) só no veredito; o estado também vem sempre escrito. */
 :root {
-  --bg: #f3f4f7;
-  --surface: #ffffff;
-  --sunk: #eceef3;
-  --ink: #14161f;
-  --muted: #5a5f73;
-  --line: #dde0e8;
-  --line-strong: #b9bece;
-  --accent: #2e56e8;
+  --bg: #eef1ed;
+  --surface: #fbfcfa;
+  --sunk: #e2e8e3;
+  --ink: #0f1a19;
+  --muted: #536360;
+  --line: #d3dbd5;
+  --line-strong: #a6b4ad;
+  --accent: #0b6b69;
   --on-accent: #ffffff;
-  --good: #1a6e3f;
-  --warn: #8a5f00;
-  --bad: #c23b35;
-  --tone-bg: #eceef3;
-  --shadow: 0 1px 2px rgba(20, 22, 31, 0.06), 0 8px 24px -12px rgba(20, 22, 31, 0.18);
+  --good: #266d2a;
+  --warn: #8f5f00;
+  --bad: #b8362f;
+  --tone-bg: #e2e8e3;
+  --shadow: 0 1px 2px rgba(15, 26, 25, 0.06), 0 8px 24px -12px rgba(15, 26, 25, 0.18);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --spring: cubic-bezier(0.16, 1, 0.3, 1);
   --display: "Anybody Variable", "Arial Narrow", system-ui, sans-serif;
@@ -24,38 +26,38 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1117;
-    --surface: #181b24;
-    --sunk: #1f232e;
-    --ink: #eceef5;
-    --muted: #9aa0b5;
-    --line: #272b38;
-    --line-strong: #3d4357;
-    --accent: #8aa4ff;
-    --on-accent: #0f1117;
-    --good: #4fd08a;
-    --warn: #e6b04a;
-    --bad: #ff7a70;
-    --tone-bg: #1f232e;
+    --bg: #0a1110;
+    --surface: #111b1a;
+    --sunk: #182322;
+    --ink: #e6eeec;
+    --muted: #8fa19d;
+    --line: #213130;
+    --line-strong: #36494a;
+    --accent: #4fd1c2;
+    --on-accent: #052321;
+    --good: #7ad87c;
+    --warn: #e5b04a;
+    --bad: #ff8077;
+    --tone-bg: #182322;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0f1117;
-  --surface: #181b24;
-  --sunk: #1f232e;
-  --ink: #eceef5;
-  --muted: #9aa0b5;
-  --line: #272b38;
-  --line-strong: #3d4357;
-  --accent: #8aa4ff;
-  --on-accent: #0f1117;
-  --good: #4fd08a;
-  --warn: #e6b04a;
-  --bad: #ff7a70;
-  --tone-bg: #1f232e;
+  --bg: #0a1110;
+  --surface: #111b1a;
+  --sunk: #182322;
+  --ink: #e6eeec;
+  --muted: #8fa19d;
+  --line: #213130;
+  --line-strong: #36494a;
+  --accent: #4fd1c2;
+  --on-accent: #052321;
+  --good: #7ad87c;
+  --warn: #e5b04a;
+  --bad: #ff8077;
+  --tone-bg: #182322;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
@@ -1121,4 +1123,97 @@ span.chip {
 
 .recent {
   margin-top: 12px;
+}
+
+/* Identidade: listas agrupadas (como no iOS), controlo segmentado e a "etiqueta de preço" */
+.cards {
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.cards > li {
+  border-bottom: 1px solid var(--line);
+}
+
+.cards > li:last-child {
+  border-bottom: 0;
+}
+
+.cards .stockcard {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 14px 16px;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin: 8px 0 14px;
+  background: var(--sunk);
+  border-radius: 11px;
+}
+
+.seg button {
+  min-width: 96px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 700 14px var(--body);
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s, box-shadow 0.2s;
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(15, 26, 25, 0.2);
+}
+
+/* Furo de etiqueta no topo do veredito */
+.verdict {
+  position: relative;
+  padding-top: 30px;
+}
+
+.verdict::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+
+.verdict.empty {
+  padding-top: 18px;
+}
+
+.verdict.empty::after {
+  display: none;
+}
+
+/* Números em estilo de livro de contas */
+.numbers > div {
+  border-bottom: 1px dotted var(--line-strong);
+}
+
+.numbers > div:last-child {
+  border-bottom: 0;
+}
+
+.cards .actions {
+  margin: 12px 0 0;
 }
