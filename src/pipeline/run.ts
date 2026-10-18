@@ -45,6 +45,7 @@ export async function runPipeline(
     classifier: classifier.name,
     counts: { captured: listings.length, validated: valid.length, final: filter.kept.length },
     stats: stats ? { ...stats, currency } : null,
+    prices: filter.kept,
     iqr: filter.applied
       ? { q1: filter.q1, q3: filter.q3, lower: filter.lower, upper: filter.upper, applied: true }
       : { q1: NaN, q3: NaN, lower: NaN, upper: NaN, applied: false },

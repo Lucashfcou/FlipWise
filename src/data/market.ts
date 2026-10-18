@@ -1,5 +1,8 @@
 import { PRODUCTS } from "../domain/catalog";
 import type { Condition, Observation } from "../domain/types";
+import ebayJson from "./ebay-prices.json";
+import { MARKETPLACES } from "../ebay/client";
+import type { MarketplaceId } from "../ebay/client";
 
 /**
  * Preços recolhidos à mão no site do CeX Portugal (pt.webuy.com), uma página de cada vez.
@@ -78,9 +81,38 @@ const EBAY_ASKS: Record<string, number[]> = {
   "ps4-pro-1tb": [139.9, 167.9, 179.9, 134.9, 354.9, 134.9, 190, 135.07, 179, 218.99, 244.7, 327.99, 170, 148.76, 200, 153.08, 133.69],
 };
 
+interface EbayFile {
+  updated?: string | null;
+  products?: Record<string, Record<string, { prices: number[] }>>;
+}
+
+/** Estado assumido para anúncios do eBay ("usado"): consolas B, comandos sem drift, jogos completos. */
+const EBAY_CONDITION = { console: "B", controller: "sem-drift", game: "completo" } as const;
+
+/** Anúncios guardados por npm run ebay:refresh. */
+export function ebayFileObservations(file: EbayFile): Observation[] {
+  const out: Observation[] = [];
+  const date = file.updated ?? MARKET_DATE;
+  for (const [id, sites] of Object.entries(file.products ?? {})) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) continue;
+    for (const [site, v] of Object.entries(sites)) {
+      const label = (MARKETPLACES as Record<string, { label: string }>)[site as MarketplaceId]?.label ?? site;
+      for (const value of v.prices ?? []) {
+        out.push({ productId: id, condition: EBAY_CONDITION[p.category], kind: "ask", value, source: `${label} (anúncios)`, date });
+      }
+    }
+  }
+  return out;
+}
+
 export function marketObservations(): Observation[] {
   const out: Observation[] = [];
+  const fromFile = ebayFileObservations(ebayJson as EbayFile);
+  const covered = new Set(fromFile.map((o) => o.productId));
+  out.push(...fromFile);
   for (const [id, prices] of Object.entries(EBAY_ASKS)) {
+    if (covered.has(id)) continue; // o ficheiro automático substitui os valores colhidos à mão
     prices.forEach((value, i) =>
       out.push({ productId: id, condition: "B", kind: "ask", value, source: EBAY_SOURCE, date: MARKET_DATE }),
     );

@@ -39,6 +39,8 @@ export interface PipelineResult {
     final: number;
   };
   stats: PriceStats | null;
+  /** Preços aproveitados (válidos, na moeda principal, dentro do IQR). */
+  prices: number[];
   iqr: { q1: number; q3: number; lower: number; upper: number; applied: boolean } | null;
   rejected: { id: string; title: string; reason: string }[];
   outliers: { id: string; title: string; price: number }[];

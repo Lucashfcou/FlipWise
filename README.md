@@ -35,3 +35,11 @@ Para testar a sério:
 4. O servidor escreve no terminal os tokens de cada leitura (`[captura] entrada=... saída=...`): é com isso que se mede o custo real por print.
 O modelo só identifica produto, estado e preço pedido; o preço de mercado continua a vir do motor local. O utilizador confirma sempre antes de usar. As imagens são reduzidas no aparelho e não são guardadas.
 Para medir a qualidade: junta uns 20 prints reais com a resposta certa, corre-os e vê quantos produtos, estados e preços saem certos. Compara `claude-haiku-5-5` com um modelo maior (`CAPTURE_MODEL`) nos mesmos prints antes de cobrar por isto.
+
+## eBay (anúncios ativos, API Browse)
+Pronto a usar quando houver chaves de produção do eBay; **ainda não testado contra a API real**: confirma o formato da resposta na primeira corrida.
+1. Na conta de desenvolvedor aprovada, cria um keyset de produção. **Nunca coles o Client Secret no chat nem no código.**
+2. Cria `.env` na raiz (já está no `.gitignore`): `EBAY_CLIENT_ID=...`, `EBAY_CLIENT_SECRET=...`, e opcionalmente `EBAY_SITES=EBAY_ES,EBAY_DE,EBAY_FR,EBAY_IT` e `EBAY_MAX_CALLS=200`.
+3. `npm run ebay:refresh` (ou `-- --only ps4-slim-500`). Para cada produto: busca usados a preço fixo, limpa com o pipeline (acessórios, lotes, outro modelo, defeitos, IQR) e grava `src/data/ebay-prices.json`.
+4. O app lê esse ficheiro como anúncios do eBay (estado assumido: consolas B, comandos sem drift, jogos completos) e substitui os valores colhidos à mão.
+Os termos da API do eBay para uso comercial têm de ser confirmados antes de cobrar por isto.
