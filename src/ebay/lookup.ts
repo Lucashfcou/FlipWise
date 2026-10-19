@@ -122,6 +122,9 @@ export async function runLookup(
   const tiers: string[] = [q];
   if (words.length >= 3) tiers.push(words.slice(0, -1).join(" "));
   if (words.length >= 3) tiers.push(words.slice(0, 2).join(" "));
+  // Último recurso: marca + tipo de aparelho + a primeira especificação (ex.: "Kingston SSD 480GB").
+  const type = cleanDeviceType(opts.deviceType);
+  if (type) tiers.push(`${words[0]} ${type} ${specs[0] ?? ""}`.trim());
   const seen = new Set<string>();
 
   for (const [ti, name] of tiers.entries()) {
