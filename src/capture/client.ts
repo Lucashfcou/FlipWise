@@ -7,7 +7,7 @@ export async function captureStatus(): Promise<CaptureStatus> {
     const res = await fetch("/api/capture/status");
     if (!res.ok) return { enabled: false };
     const data = (await res.json()) as CaptureStatus;
-    return { enabled: data.enabled === true, dailyLimit: data.dailyLimit, usedToday: data.usedToday };
+    return { enabled: data.enabled === true, dailyLimit: data.dailyLimit, usedToday: data.usedToday, lookup: data.lookup === true };
   } catch {
     return { enabled: false };
   }
@@ -34,7 +34,27 @@ export async function readPrint(imageDataUrl: string): Promise<{ result: Capture
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string; result?: CaptureResult; usedToday?: number; dailyLimit?: number };
   if (!res.ok || !data.result) throw new Error(data.error ?? "A leitura falhou.");
-  return { result: data.result, usedToday: data.usedToday, dailyLimit: data.dailyLimit };
+  // Os avisos são escritos aqui, no idioma do app (o servidor não sabe qual é).
+  return { result: { ...data.result, problems: problemsFor(data.result) }, usedToday: data.usedToday, dailyLimit: data.dailyLimit };
+}
+
+export interface LookupData {
+  query: string;
+  currency: string;
+  n: number;
+  median: number;
+  low: number;
+  high: number;
+  min: number;
+  max: number;
+}
+
+/** Preços do eBay para um produto fora do catálogo. null = poucos anúncios válidos. */
+export async function lookupPrice(q: string): Promise<LookupData | null> {
+  const res = await fetch("/api/lookup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) });
+  const data = (await res.json().catch(() => ({}))) as { error?: string; result?: LookupData | null };
+  if (!res.ok) throw new Error(data.error ?? "A busca falhou.");
+  return data.result ?? null;
 }
 
 export type DemoKind = "ok" | "foto" | "naobate";

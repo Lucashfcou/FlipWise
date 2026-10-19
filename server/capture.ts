@@ -3,6 +3,9 @@
 // Sem chave, arranca na mesma e responde "desativado": nada é enviado a lado nenhum, nada custa.
 import { existsSync } from "node:fs";
 import { createServer } from "node:http";
+import { EbayError, MARKETPLACES, getToken } from "../src/ebay/client";
+import type { MarketplaceId } from "../src/ebay/client";
+import { cleanLookupQuery, runLookup } from "../src/ebay/lookup";
 import { DEFAULT_MODEL, MAX_IMAGE_BYTES, buildVisionRequest, parseVisionResponse } from "../src/capture/vision";
 
 // As chaves vêm do ficheiro .env (fora do git), se existir.
@@ -14,6 +17,24 @@ const MODEL = process.env.CAPTURE_MODEL ?? DEFAULT_MODEL;
 /** Máximo de leituras por dia (reinicia ao reiniciar o servidor). Protege a fatura. */
 const DAILY_LIMIT = Number(process.env.CAPTURE_DAILY_LIMIT ?? 20);
 const PER_MINUTE = 6;
+
+// Busca no eBay para produtos fora do catálogo (precisa das chaves do eBay no .env).
+const EBAY_ID = process.env.EBAY_CLIENT_ID ?? "";
+const EBAY_SECRET = process.env.EBAY_CLIENT_SECRET ?? "";
+const LOOKUP_ON = Boolean(EBAY_ID && EBAY_SECRET);
+const LOOKUP_SITE = ((process.env.EBAY_SITES ?? "EBAY_ES").split(",")[0].trim() as MarketplaceId) in MARKETPLACES ? ((process.env.EBAY_SITES ?? "EBAY_ES").split(",")[0].trim() as MarketplaceId) : "EBAY_ES";
+const LOOKUP_DAILY_LIMIT = Number(process.env.LOOKUP_DAILY_LIMIT ?? 100);
+let lookupsToday = 0;
+let ebayToken: { value: string; until: number } | null = null;
+const lookupCache = new Map<string, { at: number; result: unknown }>();
+const CACHE_MS = 6 * 60 * 60 * 1000;
+
+async function tokenForLookup(): Promise<string> {
+  if (ebayToken && ebayToken.until > Date.now() + 60_000) return ebayToken.value;
+  const { token, expiresIn } = await getToken({ clientId: EBAY_ID, clientSecret: EBAY_SECRET });
+  ebayToken = { value: token, until: Date.now() + expiresIn * 1000 };
+  return token;
+}
 
 let day = new Date().toISOString().slice(0, 10);
 let usedToday = 0;
@@ -71,10 +92,33 @@ const server = createServer(async (req, res) => {
   if (today !== day) {
     day = today;
     usedToday = 0;
+    lookupsToday = 0;
   }
 
   if (req.method === "GET" && req.url === "/api/capture/status") {
-    return send(res, 200, { enabled: Boolean(KEY), dailyLimit: DAILY_LIMIT, usedToday });
+    return send(res, 200, { enabled: Boolean(KEY), dailyLimit: DAILY_LIMIT, usedToday, lookup: LOOKUP_ON });
+  }
+
+  if (req.method === "POST" && req.url === "/api/lookup") {
+    if (!LOOKUP_ON) return send(res, 503, { error: "Busca de preços desativada: faltam as chaves do eBay no servidor." });
+    if (!(req.headers["content-type"] ?? "").startsWith("application/json")) return send(res, 415, { error: "Tipo de pedido inválido." });
+    try {
+      const { q } = JSON.parse(await readBody(req, 2000)) as { q?: unknown };
+      const query = cleanLookupQuery(q);
+      if (!query) return send(res, 400, { error: "Nome do produto inválido." });
+      const key = query.toLowerCase();
+      const hit = lookupCache.get(key);
+      if (hit && Date.now() - hit.at < CACHE_MS) return send(res, 200, { result: hit.result, cached: true });
+      if (lookupsToday >= LOOKUP_DAILY_LIMIT) return send(res, 429, { error: `Limite diário de ${LOOKUP_DAILY_LIMIT} buscas atingido.` });
+      lookupsToday++;
+      const result = await runLookup(await tokenForLookup(), LOOKUP_SITE, query);
+      lookupCache.set(key, { at: Date.now(), result });
+      console.log(`[busca] "${query}" -> ${result ? result.n + " anúncios, mediana " + result.median : "poucos anúncios"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
+      return send(res, 200, { result });
+    } catch (e) {
+      if (e instanceof EbayError) console.error(`eBay: ${e.message}`);
+      return send(res, 502, { error: "A busca no eBay falhou. Tenta outra vez." });
+    }
   }
 
   if (req.method === "POST" && req.url === "/api/capture") {

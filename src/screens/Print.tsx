@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { captureStatus, demoResult, readPrint, shrinkImage } from "../capture/client";
+import { captureStatus, demoResult, lookupPrice, readPrint, shrinkImage } from "../capture/client";
+import type { LookupData } from "../capture/client";
 import type { CaptureResult, CaptureStatus } from "../capture/types";
 import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
 import type { Condition } from "../domain/types";
@@ -11,6 +12,46 @@ export interface PrintPick {
   productId: string;
   condition: Condition;
   price: number | null;
+}
+
+const eur = (n: number) => `${Math.round(n)} €`;
+
+/** Produto fora do catálogo: pesquisa o nome no eBay e mostra a faixa de preços, sempre com aviso de que é pouco fiável. */
+function Lookup({ q, asked }: { q: string; asked: number | null }) {
+  const [state, setState] = useState<"loading" | "none" | "error" | LookupData>("loading");
+  useEffect(() => {
+    let alive = true;
+    setState("loading");
+    lookupPrice(q)
+      .then((r) => alive && setState(r ?? "none"))
+      .catch(() => alive && setState("error"));
+    return () => {
+      alive = false;
+    };
+  }, [q]);
+
+  const pct = typeof state === "object" && asked ? Math.round(((asked - state.median) / state.median) * 100) : null;
+  return (
+    <div className="panel" style={{ marginTop: 12 }}>
+      <strong>{t("lookup.title")}</strong>
+      <p className="hint">{q}</p>
+      {state === "loading" && <p className="hint">{t("lookup.loading")}</p>}
+      {state === "none" && <p className="note">{t("lookup.none")}</p>}
+      {state === "error" && <p className="loss" role="alert">{t("lookup.error")}</p>}
+      {typeof state === "object" && (
+        <>
+          <span className="label">{t("lookup.typical")}</span>
+          <p style={{ fontSize: 32, fontWeight: 700, margin: "2px 0" }}>{eur(state.median)}</p>
+          <p className="hint">{t("lookup.range", { low: eur(state.low), high: eur(state.high) })}</p>
+          <p className="hint">{t("lookup.n", { n: state.n })}</p>
+          {pct !== null && (
+            <p>{Math.abs(pct) < 5 ? t("lookup.close") : pct > 0 ? t("lookup.above", { pct }) : t("lookup.below", { pct: Math.abs(pct) })}</p>
+          )}
+          <p className="note">{t("lookup.warn")}</p>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
@@ -181,6 +222,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
           {!result.productId && (
             <p className="note"><strong>{t("print.unknownTitle")}.</strong> {t("print.unknownText")}</p>
           )}
+          {!result.productId && result.searchQuery && status?.lookup && !result.demo && <Lookup q={result.searchQuery} asked={priceNum} />}
           {result.notes && <p className="hint">{result.notes}</p>}
           {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
           {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}

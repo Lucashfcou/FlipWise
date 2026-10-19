@@ -49,3 +49,11 @@ Plano pago em estudo: **grátis** = catálogo, avaliar, lotes, stock, lucro, "o 
 5. Busca livre com IA para produtos fora do catálogo (protótipo sem IA já testado com "ps vita slim": faltam sinónimos), com resultado marcado como pouco fiável.
 6. Hospedagem, contas, pagamento e controlo do teste de 1 semana (só depois de validar com utilizadores reais).
 7. Limpar: a pasta `C:\Projetos\app-revendedores` é cópia antiga do material do conselho e pode ser apagada.
+
+
+## Atualização 2026-10-19 (sessão do vídeo, IA e ténis)
+- Categoria **Ténis** (28 modelos, `src/domain/catalogShoes.ts`) e +60 eletrónicos; 348 produtos, 20 sem dados.
+- Leitura de print **ligada e testada** com chave real (Claude Haiku 5.5, ~US$ 0,002 por print; o catálogo vai em cada pedido). `npm run capture:server`; `npm run phone` testa no telemóvel pelo Wi-Fi. Prompt em `src/capture/vision.ts`.
+- **Busca no eBay para produtos fora do catálogo**: a IA devolve `searchQuery` (nunca recebe dados do eBay), o servidor pesquisa (`POST /api/lookup`, `src/ebay/lookup.ts`, cache de 6 h, limite `LOOKUP_DAILY_LIMIT`) e o app mostra a faixa com aviso de pouco fiável.
+- Contrato do eBay: proíbe enviar dados de "Restricted APIs" a IA de terceiros sem consentimento; limita copiar/guardar conteúdo do eBay. **Rever antes de cobrar.** Browse API: 5.000 chamadas/dia por omissão.
+- Falta: servidor hospedado com chave só lá, limite por utilizador, teste de segurança final com a IA ligada. Vídeos de lançamento em `C:Projetoslipwise-video` (PT) e `flipwise-video-en` (EN).

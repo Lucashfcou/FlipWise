@@ -4,13 +4,18 @@ import { TECH } from "../domain/catalogTech";
 import { createRulesClassifier, rulesClassifier } from "../pipeline/rulesClassifier";
 import type { Classifier, Listing, Verdict } from "../pipeline/types";
 
+/** Qualquer coisa com test(): uma expressão regular ou uma regra feita em código. */
+export interface Matcher {
+  test(s: string): boolean;
+}
+
 export interface ProductQuery {
   /** Texto de pesquisa no eBay. */
   q: string;
   /** O título tem de cumprir TODAS. Evita outro modelo ou capacidade. */
-  must: RegExp[];
+  must: Matcher[];
   /** O título não pode cumprir NENHUMA. */
-  mustNot: RegExp[];
+  mustNot: Matcher[];
   /** Piso de preço em euros, quando o catálogo o define. */
   min?: number;
 }

@@ -29,6 +29,8 @@ export interface CaptureResult {
   inconsistencies: string[];
   /** Problemas calculados em código a partir do resto; a interface mostra-os ao lado do resultado. */
   problems: CaptureProblem[];
+  /** Nome curto para pesquisar no eBay quando o produto não está no catálogo (marca e modelo). */
+  searchQuery?: string;
   /** true quando é só um exemplo de demonstração, sem ler nenhuma imagem. */
   demo?: boolean;
 }
@@ -37,4 +39,6 @@ export interface CaptureStatus {
   enabled: boolean;
   dailyLimit?: number;
   usedToday?: number;
+  /** A busca de preços no eBay (produtos fora do catálogo) está ligada no servidor. */
+  lookup?: boolean;
 }

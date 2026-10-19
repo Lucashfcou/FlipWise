@@ -1,6 +1,7 @@
 import { CONDITIONS, PRODUCTS, findProduct } from "../domain/catalog";
 import { t } from "../i18n";
 import type { Condition } from "../domain/types";
+import { cleanLookupQuery } from "../ebay/lookup";
 import type { CaptureProblem, CaptureResult, ImageType } from "./types";
 
 /** Limite de tamanho da imagem aceite (depois de comprimida no cliente). */
@@ -20,6 +21,7 @@ Devolves SEMPRE através da ferramenta ${TOOL_NAME}.
 
 Regras:
 - Identifica o produto escolhendo UM id da lista do catálogo, usando o texto E a foto (a forma do aparelho, comandos, logótipos). Se a família é reconhecível mas um detalhe não se vê (por exemplo a capacidade), escolhe o id mais provável (o mais comum, como PS4 Slim 500 GB), pões "confidence" em "media" e escreves em "notes" o que falta confirmar (por exemplo "capacidade não visível: confirma 500 GB ou 1 TB"). Só devolves productId null se a família do produto não se reconhece de todo ou não está no catálogo.
+- Se productId é null mas dá para ler a marca e o modelo, devolve em "searchQuery" o nome curto para pesquisar no eBay (marca + modelo, sem cor, sem estado, sem tamanho; por exemplo "Sony WH-CH720N"). Se nem isso se lê, searchQuery null.
 - "price" é o preço pedido que aparece no print, só o número. Se não se vê, null. Não estimes preços de mercado.
 - "condition" só com base no que está escrito ou claramente visível (caixa, acessórios, riscos mencionados, drift, bateria). Se o print não permite saber, devolve null e diz porquê em "conditionReason". Os estados válidos dependem do produto, como na lista.
 - Lista em "defects" qualquer defeito, aviso ou risco mencionado (bloqueado, ecrã partido, para peças, sem comando) e em "includes" o que vem incluído.
@@ -38,6 +40,7 @@ const TOOL = {
     type: "object",
     properties: {
       productId: { type: ["string", "null"], description: "Id do catálogo ou null" },
+      searchQuery: { type: ["string", "null"], description: "Marca e modelo para pesquisar no eBay, só quando productId é null" },
       title: { type: "string" },
       price: { type: ["number", "null"] },
       currency: { type: "string" },
@@ -124,6 +127,7 @@ export function parseVisionResponse(data: ApiResponse): { result: CaptureResult;
     notes: str(input.notes).slice(0, 400),
     imageType,
     inconsistencies,
+    searchQuery: !product && typeof input.searchQuery === "string" ? cleanLookupQuery(input.searchQuery) ?? undefined : undefined,
   };
   const problems = problemsFor(base);
   // Qualquer erro, ou foto e texto que não batem, tira a confiança alta.
