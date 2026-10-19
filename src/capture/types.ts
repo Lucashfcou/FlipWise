@@ -31,6 +31,10 @@ export interface CaptureResult {
   problems: CaptureProblem[];
   /** Nome curto para pesquisar no eBay quando o produto não está no catálogo (marca e modelo). */
   searchQuery?: string;
+  /** Especificações que mudam o preço (processador, RAM, armazenamento...), em formato curto. */
+  specs?: string[];
+  /** Tipo de aparelho (laptop, headphones, tablet...), para achar a categoria no eBay. */
+  deviceType?: string;
   /** true quando é só um exemplo de demonstração, sem ler nenhuma imagem. */
   demo?: boolean;
 }

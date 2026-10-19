@@ -40,6 +40,15 @@ export async function readPrint(imageDataUrl: string): Promise<{ result: Capture
 
 export interface LookupData {
   query: string;
+  /** Preços usados no cálculo (anúncios usados do eBay, já limpos). */
+  prices: number[];
+  /** O que foi comparado: mesma versão, só o modelo, ou só a categoria. */
+  basis: "specs" | "model" | "family";
+  /** Nome efetivamente pesquisado. */
+  searched?: string;
+  category?: string;
+  spread: number;
+  reliability: "media" | "baixa";
   currency: string;
   n: number;
   median: number;
@@ -50,8 +59,8 @@ export interface LookupData {
 }
 
 /** Preços do eBay para um produto fora do catálogo. null = poucos anúncios válidos. */
-export async function lookupPrice(q: string): Promise<LookupData | null> {
-  const res = await fetch("/api/lookup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) });
+export async function lookupPrice(q: string, specs: string[] = [], deviceType = ""): Promise<LookupData | null> {
+  const res = await fetch("/api/lookup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, specs, deviceType }) });
   const data = (await res.json().catch(() => ({}))) as { error?: string; result?: LookupData | null };
   if (!res.ok) throw new Error(data.error ?? "A busca falhou.");
   return data.result ?? null;

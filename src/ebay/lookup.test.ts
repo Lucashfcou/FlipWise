@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanLookupQuery, lookupProductQuery } from "./lookup";
+import { cleanLookupQuery, cleanSpecs, lookupProductQuery, specMatcher } from "./lookup";
 
 describe("busca fora do catálogo", () => {
   it("limpa o texto: tira símbolos estranhos e limita o tamanho", () => {
@@ -29,5 +29,20 @@ describe("busca fora do catálogo: peças e acessórios", () => {
     expect(ok("Pantalla para Lenovo IdeaPad S145-15IWL")).toBe(false);
     const c = lookupProductQuery("Apple MagSafe cargador");
     expect(c.mustNot.some((m) => m.test("Apple MagSafe cargador 15W"))).toBe(false);
+  });
+});
+
+describe("busca fora do catálogo: especificações", () => {
+  const ok = (spec: string, title: string) => specMatcher(spec).test(title);
+  it("8GB não casa com 128GB, e 240GB aceita 256GB", () => {
+    expect(ok("8GB", "Portatil i5 8 GB RAM 256GB SSD")).toBe(true);
+    expect(ok("8GB", "Movil 128GB")).toBe(false);
+    expect(ok("240GB", "Disco SSD 256 GB")).toBe(true);
+    expect(ok("240GB", "Disco 512GB")).toBe(false);
+    expect(ok("i7", "Intel Core i7-8565U")).toBe(true);
+    expect(ok("i7", "Intel Core i5-8265U")).toBe(false);
+  });
+  it("limpa a lista de especificações", () => {
+    expect(cleanSpecs(["i7", " 8 GB ", "x", "<b>", "256GB", 5])).toEqual(["i7", "8GB", "256GB"]);
   });
 });

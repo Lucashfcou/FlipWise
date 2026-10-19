@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { EbayError, MARKETPLACES, getToken } from "../src/ebay/client";
 import type { MarketplaceId } from "../src/ebay/client";
-import { cleanLookupQuery, runLookup } from "../src/ebay/lookup";
+import { cleanDeviceType, cleanLookupQuery, cleanSpecs, runLookup } from "../src/ebay/lookup";
 import { DEFAULT_MODEL, MAX_IMAGE_BYTES, buildVisionRequest, parseVisionResponse } from "../src/capture/vision";
 
 // As chaves vêm do ficheiro .env (fora do git), se existir.
@@ -103,17 +103,19 @@ const server = createServer(async (req, res) => {
     if (!LOOKUP_ON) return send(res, 503, { error: "Busca de preços desativada: faltam as chaves do eBay no servidor." });
     if (!(req.headers["content-type"] ?? "").startsWith("application/json")) return send(res, 415, { error: "Tipo de pedido inválido." });
     try {
-      const { q } = JSON.parse(await readBody(req, 2000)) as { q?: unknown };
+      const { q, specs: rawSpecs, deviceType: rawType } = JSON.parse(await readBody(req, 2000)) as { q?: unknown; specs?: unknown; deviceType?: unknown };
       const query = cleanLookupQuery(q);
       if (!query) return send(res, 400, { error: "Nome do produto inválido." });
-      const key = query.toLowerCase();
+      const specs = cleanSpecs(rawSpecs);
+      const deviceType = cleanDeviceType(rawType);
+      const key = `${query.toLowerCase()}|${specs.join(",").toLowerCase()}|${deviceType.toLowerCase()}`;
       const hit = lookupCache.get(key);
       if (hit && Date.now() - hit.at < CACHE_MS) return send(res, 200, { result: hit.result, cached: true });
       if (lookupsToday >= LOOKUP_DAILY_LIMIT) return send(res, 429, { error: `Limite diário de ${LOOKUP_DAILY_LIMIT} buscas atingido.` });
       lookupsToday++;
-      const result = await runLookup(await tokenForLookup(), LOOKUP_SITE, query);
+      const result = await runLookup(await tokenForLookup(), LOOKUP_SITE, query, { specs, deviceType });
       lookupCache.set(key, { at: Date.now(), result });
-      console.log(`[busca] "${query}" -> ${result ? result.n + " anúncios, mediana " + result.median : "poucos anúncios"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
+      console.log(`[busca] "${query}" -> ${result ? result.n + " anúncios, mediana " + result.median + " (" + result.basis + ", " + (result.category ?? "sem categoria") + ", " + result.reliability + ")" : "poucos anúncios"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
       return send(res, 200, { result });
     } catch (e) {
       if (e instanceof EbayError) console.error(`eBay: ${e.message}`);

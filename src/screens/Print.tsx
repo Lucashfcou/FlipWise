@@ -5,6 +5,9 @@ import type { CaptureResult, CaptureStatus } from "../capture/types";
 import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
 import type { Condition } from "../domain/types";
 import { pop, stagger, useFx } from "../fx";
+import { estimate } from "../domain/priceEngine";
+import { useApp } from "../state";
+import { Verdict } from "../ui/Verdict";
 import { t } from "../i18n";
 import type { Key } from "../i18n";
 
@@ -16,38 +19,43 @@ export interface PrintPick {
 
 const eur = (n: number) => `${Math.round(n)} €`;
 
-/** Produto fora do catálogo: pesquisa o nome no eBay e mostra a faixa de preços, sempre com aviso de que é pouco fiável. */
-function Lookup({ q, asked }: { q: string; asked: number | null }) {
+/** Produto fora do catálogo: pesquisa o nome no eBay e dá o mesmo veredito do catálogo, com a base da comparação e um aviso. */
+function Lookup({ q, specs, deviceType, asked }: { q: string; specs: string[]; deviceType: string; asked: number | null }) {
+  const { settings } = useApp();
   const [state, setState] = useState<"loading" | "none" | "error" | LookupData>("loading");
   useEffect(() => {
     let alive = true;
     setState("loading");
-    lookupPrice(q)
+    lookupPrice(q, specs, deviceType)
       .then((r) => alive && setState(r ?? "none"))
       .catch(() => alive && setState("error"));
     return () => {
       alive = false;
     };
-  }, [q]);
+  }, [q, specs.join(","), deviceType]);
 
-  const pct = typeof state === "object" && asked ? Math.round(((asked - state.median) / state.median) * 100) : null;
+  const data = typeof state === "object" ? state : null;
+  const price = data
+    ? estimate(
+        data.prices.map((value) => ({ productId: "lookup", condition: "B" as const, kind: "ask" as const, value, source: "eBay", date: new Date().toISOString().slice(0, 10) })),
+        { shipping: settings.shipping, promo: settings.promo, margin: settings.targetMargin },
+      )
+    : null;
   return (
     <div className="panel" style={{ marginTop: 12 }}>
       <strong>{t("lookup.title")}</strong>
-      <p className="hint">{q}</p>
+      <p className="hint">{q}{specs.length > 0 ? " · " + specs.join(" · ") : ""}</p>
       {state === "loading" && <p className="hint">{t("lookup.loading")}</p>}
       {state === "none" && <p className="note">{t("lookup.none")}</p>}
       {state === "error" && <p className="loss" role="alert">{t("lookup.error")}</p>}
-      {typeof state === "object" && (
+      {data && price && (
         <>
-          <span className="label">{t("lookup.typical")}</span>
-          <p style={{ fontSize: 32, fontWeight: 700, margin: "2px 0" }}>{eur(state.median)}</p>
-          <p className="hint">{t("lookup.range", { low: eur(state.low), high: eur(state.high) })}</p>
-          <p className="hint">{t("lookup.n", { n: state.n })}</p>
-          {pct !== null && (
-            <p>{Math.abs(pct) < 5 ? t("lookup.close") : pct > 0 ? t("lookup.above", { pct }) : t("lookup.below", { pct: Math.abs(pct) })}</p>
-          )}
-          <p className="note">{t("lookup.warn")}</p>
+          <Verdict price={price} asked={asked} productLabel={q} margin={settings.targetMargin} />
+          <p className="hint">{t("lookup.range", { low: eur(data.low), high: eur(data.high) })}</p>
+          <p className="hint">
+            {t("lookup.n", { n: data.n })} {data.basis === "specs" ? t("lookup.basisSpecs", { specs: specs.join(", ") }) : data.basis === "family" ? t("lookup.basisFamily", { name: data.searched ?? q }) : t("lookup.basisModel")}
+          </p>
+          <p className="note">{data.reliability === "media" ? t("lookup.warnMedium") : t("lookup.warn")}</p>
         </>
       )}
     </div>
@@ -222,7 +230,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
           {!result.productId && (
             <p className="note"><strong>{t("print.unknownTitle")}.</strong> {t("print.unknownText")}</p>
           )}
-          {!result.productId && result.searchQuery && status?.lookup && !result.demo && <Lookup q={result.searchQuery} asked={priceNum} />}
+          {!result.productId && result.searchQuery && status?.lookup && !result.demo && <Lookup q={result.searchQuery} specs={result.specs ?? []} deviceType={result.deviceType ?? ""} asked={priceNum} />}
           {result.notes && <p className="hint">{result.notes}</p>}
           {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
           {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}

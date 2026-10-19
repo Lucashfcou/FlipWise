@@ -22,6 +22,8 @@ Devolves SEMPRE através da ferramenta ${TOOL_NAME}.
 Regras:
 - Identifica o produto escolhendo UM id da lista do catálogo, usando o texto E a foto (a forma do aparelho, comandos, logótipos). Se a família é reconhecível mas um detalhe não se vê (por exemplo a capacidade), escolhe o id mais provável (o mais comum, como PS4 Slim 500 GB), pões "confidence" em "media" e escreves em "notes" o que falta confirmar (por exemplo "capacidade não visível: confirma 500 GB ou 1 TB"). Só devolves productId null se a família do produto não se reconhece de todo ou não está no catálogo.
 - Se productId é null mas dá para ler a marca e o modelo, devolve SEMPRE em "searchQuery" o nome curto do artigo principal para pesquisar no eBay (marca + modelo, sem cor, estado nem tamanho; por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL"). Se o anúncio é um lote (computador + rato, consola + jogos), usa só o artigo principal (o mais caro) e põe o resto em "includes". Se nem a marca e o modelo se lêem, searchQuery null.
+- "specs": até 5 especificações legíveis que mudam o preço do artigo principal, em formato curto e sem espaços (por exemplo ["i7","8GB","256GB"] num portátil, ["128GB"] num telemóvel, ["47mm"] num relógio). Só o que se lê no anúncio; nunca inventes. Lista vazia se não há.
+- "deviceType": o tipo de aparelho em inglês, uma ou duas palavras (laptop, headphones, smartphone, tablet, smartwatch, camera, game console, speaker, graphics card, keyboard...). Só quando productId é null.
 - "price" é o preço pedido que aparece no print, só o número. Se não se vê, null. Não estimes preços de mercado.
 - "condition" só com base no que está escrito ou claramente visível (caixa, acessórios, riscos mencionados, drift, bateria). Se o print não permite saber, devolve null e diz porquê em "conditionReason". Os estados válidos dependem do produto, como na lista.
 - Lista em "defects" qualquer defeito, aviso ou risco mencionado (bloqueado, ecrã partido, para peças, sem comando) e em "includes" o que vem incluído.
@@ -40,6 +42,8 @@ const TOOL = {
     type: "object",
     properties: {
       productId: { type: ["string", "null"], description: "Id do catálogo ou null" },
+      deviceType: { type: ["string", "null"], description: "Tipo de aparelho em inglês, só quando productId é null" },
+      specs: { type: "array", items: { type: "string" }, description: "Especificações curtas que mudam o preço, só as legíveis" },
       searchQuery: { type: ["string", "null"], description: "Marca e modelo para pesquisar no eBay, só quando productId é null" },
       title: { type: "string" },
       price: { type: ["number", "null"] },
@@ -127,6 +131,8 @@ export function parseVisionResponse(data: ApiResponse): { result: CaptureResult;
     notes: str(input.notes).slice(0, 400),
     imageType,
     inconsistencies,
+    specs: !product ? strList(input.specs).map((x) => x.replace(/\s+/g, "").slice(0, 14)).filter((x) => /^[\p{L}\p{N}.+-]{2,14}$/u.test(x)).slice(0, 5) : undefined,
+    deviceType: !product && typeof input.deviceType === "string" ? input.deviceType.replace(/[^\p{L}\s-]/gu, "").trim().slice(0, 24) || undefined : undefined,
     searchQuery: !product && typeof input.searchQuery === "string" ? cleanLookupQuery(input.searchQuery) ?? undefined : undefined,
   };
   const problems = problemsFor(base);

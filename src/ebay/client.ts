@@ -51,12 +51,13 @@ export async function getToken(creds: EbayCredentials, fetchImpl: typeof fetch =
 /** USED = usados a funcionar; PARTS = "para peças ou sem funcionar" (código de condição 7000 do eBay). */
 export type EbayCondition = "USED" | "PARTS";
 
-export function buildSearchUrl(query: string, limit = 50, condition: EbayCondition = "USED"): string {
+export function buildSearchUrl(query: string, limit = 50, condition: EbayCondition = "USED", categoryId?: string): string {
   const params = new URLSearchParams({
     q: query,
     limit: String(Math.min(200, Math.max(1, limit))),
     filter: condition === "PARTS" ? "buyingOptions:{FIXED_PRICE},conditionIds:{7000}" : "buyingOptions:{FIXED_PRICE},conditions:{USED}",
   });
+  if (categoryId && /^\d+$/.test(categoryId)) params.set("category_ids", categoryId);
   return `${SEARCH_URL}?${params.toString()}`;
 }
 
@@ -67,8 +68,9 @@ export async function searchItems(
   limit = 50,
   fetchImpl: typeof fetch = fetch,
   condition: EbayCondition = "USED",
+  categoryId?: string,
 ): Promise<EbayItem[]> {
-  const res = await fetchImpl(buildSearchUrl(query, limit, condition), {
+  const res = await fetchImpl(buildSearchUrl(query, limit, condition, categoryId), {
     headers: { Authorization: `Bearer ${token}`, "X-EBAY-C-MARKETPLACE-ID": marketplace },
   });
   if (!res.ok) throw new EbayError(`eBay search ${res.status}: ${(await res.text()).slice(0, 200)}`, res.status);
@@ -86,4 +88,47 @@ export function toRaw(items: EbayItem[]): unknown[] {
     // O estado declarado pelo vendedor ajuda o classificador a apanhar "para peças" escondido.
     description: i.condition ?? "",
   }));
+}
+
+const treeIds = new Map<string, string>();
+
+/**
+ * Categoria folha mais provável para um texto (Taxonomy API do eBay). Serve para a pesquisa ficar só nos aparelhos
+ * (ex.: "Portáteis") e deixar de fora carregadores, ecrãs e outras peças que aparecem na pesquisa por texto.
+ */
+export async function suggestCategory(token: string, marketplace: MarketplaceId, query: string, fetchImpl: typeof fetch = fetch, hint = ""): Promise<{ id: string; name: string } | null> {
+  const headers = { Authorization: `Bearer ${token}` };
+  let tree = treeIds.get(marketplace);
+  if (!tree) {
+    const r = await fetchImpl(`https://api.ebay.com/commerce/taxonomy/v1/get_default_category_tree_id?marketplace_id=${marketplace}`, { headers });
+    if (!r.ok) return null;
+    const d = (await r.json()) as { categoryTreeId?: string };
+    if (!d.categoryTreeId) return null;
+    tree = d.categoryTreeId;
+    treeIds.set(marketplace, tree);
+  }
+  const r = await fetchImpl(`https://api.ebay.com/commerce/taxonomy/v1/category_tree/${tree}/get_category_suggestions?q=${encodeURIComponent(`${hint} ${query}`.trim())}`, { headers });
+  if (!r.ok) return null;
+  const d = (await r.json()) as { categorySuggestions?: { category?: { categoryId?: string; categoryName?: string } }[] };
+  // Categorias genéricas ("Otros", "Other"...) não ajudam: usa a primeira específica.
+  const generic = /\b(otros?|other|varios|various|miscellaneous|sonstige|altri|autres?|diversos)\b/i;
+  const parts = /(bater[ií]a|battery|cargador|charger|funda|case|bolsa|bag|accesorio|accessor|repuesto|spare|pieza|part|cable|adaptador|soporte|protector|pantalla|screen|teclado|keyboard)/i;
+  const DEVICE: Record<string, RegExp> = {
+    laptop: /(port[aá]til|laptop|notebook|netbook)/i,
+    headphones: /(auricular|headphone|earbud|headset|cascos)/i,
+    earbuds: /(auricular|headphone|earbud|headset|cascos)/i,
+    smartphone: /(m[oó]vil|smartphone|cell\s?phone|tel[eé]fono)/i,
+    tablet: /(tablet|ipad|ebook)/i,
+    smartwatch: /(reloj|watch|wearable|smartband)/i,
+    camera: /(c[aá]mara|camera)/i,
+    console: /(consola|console)/i,
+    speaker: /(altavoz|speaker)/i,
+    "graphics card": /(gr[aá]fica|graphics|video\s?card)/i,
+  };
+  const cats = (d.categorySuggestions ?? []).map((x) => x.category).filter((x): x is { categoryId?: string; categoryName?: string } => Boolean(x?.categoryId));
+  const wanted = DEVICE[hint.toLowerCase().trim()];
+  const pick =
+    (wanted && cats.find((x) => wanted.test(x.categoryName ?? "") && !parts.test(x.categoryName ?? ""))) ||
+    cats.find((x) => !generic.test(x.categoryName ?? "") && !parts.test(x.categoryName ?? ""));
+  return pick?.categoryId ? { id: pick.categoryId, name: pick.categoryName ?? "" } : null;
 }
