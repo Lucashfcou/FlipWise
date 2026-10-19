@@ -87,9 +87,9 @@ const server = createServer(async (req, res) => {
 
     try {
       const raw = await readBody(req, MAX_IMAGE_BYTES * 1.5);
-      const { image } = JSON.parse(raw) as { image?: string };
+      const { image, lang } = JSON.parse(raw) as { image?: string; lang?: string };
       if (typeof image !== "string") return send(res, 400, { error: "Falta a imagem." });
-      const body = buildVisionRequest(image, MODEL);
+      const body = buildVisionRequest(image, MODEL, lang === "en" ? "en" : "pt");
 
       recent.push(now);
       usedToday++;

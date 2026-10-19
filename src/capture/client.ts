@@ -30,7 +30,7 @@ export async function readPrint(imageDataUrl: string): Promise<{ result: Capture
   const res = await fetch("/api/capture", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ image: imageDataUrl }),
+    body: JSON.stringify({ image: imageDataUrl, lang: getLang() }),
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string; result?: CaptureResult; usedToday?: number; dailyLimit?: number };
   if (!res.ok || !data.result) throw new Error(data.error ?? "A leitura falhou.");
