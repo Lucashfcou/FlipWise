@@ -87,7 +87,7 @@ export interface EbayFile {
 }
 
 /** Estado assumido para anúncios do eBay ("usado"): consolas e telemóveis B, comandos sem drift, jogos completos. */
-const EBAY_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo" } as const;
+const EBAY_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo", shoe: "B" } as const;
 /** Anúncios "para peças ou sem funcionar" do eBay. Jogos não têm este estado. */
 const EBAY_PARTS_CONDITION = { console: "P", phone: "P", tablet: "P", laptop: "P", watch: "P", audio: "P", camera: "P", gpu: "P", controller: "defeito" } as const;
 
@@ -115,7 +115,7 @@ export function ebayFileObservations(file: EbayFile): Observation[] {
       for (const value of v.prices ?? []) {
         out.push({ productId: id, condition: EBAY_CONDITION[p.category], kind: "ask", value, source: `${label} (listings)`, date });
       }
-      if (p.category !== "game") {
+      if (p.category !== "game" && p.category !== "shoe") {
         for (const value of v.parts ?? []) {
           out.push({ productId: id, condition: EBAY_PARTS_CONDITION[p.category], kind: "ask", value, source: `${label} (parts)`, date });
         }

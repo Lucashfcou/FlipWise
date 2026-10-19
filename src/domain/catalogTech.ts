@@ -188,12 +188,47 @@ export const TECH: TechSeed[] = [
   T("gpu-rx-580-8", "gpu", "AMD", "Radeon RX 580", "8 GB", { must: [/rx\s?580/i, /8\s?gb/i] }),
   T("ps-portal", "console", "Sony", "PlayStation Portal", "", { must: [/(ps|playstation)\s?portal/i] }),
   T("dualsense-edge", "controller", "Sony", "DualSense Edge", "", { must: [/dualsense/i, /edge/i] }),
+  // Ronda 3 de produtos
+  T("galaxy-a35-128", "phone", "Samsung", "Galaxy A35", "128 GB", { must: [/\ba35\b/i, /\b128\s?gb/i] }),
+  T("galaxy-s24-plus-256", "phone", "Samsung", "Galaxy S24+", "256 GB", { must: [/\bs24\s?(\+|plus)/i, /\b256\s?gb/i] }),
+  T("pixel-8a-128", "phone", "Google", "Pixel 8a", "128 GB", { must: [/pixel\s?8a/i, /\b128\s?gb/i] }),
+  T("pixel-9-128", "phone", "Google", "Pixel 9", "128 GB", { must: [/pixel\s?9\b/i, /\b128\s?gb/i], not: [/pro|fold|xl/i] }),
+  T("redmi-note-13-pro-256", "phone", "Xiaomi", "Redmi Note 13 Pro", "256 GB", { must: [/note\s?13\s?pro/i, /\b256\s?gb/i], not: [/plus|\+/i] }),
+  T("oneplus-12-256", "phone", "OnePlus", "OnePlus 12", "256 GB", { must: [/oneplus\s?12\b/i, /\b256\s?gb/i], not: [/12r/i] }),
+  T("nothing-phone-2-256", "phone", "Nothing", "Phone (2)", "256 GB", { q: "Nothing Phone 2 256GB", must: [/nothing\s?phone\s?\(?2\)?/i, /\b256\s?gb/i], not: [/2a/i] }),
+  T("ipad-pro-12-9-m1-128", "tablet", "Apple", "iPad Pro 12.9 M1", "128 GB Wi-Fi", { must: [/ipad\s?pro/i, /12[.,]9/i, /\bm1\b/i, /\b128\s?gb/i], not: [/cellular|5g|lte/i] }),
+  T("galaxy-tab-s6-lite-64", "tablet", "Samsung", "Galaxy Tab S6 Lite", "64 GB", { must: [/tab\s?s6\s?lite/i] }),
+  T("garmin-forerunner-955", "watch", "Garmin", "Forerunner 955", "", { must: [/forerunner\s?955/i] }),
+  T("garmin-fenix-7-47", "watch", "Garmin", "Fenix 7", "47 mm", { q: "Garmin Fenix 7", must: [/f[eé]nix\s?7\b/i], not: [/7s|7x|pro|solar\s?x/i] }),
+  T("garmin-venu-3", "watch", "Garmin", "Venu 3", "", { must: [/venu\s?3\b/i], not: [/3s/i] }),
+  T("galaxy-watch-6-classic-47", "watch", "Samsung", "Galaxy Watch 6 Classic", "47 mm", { must: [/watch\s?6/i, /classic/i, /47/i] }),
+  T("sennheiser-momentum-4", "audio", "Sennheiser", "Momentum 4 Wireless", "", { must: [/momentum\s?4/i] }),
+  T("marshall-emberton-2", "audio", "Marshall", "Emberton II", "", { q: "Marshall Emberton II", must: [/emberton/i, /(ii|2)\b/i] }),
+  T("jbl-boombox-3", "audio", "JBL", "Boombox 3", "", { must: [/boombox\s?3/i] }),
+  T("sonos-roam", "audio", "Sonos", "Roam", "", { must: [/sonos\s?roam/i], not: [/\broam\s?2\b/i] }),
+  T("bose-soundlink-flex", "audio", "Bose", "SoundLink Flex", "", { must: [/soundlink\s?flex/i] }),
+  T("insta360-x3", "camera", "Insta360", "X3", "", { must: [/insta\s?360/i, /\bx3\b/i] }),
+  T("dji-osmo-pocket-2", "camera", "DJI", "Osmo Pocket 2", "", { must: [/pocket\s?2/i, /(osmo|dji)/i] }),
+  T("canon-eos-m50-ii-body", "camera", "Canon", "EOS M50 Mark II", "body", { must: [/m50/i, /(ii|2|mark)/i, /canon/i] }),
+  T("canon-eos-2000d-body", "camera", "Canon", "EOS 2000D", "body", { must: [/2000d/i, /canon/i] }),
+  T("sony-zv-1", "camera", "Sony", "ZV-1", "", { must: [/zv-?1\b/i], not: [/zv-?1\s?(ii|f)/i] }),
+  T("nikon-z50-body", "camera", "Nikon", "Z50", "body", { must: [/\bz\s?50\b/i, /nikon/i] }),
+  T("gpu-rtx-3070ti", "gpu", "NVIDIA", "GeForce RTX 3070 Ti", "8 GB", { must: [/3070\s?ti/i], not: [/laptop|portatil|notebook/i] }),
+  T("gpu-gtx-1080ti", "gpu", "NVIDIA", "GeForce GTX 1080 Ti", "11 GB", { must: [/1080\s?ti/i] }),
+  T("gpu-gtx-1070", "gpu", "NVIDIA", "GeForce GTX 1070", "8 GB", { must: [/1070/i], not: [/\bti\b|laptop|portatil|notebook/i] }),
+  T("gameboy-advance", "console", "Nintendo", "Game Boy Advance", "", { must: [/(game\s?boy\s?advance|\bgba\b)/i], not: [/sp\b/i] }),
+  T("gameboy-color", "console", "Nintendo", "Game Boy Color", "", { must: [/game\s?boy\s?colou?r|\bgbc\b/i] }),
+  T("nintendo-64", "console", "Nintendo", "Nintendo 64", "", { must: [/(nintendo\s?64|\bn64\b)/i] }),
+  T("snes", "console", "Nintendo", "Super Nintendo (SNES)", "", { must: [/(super\s?nintendo|\bsnes\b)/i], not: [/mini|classic/i] }),
+  T("xbox-elite-2", "controller", "Microsoft", "Xbox Elite Series 2", "", { must: [/elite/i, /(series\s?2|serie\s?2|\b2\b)/i, /xbox/i] }),
 ];
 
 /**
  * Ajustes depois da primeira corrida real: placas gráficas vinham misturadas com PCs completos, drones com baterias
  * e hélices, AirPods com auriculares soltos. `min` é um piso de plausibilidade (abaixo disto é peça ou golpe).
  */
+/** Consolas retro: jogos, comandos e cabos soltos vêm no mesmo resultado e baixam o preço. */
+const RETRO_EXTRA = /\b(juegos?|games?|spiele?|jeux|cart(ucho|ridge|a)?|mandos?|controllers?|pads?|cables?|adaptador|adapter|solo|only|sin\s?consola|para\s?piezas|defekt|bater[ií]a|pantalla|carcasa|shell)\b/i;
 const PC = /\b(pc|ordenador|desktop|torre|sobremesa|computer|komplett|rechner|ryzen|i[3579][- ]?\d{4,5}|intel)\b/i;
 const SPARE = /(bater[ií]a|battery|h[eé]lice|propeller|bolsa|bag|maleta|filtro|filter|soporte|repuesto|spare|cable|cargador|charger|hub|palo|stick)/i;
 const SINGLE = /(izquierdo|derecho|\bleft\b|\bright\b|solo\s?(el\s)?(auricular|estuche|case)|estuche\s?(solo|de carga)|charging case|\bcase only\b|einzeln|\blinks\b|\brechts\b)/i;
@@ -212,6 +247,13 @@ const PATCH: Record<string, { min?: number; not?: RegExp[]; skip?: boolean }> = 
   "gpu-rx-6800xt": { min: 270, not: [PC] },
   "canon-eos-250d-body": { min: 250, not: [SPARE, /(objetivo|lens|lente|kit|tapa|correa|strap|flash)/i] },
   "gpu-rtx-2060": { min: 90, not: [PC] },
+  "gpu-rtx-3070ti": { min: 220, not: [PC] },
+  "gpu-gtx-1080ti": { min: 150, not: [PC] },
+  "gpu-gtx-1070": { min: 70, not: [PC] },
+  "snes": { min: 45, not: [RETRO_EXTRA] },
+  "nintendo-64": { min: 50, not: [RETRO_EXTRA] },
+  "gameboy-advance": { min: 40, not: [/\b(juegos|jeux|spiele|cartucho|cartridge|solo|only|pantalla|carcasa|shell|funda|cable|mando)\b/i] },
+  "gameboy-color": { min: 40, not: [/\b(juegos|jeux|spiele|cartucho|cartridge|solo|only|pantalla|carcasa|shell|funda|cable|mando)\b/i] },
   "gpu-rtx-2070-super": { min: 150, not: [PC] },
   "gpu-gtx-1650": { min: 50, not: [PC] },
   "gpu-rx-580-8": { min: 50, not: [PC] },

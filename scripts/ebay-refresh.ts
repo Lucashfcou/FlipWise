@@ -47,7 +47,7 @@ const current = existsSync(FILE) ? JSON.parse(readFileSync(FILE, "utf8")) : { pr
 type Entry = { prices: number[]; captured: number; validated: number; parts?: number[]; partsCaptured?: number };
 const products: Record<string, Record<string, Entry>> = current.products ?? {};
 
-const MAIN_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo" } as const;
+const MAIN_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo", shoe: "B" } as const;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let calls = 0;
 let stop = false;
@@ -81,7 +81,7 @@ for (const p of PRODUCTS) {
       const entry: Entry = { prices: r.prices, captured: r.counts.captured, validated: r.counts.validated };
 
       let partsInfo = "";
-      if (withParts && p.category !== "game" && calls < maxCalls) {
+      if (withParts && p.category !== "game" && p.category !== "shoe" && calls < maxCalls) {
         await sleep(250);
         const refB = referenceFor(p.id, "B");
         const partsItems = await search(site, q.q, "PARTS");

@@ -1,5 +1,6 @@
 import { t } from "../i18n";
 import type { Key } from "../i18n";
+import { SHOES } from "./catalogShoes";
 import { TECH } from "./catalogTech";
 import type { Category, Condition, Product } from "./types";
 
@@ -44,6 +45,11 @@ export const CONDITIONS: Record<Category, { id: Condition; label: string; hint: 
     cond("drift-leve", "cond.drift-leve", "cond.drift-leve.hint"),
     cond("defeito", "cond.defeito", "cond.defeito.hint"),
   ],
+  shoe: [
+    cond("A", "cond.shoeA", "cond.shoeA.hint"),
+    cond("B", "cond.shoeB", "cond.shoeB.hint"),
+    cond("C", "cond.shoeC", "cond.shoeC.hint"),
+  ],
   game: [
     cond("lacrado", "cond.lacrado", "cond.lacrado.hint"),
     cond("completo", "cond.completo", "cond.completo.hint"),
@@ -81,6 +87,9 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   },
   get game() {
     return t("cat.game");
+  },
+  get shoe() {
+    return t("cat.shoe");
   },
 };
 
@@ -214,7 +223,7 @@ function gameSeeds(titles: string[], platform: Platform, suffix: string): Seed[]
   return titles.map((name) => ({ id: `game-${slug(name)}${suffix}`, category: "game" as const, brand: platform, name, variant: platform }));
 }
 
-const techSeeds: Seed[] = TECH.map(({ id, category, brand, name, variant }) => ({ id, category, brand, name, variant }));
+const techSeeds: Seed[] = [...TECH, ...SHOES].map(({ id, category, brand, name, variant }) => ({ id, category, brand, name, variant }));
 
 const SEEDS: Seed[] = [
   ...consoleSeeds,

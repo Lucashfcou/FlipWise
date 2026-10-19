@@ -1,4 +1,5 @@
 import { PRODUCTS } from "../domain/catalog";
+import { SHOES } from "../domain/catalogShoes";
 import { TECH } from "../domain/catalogTech";
 import { createRulesClassifier, rulesClassifier } from "../pipeline/rulesClassifier";
 import type { Classifier, Listing, Verdict } from "../pipeline/types";
@@ -116,7 +117,7 @@ function gameQuery(productId: string): ProductQuery | undefined {
   };
 }
 
-const TECH_BY_ID = new Map(TECH.map((x) => [x.id, x]));
+const TECH_BY_ID = new Map([...TECH, ...SHOES].map((x) => [x.id, x]));
 
 /** Produtos de catalogTech: o título tem de cumprir o que está definido; acessórios e lotes saem sempre. */
 function techQuery(productId: string): ProductQuery | undefined {

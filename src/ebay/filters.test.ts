@@ -27,7 +27,7 @@ describe("catálogo", () => {
 
   it("tem telemóveis, consolas, comandos e jogos de três plataformas", () => {
     const cats = new Set(PRODUCTS.map((p) => p.category));
-    expect([...cats].sort()).toEqual(["audio", "camera", "console", "controller", "game", "gpu", "laptop", "phone", "tablet", "watch"]);
+    expect([...cats].sort()).toEqual(["audio", "camera", "console", "controller", "game", "gpu", "laptop", "phone", "shoe", "tablet", "watch"]);
     expect(new Set(PRODUCTS.filter((p) => p.category === "game").map((p) => p.variant))).toEqual(new Set(["PS4", "PS5", "Switch"]));
   });
 });
