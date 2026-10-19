@@ -43,7 +43,10 @@ function readBody(req: import("node:http").IncomingMessage, max: number): Promis
 }
 
 /** Só pedidos vindos da própria máquina: bloqueia páginas de outros sites (CSRF) e DNS rebinding. */
-const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+const LOCAL_ONLY = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+// Teste no celular (npm run phone): aceita também endereços de rede privada (a tua rede Wi-Fi). Desligado por omissão.
+const LAN = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+const LOCAL = { test: (h: string) => LOCAL_ONLY.test(h) || (process.env.CAPTURE_LAN === "1" && LAN.test(h)) };
 function fromLocal(req: import("node:http").IncomingMessage): boolean {
   if (!LOCAL.test(req.headers.host ?? "")) return false;
   const origin = req.headers.origin;
