@@ -6,3 +6,5 @@ dist-artifact
 
 capture-server.log
 phone.log
+vite.log
+tunnel.log

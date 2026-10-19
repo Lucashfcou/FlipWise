@@ -46,7 +46,12 @@ function readBody(req: import("node:http").IncomingMessage, max: number): Promis
 const LOCAL_ONLY = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 // Teste no celular (npm run phone): aceita também endereços de rede privada (a tua rede Wi-Fi). Desligado por omissão.
 const LAN = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
-const LOCAL = { test: (h: string) => LOCAL_ONLY.test(h) || (process.env.CAPTURE_LAN === "1" && LAN.test(h)) };
+// Túnel temporário para testar fora de casa: só aceita o nome exato indicado em CAPTURE_EXTRA_HOST.
+const EXTRA = (process.env.CAPTURE_EXTRA_HOST ?? "").toLowerCase();
+const LOCAL = {
+  test: (h: string) =>
+    LOCAL_ONLY.test(h) || (process.env.CAPTURE_LAN === "1" && LAN.test(h)) || (EXTRA !== "" && h.toLowerCase() === EXTRA),
+};
 function fromLocal(req: import("node:http").IncomingMessage): boolean {
   if (!LOCAL.test(req.headers.host ?? "")) return false;
   const origin = req.headers.origin;
