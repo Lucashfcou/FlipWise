@@ -1,4 +1,4 @@
-const CACHE = "flipwise-v1";
+const CACHE = "flipwise-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/icon.svg", "/manifest.webmanifest"])));
