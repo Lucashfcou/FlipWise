@@ -3,3 +3,5 @@ dist
 dist-artifact
 .env
 .env.*
+
+capture-server.log

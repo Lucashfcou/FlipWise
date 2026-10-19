@@ -43,7 +43,7 @@ function readBody(req: import("node:http").IncomingMessage, max: number): Promis
 }
 
 /** Só pedidos vindos da própria máquina: bloqueia páginas de outros sites (CSRF) e DNS rebinding. */
-const LOCAL = /^(localhost|127.0.0.1|[::1])(:d+)?$/;
+const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 function fromLocal(req: import("node:http").IncomingMessage): boolean {
   if (!LOCAL.test(req.headers.host ?? "")) return false;
   const origin = req.headers.origin;
