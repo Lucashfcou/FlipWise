@@ -282,6 +282,7 @@ span.chip {
 
 /* Lista de produtos */
 .picklist {
+  scroll-margin-top: 72px;
   list-style: none;
   margin: 12px 0 0;
   padding: 0;
@@ -846,6 +847,7 @@ span.chip {
 }
 
 .chosen {
+  scroll-margin-top: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;

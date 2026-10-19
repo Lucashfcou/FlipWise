@@ -50,6 +50,16 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
     if (validAsked) verdictRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [validAsked]);
 
+  // No telemóvel a lista abre abaixo do ecrã: ao escolher categoria, leva a lista para a vista.
+  useEffect(() => {
+    if (category) listRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [category]);
+
+  // Ao escolher um produto, a ficha abre no topo em vez de ficar onde estava a lista.
+  useEffect(() => {
+    if (productId) chosenRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [productId]);
+
   function pick(id: string) {
     const p = findProduct(id)!;
     pushRecent(id);
