@@ -19,3 +19,15 @@ describe("busca fora do catálogo", () => {
     expect(ok("Auriculares Bose QC45")).toBe(false);
   });
 });
+
+describe("busca fora do catálogo: peças e acessórios", () => {
+  it("tira carregadores e peças, exceto se o nome pesquisado os inclui", () => {
+    const q = lookupProductQuery("Lenovo IdeaPad S145-15IWL");
+    const ok = (title: string) => q.must.every((m) => m.test(title)) && !q.mustNot.some((m) => m.test(title));
+    expect(ok("Portátil Lenovo IdeaPad S145-15IWL 8GB 256GB")).toBe(true);
+    expect(ok("Cargador Lenovo IdeaPad S145-15IWL 65W")).toBe(false);
+    expect(ok("Pantalla para Lenovo IdeaPad S145-15IWL")).toBe(false);
+    const c = lookupProductQuery("Apple MagSafe cargador");
+    expect(c.mustNot.some((m) => m.test("Apple MagSafe cargador 15W"))).toBe(false);
+  });
+});
