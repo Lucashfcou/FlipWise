@@ -25,6 +25,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const [productId, setProductId] = useState("");
   const [condition, setCondition] = useState<Condition | "">("");
   const [price, setPrice] = useState("");
+  const demo = status !== null && !status.enabled;
   const confirmRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +60,14 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
     if (!image) return;
     setBusy(true);
     setError("");
+    if (demo) {
+      // Modo demo: o print fica no aparelho, não é enviado nem lido; mostra-se um resultado de exemplo.
+      setTimeout(() => {
+        load(demoResult("ok"));
+        setBusy(false);
+      }, 700);
+      return;
+    }
     try {
       const { result: r, usedToday, dailyLimit } = await readPrint(image);
       load(r);
@@ -99,15 +108,15 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
       ) : status.enabled ? (
         <p className="hint">{t("print.on", { used: status.usedToday ?? 0, limit: status.dailyLimit ?? "?" })}</p>
       ) : (
-        <p className="note">{t("print.off")}</p>
+        <p className="note">{t("print.demoOn")}</p>
       )}
 
-      {status?.enabled && (
+      {status && (
         <>
           <label className="label" htmlFor="printfile">{t("print.file")}</label>
           <input id="printfile" className="field" type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
           {preview && <img className="printpreview" src={preview} alt={t("print.preview")} />}
-          <p className="hint">{t("print.privacy")}</p>
+          <p className="hint">{t(demo ? "print.demoPrivacy" : "print.privacy")}</p>
           <div className="actions">
             <button className="btn primary" onClick={read} disabled={!image || busy}>{busy ? t("print.reading") : t("print.read")}</button>
           </div>

@@ -24,6 +24,26 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
+/** Lista guardada: se o conteúdo estiver corrompido (ou editado à mão) e não for uma lista, usa vazio. */
+function readList<T>(key: string): T[] {
+  const v = read<unknown>(key, []);
+  return Array.isArray(v) ? (v.filter((x) => x !== null && typeof x === "object") as T[]) : [];
+}
+
+/** Definições guardadas: só aceita os campos conhecidos com o tipo certo; o resto cai nos valores por omissão. */
+function readSettings(): Partial<Settings> {
+  const v = read<Record<string, unknown>>("garimpo.settings", {});
+  const out: Record<string, unknown> = {};
+  if (v === null || typeof v !== "object" || Array.isArray(v)) return out;
+  for (const k of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+    const d = DEFAULT_SETTINGS[k];
+    const x = v[k];
+    if (typeof x === typeof d && (typeof x !== "number" || Number.isFinite(x))) out[k] = x;
+  }
+  if (out.lang !== "en" && out.lang !== "pt") delete out.lang;
+  return out as Partial<Settings>;
+}
+
 function write(key: string, value: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -33,13 +53,13 @@ function write(key: string, value: unknown) {
 }
 
 export const localRepo: Repo = {
-  loadStock: () => read<StockItem[]>("garimpo.stock", []),
+  loadStock: () => readList<StockItem>("garimpo.stock"),
   saveStock: (items) => write("garimpo.stock", items),
-  loadObservations: () => [...marketObservations(), ...read<Observation[]>("garimpo.observations", [])],
+  loadObservations: () => [...marketObservations(), ...readList<Observation>("garimpo.observations")],
   addObservations: (list) => {
-    const mine = read<Observation[]>("garimpo.observations", []);
+    const mine = readList<Observation>("garimpo.observations");
     write("garimpo.observations", [...mine, ...list]);
   },
-  loadSettings: () => ({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>("garimpo.settings", {}) }),
+  loadSettings: () => ({ ...DEFAULT_SETTINGS, ...readSettings() }),
   saveSettings: (s) => write("garimpo.settings", s),
 };

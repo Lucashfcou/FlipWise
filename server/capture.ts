@@ -42,7 +42,23 @@ function readBody(req: import("node:http").IncomingMessage, max: number): Promis
   });
 }
 
+/** Só pedidos vindos da própria máquina: bloqueia páginas de outros sites (CSRF) e DNS rebinding. */
+const LOCAL = /^(localhost|127.0.0.1|[::1])(:d+)?$/;
+function fromLocal(req: import("node:http").IncomingMessage): boolean {
+  if (!LOCAL.test(req.headers.host ?? "")) return false;
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      if (!LOCAL.test(new URL(origin).host)) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 const server = createServer(async (req, res) => {
+  if (!fromLocal(req)) return send(res, 403, { error: "Origem não permitida." });
   const today = new Date().toISOString().slice(0, 10);
   if (today !== day) {
     day = today;
@@ -54,6 +70,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && req.url === "/api/capture") {
+    if (!(req.headers["content-type"] ?? "").startsWith("application/json")) return send(res, 415, { error: "Tipo de pedido inválido." });
     if (!KEY) return send(res, 503, { error: "Leitura por print desativada: falta ANTHROPIC_API_KEY no servidor." });
     if (usedToday >= DAILY_LIMIT) return send(res, 429, { error: `Limite diário de ${DAILY_LIMIT} leituras atingido.` });
     const now = Date.now();
