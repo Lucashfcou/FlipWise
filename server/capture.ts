@@ -120,7 +120,7 @@ async function callVision(image: string, model: string, lang: "pt" | "en"): Prom
   const api = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify(buildVisionRequest(image, model, lang)),
+    body: JSON.stringify(buildVisionRequest(image, model, lang, model === MODEL)),
   });
   if (!api.ok) {
     console.error(`Claude API ${api.status} (${model}): ${(await api.text()).slice(0, 300)}`);

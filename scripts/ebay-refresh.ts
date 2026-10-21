@@ -9,10 +9,11 @@
 //      npm run ebay:refresh -- --no-parts               (salta a busca de "para peças")
 //      npm run ebay:refresh -- --missing                (só os produtos que ainda não têm dados)
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { MARKETPLACES, EbayError, getToken, searchItems, toRaw } from "../src/ebay/client";
+import { MARKETPLACES, EbayError, getToken, searchItems, suggestCategory, toRaw } from "../src/ebay/client";
 import type { EbayCondition, EbayCredentials, MarketplaceId } from "../src/ebay/client";
 import { productClassifier, queryFor } from "../src/ebay/queries";
 import { PRODUCTS } from "../src/domain/catalog";
+import { MORE_ALL } from "../src/domain/catalogMore";
 import { referenceFor } from "../src/data/market";
 import { runPipeline } from "../src/pipeline/run";
 
@@ -38,6 +39,12 @@ const onlyIds = arg("--ids")?.split(",").map((x) => x.trim()).filter(Boolean);
 const category = arg("--category");
 const withParts = !process.argv.includes("--no-parts");
 const missingOnly = process.argv.includes("--missing");
+/** Só o catálogo grande gerado por listas (npm run ebay:refresh -- --more --missing --no-parts). */
+const moreOnly = process.argv.includes("--more");
+/** Só produtos que ainda têm menos de 6 preços no total (em qualquer país): usa-se para ir buscar a outros países. */
+const thinOnly = process.argv.includes("--thin");
+const MORE_IDS = new Set(MORE_ALL.map((x) => x.id));
+const TYPE_BY_ID = new Map(MORE_ALL.map((x) => [x.id, x.opts.type ?? ""]));
 
 const creds: EbayCredentials = { clientId, clientSecret };
 const { token } = await getToken(creds);
@@ -47,23 +54,50 @@ const current = existsSync(FILE) ? JSON.parse(readFileSync(FILE, "utf8")) : { pr
 type Entry = { prices: number[]; captured: number; validated: number; parts?: number[]; partsCaptured?: number };
 const products: Record<string, Record<string, Entry>> = current.products ?? {};
 
-const MAIN_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo", shoe: "B" } as const;
+const MAIN_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo", shoe: "B", cpu: "B", storage: "B", monitor: "B", peripheral: "B", desktop: "B" } as const;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let calls = 0;
 let stop = false;
 
-async function search(site: MarketplaceId, q: string, condition: EbayCondition) {
-  calls++;
-  return searchItems(token, site, q, 100, fetch, condition);
+const catCache = new Map<string, string | undefined>();
+/** Categoria do eBay para um tipo de aparelho ("cpu", "smartphone"...), uma vez por país. */
+async function categoryFor(site: MarketplaceId, type: string): Promise<string | undefined> {
+  if (!type) return undefined;
+  const key = site + "|" + type;
+  if (!catCache.has(key)) {
+    calls++;
+    try {
+      catCache.set(key, (await suggestCategory(token, site, "", fetch, type))?.id);
+    } catch {
+      catCache.set(key, undefined);
+    }
+  }
+  return catCache.get(key);
 }
 
-for (const p of PRODUCTS) {
-  if (stop) break;
-  if (only && p.id !== only) continue;
-  if (onlyIds && !onlyIds.includes(p.id)) continue;
-  if (category && p.category !== category) continue;
-  const q = queryFor(p.id);
-  if (!q) continue;
+async function search(site: MarketplaceId, q: string, condition: EbayCondition, categoryId?: string) {
+  calls++;
+  return searchItems(token, site, q, 100, fetch, condition, categoryId);
+}
+
+let sinceSave = 0;
+function save() {
+  writeFileSync(FILE, JSON.stringify({ updated: new Date().toISOString().slice(0, 10), sites, products }, null, 2) + "\n");
+}
+
+// Com --more usa a lista completa do catálogo grande (antes da poda), para também achar os produtos novos.
+const universe: { id: string; category: (typeof PRODUCTS)[number]["category"]; name: string; variant: string }[] = moreOnly ? MORE_ALL : PRODUCTS;
+const todo = universe.filter((p) => {
+  if (only && p.id !== only) return false;
+  if (onlyIds && !onlyIds.includes(p.id)) return false;
+  if (category && p.category !== category) return false;
+  if (moreOnly && !MORE_IDS.has(p.id)) return false;
+  if (thinOnly && Object.values(products[p.id] ?? {}).reduce((n, v) => n + v.prices.length, 0) >= MIN_VALID) return false;
+  return Boolean(queryFor(p.id));
+});
+
+async function work(p: (typeof universe)[number]) {
+  const q = queryFor(p.id)!;
 
   for (const site of sites) {
     if (missingOnly && products[p.id]?.[site]) continue;
@@ -76,15 +110,16 @@ for (const p of PRODUCTS) {
       // Usados: limites de plausibilidade a partir do CeX (se existir). Abaixo do que a loja paga ou acima do que vende = suspeito.
       const ref = referenceFor(p.id, MAIN_CONDITION[p.category]);
       const bounds = { min: Math.max(ref.floor !== undefined ? ref.floor * 0.8 : 0, q.min ?? 0) || undefined, max: ref.ceiling };
-      const items = await search(site, q.q, "USED");
+      const catId = await categoryFor(site, TYPE_BY_ID.get(p.id) ?? "");
+      const items = await search(site, q.q, "USED", catId);
       const r = await runPipeline(`${p.name} ${p.variant}`, toRaw(items), productClassifier(q), "EUR", bounds);
       const entry: Entry = { prices: r.prices, captured: r.counts.captured, validated: r.counts.validated };
 
       let partsInfo = "";
       if (withParts && p.category !== "game" && p.category !== "shoe" && calls < maxCalls) {
-        await sleep(250);
+        await sleep(150);
         const refB = referenceFor(p.id, "B");
-        const partsItems = await search(site, q.q, "PARTS");
+        const partsItems = await search(site, q.q, "PARTS", catId);
         const rp = await runPipeline(`${p.name} ${p.variant}`, toRaw(partsItems), productClassifier(q, { parts: true }), "EUR", { max: refB.floor });
         entry.parts = rp.prices;
         entry.partsCaptured = rp.counts.captured;
@@ -94,10 +129,14 @@ for (const p of PRODUCTS) {
       if (r.counts.final < MIN_VALID) {
         delete products[p.id]?.[site];
         console.log(`${p.id.padEnd(34)} ${site.slice(5)}  só ${r.counts.final} válidos de ${r.counts.captured}: ignorado (sem dados)`);
-        await sleep(250);
+        await sleep(150);
         continue;
       }
       (products[p.id] ??= {})[site] = entry;
+      if (++sinceSave >= 40) {
+        save();
+        sinceSave = 0;
+      }
       console.log(
         `${p.id.padEnd(34)} ${site.slice(5)}  ${String(r.counts.final).padStart(3)}/${String(r.counts.captured).padStart(3)} usados` +
           (r.stats ? `  med ${String(r.stats.median).padStart(7)}` : "  (sem dados)") + partsInfo,
@@ -110,9 +149,21 @@ for (const p of PRODUCTS) {
         break;
       }
     }
-    await sleep(250);
+    await sleep(150);
   }
 }
+
+// Vários produtos ao mesmo tempo (EBAY_CONCURRENCY, 6 por omissão): o eBay responde devagar a cada pedido.
+let next = 0;
+await Promise.all(
+  Array.from({ length: Number(process.env.EBAY_CONCURRENCY ?? 6) }, async () => {
+    while (!stop) {
+      const p = todo[next++];
+      if (!p) break;
+      await work(p);
+    }
+  }),
+);
 
 writeFileSync(FILE, JSON.stringify({ updated: new Date().toISOString().slice(0, 10), sites, products }, null, 2) + "\n");
 console.log(`\nGravado em ${FILE}. Pedidos feitos: ${calls}.`);

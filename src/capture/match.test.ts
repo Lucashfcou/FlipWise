@@ -22,6 +22,10 @@ describe("casar o nome lido com o catálogo", () => {
     if (!m.exact) expect(m.options.length).toBeGreaterThan(1);
   });
 
+  it("relógios: Series 8 casa com S8", () => {
+    expect(matchCatalog("Apple Watch Series 8 45mm").exact?.id).toBe("apple-watch-s8-45");
+  });
+
   it("produto que não existe no catálogo devolve nada", () => {
     const m = matchCatalog("Foobar Zzyzx X9000 Pro");
     expect(m.exact).toBeUndefined();

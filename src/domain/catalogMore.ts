@@ -82,7 +82,8 @@ const PHONES: Row[] = [
 ];
 
 const TABLETS: Row[] = [
-  ["Apple", "iPad 6,iPad 7,iPad 8,iPad 9,iPad 10", "32 GB/64 GB/128 GB/256 GB"],
+  ["Apple", "iPad 6,iPad 7,iPad 8", "32 GB/128 GB"],
+  ["Apple", "iPad 9,iPad 10", "64 GB/256 GB"],
   ["Apple", "iPad Air 2,iPad Air 3,iPad Air 4,iPad Air 5,iPad Air 11 M2", "64 GB/128 GB/256 GB"],
   ["Apple", "iPad mini 4,iPad mini 5,iPad mini 6,iPad mini 7", "64 GB/128 GB/256 GB"],
   ["Apple", "iPad Pro 10.5,iPad Pro 11 2018,iPad Pro 11 2020,iPad Pro 11 M1,iPad Pro 11 M2,iPad Pro 12.9 2018,iPad Pro 12.9 2020,iPad Pro 12.9 M1,iPad Pro 12.9 M2", "128 GB/256 GB/512 GB/1 TB"],
@@ -221,7 +222,7 @@ const CAMERAS_MORE: Row[] = [
 ];
 
 const WATCHES_MORE: Row[] = [
-  ["Apple", "Watch Series 3,Watch Series 4,Watch Series 5,Watch Series 6,Watch SE 2020,Watch Series 7,Watch Series 8,Watch Series 9,Watch Series 10,Watch Ultra,Watch Ultra 2", "40 mm/41 mm/44 mm/45 mm/46 mm/49 mm", "smartwatch"],
+  ["Apple", "Watch Series 3,Watch Series 4,Watch Series 5,Watch Series 6,Watch SE 2020,Watch Series 7,Watch Series 8,Watch Series 9,Watch Series 10,Watch Ultra,Watch Ultra 2", undefined, "smartwatch"],
   ["Samsung", "Galaxy Watch 3,Galaxy Watch 4,Galaxy Watch 4 Classic,Galaxy Watch 5,Galaxy Watch 5 Pro,Galaxy Watch 6,Galaxy Watch 6 Classic,Galaxy Watch 7,Galaxy Watch Ultra,Galaxy Watch Active 2,Galaxy Fit 3,Galaxy Watch FE", undefined, "smartwatch"],
   ["Garmin", "Forerunner 35,Forerunner 45,Forerunner 55,Forerunner 245,Forerunner 255,Forerunner 265,Forerunner 645,Forerunner 745,Forerunner 945,Forerunner 955,Forerunner 965,Fenix 5,Fenix 5 Plus,Fenix 6,Fenix 6 Pro,Fenix 6X Pro,Fenix 7,Fenix 7X,Fenix 7 Pro,Epix Gen 2,Instinct,Instinct 2,Instinct 2X,Venu,Venu 2,Venu 2 Plus,Venu 3,Venu Sq,Vivoactive 3,Vivoactive 4,Vivoactive 5,Vivosmart 4,Vivosmart 5,Vivomove,Lily,Enduro,Tactix,MARQ,Swim 2,Edge 530,Edge 830,Edge 540,Edge 1030,Edge 1040,Edge 130", undefined, "smartwatch"],
   ["Fitbit", "Charge 3,Charge 4,Charge 5,Charge 6,Versa 2,Versa 3,Versa 4,Sense,Sense 2,Inspire 2,Inspire 3,Luxe,Ace 3", undefined, "smartwatch"],

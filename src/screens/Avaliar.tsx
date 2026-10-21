@@ -17,6 +17,7 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   const { priceFor, settings, contribute, addStock, recent, pushRecent } = useApp();
   const [mode, setMode] = useState<"item" | "lote">("item");
   const [category, setCategory] = useState<Category | null>(null);
+  const [brand, setBrand] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [productId, setProductId] = useState<string | null>(null);
   const [condition, setCondition] = useState<Condition>("B");
@@ -30,13 +31,27 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
   const list = useMemo(() => {
     if (searching) {
       const q = query.toLowerCase();
-      return PRODUCTS.filter((p) => `${p.name} ${p.variant} ${productLabel(p)}`.toLowerCase().includes(q));
+      // Cada palavra pesquisada tem de aparecer (marca, nome ou variante), por qualquer ordem: "samsung s21 256".
+      const words = q.split(/\s+/).filter(Boolean);
+      return PRODUCTS.filter((p) => {
+        const hay = `${p.brand} ${p.name} ${p.variant} ${productLabel(p)}`.toLowerCase();
+        return words.every((w) => hay.includes(w));
+      }).slice(0, 80);
     }
-    return category ? PRODUCTS.filter((p) => p.category === category) : [];
-  }, [category, query, searching]);
+    return category ? PRODUCTS.filter((p) => p.category === category && (!brand || p.brand === brand)) : [];
+  }, [category, brand, query, searching]);
+
+  // Marcas da categoria (só quando há muitos produtos): filtro rápido para não rolar centenas de linhas.
+  const brands = useMemo(() => {
+    if (!category) return [];
+    const count = new Map<string, number>();
+    for (const p of PRODUCTS) if (p.category === category) count.set(p.brand, (count.get(p.brand) ?? 0) + 1);
+    const total = [...count.values()].reduce((a, b) => a + b, 0);
+    return total > 30 ? [...count.entries()].sort((a, b) => b[1] - a[1]).map(([b]) => b) : [];
+  }, [category]);
 
   // A lista abre em onda; o produto escolhido salta ao entrar.
-  useFx(listRef, (root) => stagger([...root.children], 8, 22), [category, query]);
+  useFx(listRef, (root) => stagger([...root.children].slice(0, 40), 8, 22), [category, brand, query]);
   useFx(chosenRef, (el) => pop(el, 1.02), [productId]);
 
   const product = productId ? findProduct(productId)! : null;
@@ -147,11 +162,23 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
                   key={c}
                   aria-pressed={c === category}
                   className={c === category ? "tile on" : "tile"}
-                  onClick={() => setCategory(c === category ? null : c)}
+                  onClick={() => {
+                    setCategory(c === category ? null : c);
+                    setBrand(null);
+                  }}
                 >
                   <strong>{CATEGORY_LABEL[c]}</strong>
                   <small>{t("eval.products", { n: PRODUCTS.filter((p) => p.category === c).length })}</small>
                 </button>
+              ))}
+            </div>
+          )}
+
+          {!searching && category && brands.length > 1 && (
+            <div className="chips" style={{ marginTop: 12 }} role="group" aria-label={t("eval.brandAria")}>
+              <button className={brand === null ? "chip on" : "chip"} aria-pressed={brand === null} onClick={() => setBrand(null)}>{t("eval.allBrands")}</button>
+              {brands.map((b) => (
+                <button key={b} className={brand === b ? "chip on" : "chip"} aria-pressed={brand === b} onClick={() => setBrand(brand === b ? null : b)}>{b}</button>
               ))}
             </div>
           )}

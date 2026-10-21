@@ -50,10 +50,16 @@ Plano pago em estudo: **grátis** = catálogo, avaliar, lotes, stock, lucro, "o 
 6. Hospedagem, contas, pagamento e controlo do teste de 1 semana (só depois de validar com utilizadores reais).
 7. Limpar: a pasta `C:\Projetos\app-revendedores` é cópia antiga do material do conselho e pode ser apagada.
 
+## Atualização 2026-10-21 (IA, busca no eBay e catálogo grande)
 
-## Atualização 2026-10-19 (sessão do vídeo, IA e ténis)
-- Categoria **Ténis** (28 modelos, `src/domain/catalogShoes.ts`) e +60 eletrónicos; 348 produtos, 20 sem dados.
-- Leitura de print **ligada e testada** com chave real (Claude Haiku 5.5, ~US$ 0,002 por print; o catálogo vai em cada pedido). `npm run capture:server`; `npm run phone` testa no telemóvel pelo Wi-Fi. Prompt em `src/capture/vision.ts`.
-- **Busca no eBay para produtos fora do catálogo**: a IA devolve `searchQuery` (nunca recebe dados do eBay), o servidor pesquisa (`POST /api/lookup`, `src/ebay/lookup.ts`, cache de 6 h, limite `LOOKUP_DAILY_LIMIT`) e o app mostra a faixa com aviso de pouco fiável.
-- Contrato do eBay: proíbe enviar dados de "Restricted APIs" a IA de terceiros sem consentimento; limita copiar/guardar conteúdo do eBay. **Rever antes de cobrar.** Browse API: 5.000 chamadas/dia por omissão.
-- Falta: servidor hospedado com chave só lá, limite por utilizador, teste de segurança final com a IA ligada. Vídeos de lançamento em `C:Projetoslipwise-video` (PT) e `flipwise-video-en` (EN).
+**Fluxo do print (pago, ligado e testado com chave real)** — `server/capture.ts`, `src/capture/*`, `src/ebay/*`
+1. A IA (Claude Haiku 5.5, ~3 mil tokens de entrada, ~US$ 0,0004 por leitura) lê o print **sem o catálogo no prompt** e devolve nome, tipo, especificações, preço, estado, e `needsModel`/`modelOptions` quando só se sabe a linha (`src/capture/vision.ts`).
+2. O **código** casa o nome com o catálogo por palavras inteiras (`src/capture/match.ts`). Se casa: motor do catálogo. Se há várias capacidades: botões.
+3. Fora do catálogo: busca no eBay (`src/ebay/lookup.ts`): categoria certa por país (Taxonomy API, `suggestCategory`), código de modelo inteiro (5700X não casa com 5700X3D, `titleMatch.ts`), especificações, degraus até a "família", vários países (ES, DE, FR, IT) até haver resultado fiável. Base mínima: 8 anúncios. O mesmo cartão Comprar/Negociar/Deixar passar (`estimate` + `Verdict`).
+4. Se não for fiável: segunda leitura da imagem pedindo nomes alternativos; anúncios difíceis repetem com o **Sonnet 5.5** (`SMART_MODEL`, sem tool_choice forçado: o Sonnet recusa). A IA nunca recebe dados do eBay (cláusula da licença).
+5. Interface (`Print.tsx`): nome editável ("Percebi isto"), opções de modelo, ponte para o catálogo, aviso de pouca fiabilidade e de preço suspeito.
+- Variáveis (`.env`): ANTHROPIC_API_KEY, EBAY_CLIENT_ID/SECRET, CAPTURE_DAILY_LIMIT, LOOKUP_DAILY_LIMIT, SMART_MODEL, SMART_DAILY_LIMIT, LOOKUP_SITES, CAPTURE_EXTRA_HOST (túnel), CAPTURE_LAN. `npm run phone` testa no celular pela rede de casa.
+
+**Catálogo** (`src/domain/catalogMore.ts`, gerado por listas): ~2.400 produtos novos em 14 categorias (5 novas: processadores, SSD e memória, monitores, periféricos, computadores) com filtro automático. Os preços vêm de `npm run ebay:refresh -- --more --missing --no-parts` (e `--thin` com `EBAY_SITES=EBAY_DE` para ir buscar a outros países). `npm run prune:more` guarda em `src/data/more-keep.json` só o que tem 6+ anúncios; `npm run slim:prices` reduz o ficheiro de preços (40 por produto). Ténis em `catalogShoes.ts`.
+- eBay: Browse API 5.000 chamadas/dia por omissão. Contrato: proíbe enviar dados de "Restricted APIs" a IA de terceiros e limita copiar/guardar conteúdo do eBay (**rever antes de cobrar**).
+- Falta: servidor hospedado com as chaves só lá, limite por utilizador, login/pagamento, teste de segurança final com a IA ligada. Vídeos em `C:\Projetos\flipwise-video` (PT) e `flipwise-video-en` (EN).

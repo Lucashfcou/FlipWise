@@ -2,6 +2,7 @@ import { CONDITIONS } from "../domain/catalog";
 import { t } from "../i18n";
 import type { Category, Condition } from "../domain/types";
 import { cleanLookupQuery, cleanSpecs } from "../ebay/lookup";
+import { isDistinctive } from "../ebay/titleMatch";
 import { matchCatalog } from "./match";
 import type { CaptureProblem, CaptureResult, ImageType } from "./types";
 
@@ -62,7 +63,8 @@ export function parseDataUrl(dataUrl: string): { mediaType: string; data: string
 }
 
 /** Corpo do pedido à API de mensagens, com visão e saída estruturada forçada. */
-export function buildVisionRequest(imageDataUrl: string, model = DEFAULT_MODEL, lang: "pt" | "en" = "pt") {
+/** `forceTool: false` para modelos que não aceitam tool_choice forçado (o Sonnet 5.5 recusa): a instrução do sistema já manda usar a ferramenta. */
+export function buildVisionRequest(imageDataUrl: string, model = DEFAULT_MODEL, lang: "pt" | "en" = "pt", forceTool = true) {
   const img = parseDataUrl(imageDataUrl);
   if (!img) throw new Error("Imagem inválida: usa JPEG, PNG, WebP ou GIF.");
   return {
@@ -70,7 +72,7 @@ export function buildVisionRequest(imageDataUrl: string, model = DEFAULT_MODEL, 
     max_tokens: 1600,
     system: SYSTEM,
     tools: [TOOL],
-    tool_choice: { type: "tool", name: TOOL_NAME },
+    tool_choice: forceTool ? { type: "tool" as const, name: TOOL_NAME } : { type: "auto" as const },
     messages: [
       {
         role: "user",
@@ -117,8 +119,10 @@ export function parseVisionResponse(data: ApiResponse): { result: CaptureResult;
   const imageType: ImageType =
     input.imageType === "anuncio" || input.imageType === "foto_sem_texto" || input.imageType === "outro" ? input.imageType : "outro";
   const inconsistencies = strList(input.inconsistencies).map((s) => s.slice(0, 200)).slice(0, 6);
-  const needsModel = input.needsModel === true;
-  const modelOptions = needsModel ? strList(input.modelOptions).map((s) => cleanLookupQuery(s)).filter((s): s is string => Boolean(s)).slice(0, 6) : [];
+  const modelOptions = strList(input.modelOptions).map((s) => cleanLookupQuery(s)).filter((s): s is string => Boolean(s)).slice(0, 6);
+  // Só a linha (sem código de modelo) e a IA deu opções: pergunta o modelo, mesmo que ela não tenha marcado needsModel.
+  const hasCode = (searchQuery ?? "").split(/s+/).some(isDistinctive);
+  const needsModel = input.needsModel === true || (modelOptions.length > 0 && !hasCode && !product);
 
   const base = {
     productId: product ? product.id : null,

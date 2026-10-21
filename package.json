@@ -11,6 +11,8 @@
     "pipeline:demo": "tsx scripts/pipeline-demo.ts",
     "capture:server": "tsx server/capture.ts",
     "phone": "node scripts/phone.mjs",
+    "prune:more": "tsx scripts/prune-more.ts",
+    "slim:prices": "tsx scripts/slim-prices.ts",
     "ebay:refresh": "tsx scripts/ebay-refresh.ts"
   },
   "dependencies": {

@@ -7,6 +7,7 @@ import type { Product } from "../domain/types";
  */
 
 const ALIASES: [RegExp, string][] = [
+  [/\bseries\s?(\d+)\b/g, "s$1"],
   [/\bps\s?([2345])\b/g, "playstation $1"],
   [/\bpsp\b/g, "psp"],
   [/\bjoy-?con\b/g, "joycon"],
