@@ -38,6 +38,10 @@ const LOOKUP_DAILY_LIMIT = Number(process.env.LOOKUP_DAILY_LIMIT ?? 100);
 let lookupsToday = 0;
 let ebayToken: { value: string; until: number } | null = null;
 const lookupCache = new Map<string, { at: number; result: unknown }>();
+const LOOKUP_CACHE_MAX = 500;
+/** Buscas por minuto (as repetidas vêm da cache e não contam). */
+const LOOKUP_PER_MINUTE = 20;
+let recentLookups: number[] = [];
 const CACHE_MS = 6 * 60 * 60 * 1000;
 
 /** Busca com cache de 6 h e limite diário. */
@@ -46,6 +50,10 @@ async function doLookup(query: string, specs: string[], deviceType: string): Pro
   const hit = lookupCache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.result as LookupResult | null;
   if (lookupsToday >= LOOKUP_DAILY_LIMIT) throw new Error(`Limite diário de ${LOOKUP_DAILY_LIMIT} buscas atingido.`);
+  const nowMs = Date.now();
+  recentLookups = recentLookups.filter((t) => nowMs - t < 60_000);
+  if (recentLookups.length >= LOOKUP_PER_MINUTE) throw new Error("Demasiadas buscas seguidas. Espera um minuto.");
+  recentLookups.push(nowMs);
   lookupsToday++;
   const token = await tokenForLookup();
   let result: LookupResult | null = null;
@@ -54,6 +62,8 @@ async function doLookup(query: string, specs: string[], deviceType: string): Pro
     if (lookupScore(r) > lookupScore(result)) result = r;
     if (lookupConfident(result)) break;
   }
+  // Cache limitada: descarta a entrada mais antiga quando passa do teto (a memória do servidor não cresce sem fim).
+  if (lookupCache.size >= LOOKUP_CACHE_MAX) lookupCache.delete(lookupCache.keys().next().value as string);
   lookupCache.set(key, { at: Date.now(), result });
   console.log(`[busca] "${query}" ${specs.join("/")} -> ${result ? result.n + " anúncios, mediana " + result.median + " (" + result.site + " " + result.basis + ", " + (result.category ?? "sem categoria") + ", " + result.reliability + ")" : "sem resultado fiável"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
   return result;
