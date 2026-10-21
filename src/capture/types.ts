@@ -52,6 +52,14 @@ export interface CaptureResult {
 
 export interface CaptureStatus {
   enabled: boolean;
+  /** O servidor tem contas e quem chama não entrou. */
+  loginRequired?: boolean;
+  /** Entrou, mas o plano não inclui a leitura por print. */
+  upgrade?: boolean;
+  accounts?: boolean;
+  plan?: "free" | "trial" | "pro";
+  trialEndsAt?: string | null;
+  email?: string;
   dailyLimit?: number;
   usedToday?: number;
   /** A busca de preços no eBay (produtos fora do catálogo) está ligada no servidor. */

@@ -9,6 +9,8 @@ import type { Condition } from "../domain/types";
 import { pop, stagger, useFx } from "../fx";
 import { estimate } from "../domain/priceEngine";
 import { useApp } from "../state";
+import { useAuth } from "../auth/AuthProvider";
+import { LoginPanel } from "../auth/AccountPanel";
 import { Verdict } from "../ui/Verdict";
 import { t } from "../i18n";
 import type { Key } from "../i18n";
@@ -122,9 +124,11 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const confirmRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Volta a perguntar ao servidor quando se abre o painel ou quando a pessoa entra ou sai da conta.
+  const { user } = useAuth();
   useEffect(() => {
-    if (open && status === null) captureStatus().then(setStatus);
-  }, [open, status]);
+    if (open) captureStatus().then(setStatus);
+  }, [open, user?.id]);
 
   useFx(panelRef, (el) => pop(el, 1.01), [open]);
   useFx(confirmRef, (el) => stagger([...el.children], 8, 35), [result]);
@@ -200,6 +204,14 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
         <p className="hint">{t("print.checking")}</p>
       ) : status.enabled ? (
         <p className="hint">{t("print.on", { used: status.usedToday ?? 0, limit: status.dailyLimit ?? "?" })}</p>
+      ) : status.loginRequired ? (
+        <>
+          <p className="note">{t("auth.needLogin")}</p>
+          <LoginPanel compact />
+          <p className="hint">{t("print.demoOn")}</p>
+        </>
+      ) : status.upgrade ? (
+        <p className="note">{t("auth.needPro")}</p>
       ) : (
         <p className="note">{t("print.demoOn")}</p>
       )}

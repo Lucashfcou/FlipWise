@@ -1,13 +1,33 @@
 import type { CaptureResult, CaptureStatus } from "./types";
 import { getLang } from "../i18n";
+import { accessToken } from "../auth/supabase";
 import { problemsFor } from "./vision";
+
+/** Cabeçalhos dos pedidos ao servidor: JSON e, com sessão, o token para o servidor confirmar quem é. */
+async function headers(json = false): Promise<Record<string, string>> {
+  const h: Record<string, string> = json ? { "content-type": "application/json" } : {};
+  const token = await accessToken();
+  if (token) h.authorization = `Bearer ${token}`;
+  return h;
+}
 
 export async function captureStatus(): Promise<CaptureStatus> {
   try {
-    const res = await fetch("/api/capture/status");
+    const res = await fetch("/api/capture/status", { headers: await headers() });
     if (!res.ok) return { enabled: false };
     const data = (await res.json()) as CaptureStatus;
-    return { enabled: data.enabled === true, dailyLimit: data.dailyLimit, usedToday: data.usedToday, lookup: data.lookup === true };
+    return {
+      enabled: data.enabled === true,
+      dailyLimit: data.dailyLimit,
+      usedToday: data.usedToday,
+      lookup: data.lookup === true,
+      loginRequired: data.loginRequired === true,
+      upgrade: data.upgrade === true,
+      accounts: data.accounts === true,
+      plan: data.plan,
+      trialEndsAt: data.trialEndsAt,
+      email: data.email,
+    };
   } catch {
     return { enabled: false };
   }
@@ -29,7 +49,7 @@ export async function shrinkImage(file: File, maxSide = 1280): Promise<string> {
 export async function readPrint(imageDataUrl: string): Promise<{ result: CaptureResult; usedToday?: number; dailyLimit?: number }> {
   const res = await fetch("/api/capture", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: await headers(true),
     body: JSON.stringify({ image: imageDataUrl, lang: getLang() }),
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string; result?: CaptureResult; usedToday?: number; dailyLimit?: number };
@@ -60,7 +80,7 @@ export interface LookupData {
 
 /** Preços do eBay para um produto fora do catálogo. null = poucos anúncios válidos. */
 export async function lookupPrice(q: string, specs: string[] = [], deviceType = ""): Promise<LookupData | null> {
-  const res = await fetch("/api/lookup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, specs, deviceType }) });
+  const res = await fetch("/api/lookup", { method: "POST", headers: await headers(true), body: JSON.stringify({ q, specs, deviceType }) });
   const data = (await res.json().catch(() => ({}))) as { error?: string; result?: LookupData | null };
   if (!res.ok) throw new Error(data.error ?? "A busca falhou.");
   return data.result ?? null;

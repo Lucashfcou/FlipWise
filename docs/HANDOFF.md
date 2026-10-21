@@ -63,3 +63,9 @@ Plano pago em estudo: **grátis** = catálogo, avaliar, lotes, stock, lucro, "o 
 **Catálogo** (`src/domain/catalogMore.ts`, gerado por listas): ~2.400 produtos novos em 14 categorias (5 novas: processadores, SSD e memória, monitores, periféricos, computadores) com filtro automático. Os preços vêm de `npm run ebay:refresh -- --more --missing --no-parts` (e `--thin` com `EBAY_SITES=EBAY_DE` para ir buscar a outros países). `npm run prune:more` guarda em `src/data/more-keep.json` só o que tem 6+ anúncios; `npm run slim:prices` reduz o ficheiro de preços (40 por produto). Ténis em `catalogShoes.ts`.
 - eBay: Browse API 5.000 chamadas/dia por omissão. Contrato: proíbe enviar dados de "Restricted APIs" a IA de terceiros e limita copiar/guardar conteúdo do eBay (**rever antes de cobrar**).
 - Falta: servidor hospedado com as chaves só lá, limite por utilizador, login/pagamento, teste de segurança final com a IA ligada. Vídeos em `C:\Projetos\flipwise-video` (PT) e `flipwise-video-en` (EN).
+
+## Contas e Vercel (2026-10-21)
+- Site: https://flip-wise-chi.vercel.app (Vercel, região cdg1). Funções em `api/*.mjs` geradas de `api-src/` por `npm run build:api` (esbuild; fazer commit de `api/`). Núcleo partilhado com o servidor local: `server/core.ts`.
+- Supabase: `supabase/schema.sql` (perfis, plan_limits, usage_daily, user_data, função consume_usage atómica, RLS). Login por e-mail (link) e Google (opcional) em `src/auth/*`. Guia de configuração: `docs/SETUP-CONTAS.md`.
+- Sem as variáveis do Supabase no servidor, `/api/capture/status` responde `{enabled:false}` (modo demo). Com elas, a leitura exige login: teste de 1 semana do Pro, depois plano grátis (0 leituras); limites em `plan_limits`.
+- Falta: pagamento (Stripe atualiza `profiles.plan`), sincronização de estoque/vendas (tabela `user_data` pronta, cliente por fazer), exclusão de conta (GDPR), teste de segurança final.

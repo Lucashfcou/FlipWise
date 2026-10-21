@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CSV_TEMPLATE, parseCsv } from "../domain/csv";
 import { t } from "../i18n";
 import { useApp } from "../state";
+import { AccountPanel } from "../auth/AccountPanel";
 
 function ImportPanel() {
   const { importObservations } = useApp();
@@ -61,6 +62,7 @@ export function Config() {
   return (
     <section>
       <h1>{t("settings.title")}</h1>
+      <AccountPanel />
       <form
         className="panel"
         onSubmit={(e) => {

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { AuthProvider } from "./auth/AuthProvider";
 import { AppProvider } from "./state";
 import "@fontsource-variable/anybody/wdth.css";
 import "@fontsource/atkinson-hyperlegible/400.css";
@@ -11,9 +12,11 @@ import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AppProvider>
-      <App />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </AuthProvider>
   </StrictMode>,
 );
 
