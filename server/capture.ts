@@ -7,6 +7,7 @@ import { EbayError, MARKETPLACES, getToken } from "../src/ebay/client";
 import type { MarketplaceId } from "../src/ebay/client";
 import { cleanDeviceType, cleanLookupQuery, cleanSpecs, lookupConfident, lookupScore, runLookup } from "../src/ebay/lookup";
 import type { LookupResult } from "../src/ebay/lookup";
+import type { CaptureResult } from "../src/capture/types";
 import { DEFAULT_MODEL, MAX_IMAGE_BYTES, buildRetryRequest, buildVisionRequest, parseRetryResponse, parseVisionResponse } from "../src/capture/vision";
 
 // As chaves vêm do ficheiro .env (fora do git), se existir.
@@ -18,6 +19,15 @@ const MODEL = process.env.CAPTURE_MODEL ?? DEFAULT_MODEL;
 /** Máximo de leituras por dia (reinicia ao reiniciar o servidor). Protege a fatura. */
 const DAILY_LIMIT = Number(process.env.CAPTURE_DAILY_LIMIT ?? 20);
 const PER_MINUTE = 6;
+/** Modelo mais forte, só para anúncios difíceis (baixa confiança, falta o modelo). Vazio desliga. */
+const SMART_MODEL = process.env.SMART_MODEL ?? "claude-sonnet-5-5";
+const SMART_DAILY_LIMIT = Number(process.env.SMART_DAILY_LIMIT ?? 10);
+let smartToday = 0;
+/** Países do eBay, por ordem: passa ao seguinte quando o anterior não dá resultado fiável. */
+const LOOKUP_SITES = (process.env.LOOKUP_SITES ?? "EBAY_ES,EBAY_DE,EBAY_FR,EBAY_IT")
+  .split(",")
+  .map((x) => x.trim())
+  .filter((x): x is MarketplaceId => x in MARKETPLACES);
 
 // Busca no eBay para produtos fora do catálogo (precisa das chaves do eBay no .env).
 const EBAY_ID = process.env.EBAY_CLIENT_ID ?? "";
@@ -37,9 +47,15 @@ async function doLookup(query: string, specs: string[], deviceType: string): Pro
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.result as LookupResult | null;
   if (lookupsToday >= LOOKUP_DAILY_LIMIT) throw new Error(`Limite diário de ${LOOKUP_DAILY_LIMIT} buscas atingido.`);
   lookupsToday++;
-  const result = await runLookup(await tokenForLookup(), LOOKUP_SITE, query, { specs, deviceType });
+  const token = await tokenForLookup();
+  let result: LookupResult | null = null;
+  for (const site of LOOKUP_SITES.length ? LOOKUP_SITES : [LOOKUP_SITE]) {
+    const r = await runLookup(token, site, query, { specs, deviceType });
+    if (lookupScore(r) > lookupScore(result)) result = r;
+    if (lookupConfident(result)) break;
+  }
   lookupCache.set(key, { at: Date.now(), result });
-  console.log(`[busca] "${query}" ${specs.join("/")} -> ${result ? result.n + " anúncios, mediana " + result.median + " (" + result.basis + ", " + (result.category ?? "sem categoria") + ", " + result.reliability + ")" : "sem resultado fiável"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
+  console.log(`[busca] "${query}" ${specs.join("/")} -> ${result ? result.n + " anúncios, mediana " + result.median + " (" + result.site + " " + result.basis + ", " + (result.category ?? "sem categoria") + ", " + result.reliability + ")" : "sem resultado fiável"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
   return result;
 }
 
@@ -100,6 +116,22 @@ function fromLocal(req: import("node:http").IncomingMessage): boolean {
   return true;
 }
 
+async function callVision(image: string, model: string, lang: "pt" | "en"): Promise<{ result: CaptureResult; usage: { input: number; output: number } }> {
+  const api = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify(buildVisionRequest(image, model, lang)),
+  });
+  if (!api.ok) {
+    console.error(`Claude API ${api.status} (${model}): ${(await api.text()).slice(0, 300)}`);
+    throw new Error("O serviço de leitura falhou. Tenta outra vez.");
+  }
+  return parseVisionResponse(await api.json());
+}
+
+const quality = (r: CaptureResult) =>
+  (r.productId ? 3 : 0) + (r.searchQuery && !r.needsModel ? 2 : 0) + (r.confidence === "alta" ? 2 : r.confidence === "media" ? 1 : 0) - r.problems.filter((p) => p.severity === "erro").length * 2;
+
 const server = createServer(async (req, res) => {
   if (!fromLocal(req)) return send(res, 403, { error: "Origem não permitida." });
   const today = new Date().toISOString().slice(0, 10);
@@ -107,6 +139,7 @@ const server = createServer(async (req, res) => {
     day = today;
     usedToday = 0;
     lookupsToday = 0;
+    smartToday = 0;
   }
 
   if (req.method === "GET" && req.url === "/api/capture/status") {
@@ -142,22 +175,34 @@ const server = createServer(async (req, res) => {
       const raw = await readBody(req, MAX_IMAGE_BYTES * 1.5);
       const { image, lang } = JSON.parse(raw) as { image?: string; lang?: string };
       if (typeof image !== "string") return send(res, 400, { error: "Falta a imagem." });
-      const body = buildVisionRequest(image, MODEL, lang === "en" ? "en" : "pt");
+      const lg: "pt" | "en" = lang === "en" ? "en" : "pt";
 
       recent.push(now);
       usedToday++;
-      const api = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify(body),
-      });
-      if (!api.ok) {
+      let first;
+      try {
+        first = await callVision(image, MODEL, lg);
+      } catch (e) {
         usedToday--; // chamada falhada não conta para o limite
-        console.error(`Claude API ${api.status}: ${(await api.text()).slice(0, 300)}`);
-        return send(res, 502, { error: "O serviço de leitura falhou. Tenta outra vez." });
+        return send(res, 502, { error: e instanceof Error ? e.message : "A leitura falhou." });
       }
-      let { result, usage } = parseVisionResponse(await api.json());
-      if (LOOKUP_ON && !result.productId && result.searchQuery) {
+      let { result, usage } = first;
+
+      // Anúncio difícil (baixa confiança, falta o modelo): repete com o modelo mais forte.
+      const hard = (r: CaptureResult) => r.imageType === "anuncio" && (r.confidence === "baixa" || r.needsModel === true || (!r.productId && !r.searchQuery));
+      if (SMART_MODEL && hard(result) && smartToday < SMART_DAILY_LIMIT) {
+        smartToday++;
+        try {
+          const second = await callVision(image, SMART_MODEL, lg);
+          console.log(`[captura] modelo forte ${SMART_MODEL} entrada=${second.usage.input} saída=${second.usage.output} (${quality(result)} -> ${quality(second.result)}) hoje=${smartToday}/${SMART_DAILY_LIMIT}`);
+          if (quality(second.result) > quality(result)) result = second.result;
+        } catch {
+          /* mantém a primeira leitura */
+        }
+      }
+
+      // Fora do catálogo e com o modelo conhecido: busca no eBay; se não for fiável, a IA reanalisa a imagem e propõe outros nomes.
+      if (LOOKUP_ON && !result.productId && !result.needsModel && result.searchQuery && !(result.candidates?.length)) {
         try {
           let best = { q: result.searchQuery, specs: result.specs ?? [], type: result.deviceType ?? "", lookup: await doLookup(result.searchQuery, result.specs ?? [], result.deviceType ?? "") };
           if (!lookupConfident(best.lookup) && usedToday < DAILY_LIMIT) {
@@ -166,7 +211,7 @@ const server = createServer(async (req, res) => {
             const retry = await fetch("https://api.anthropic.com/v1/messages", {
               method: "POST",
               headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
-              body: JSON.stringify(buildRetryRequest(image, tried, MODEL, lang === "en" ? "en" : "pt")),
+              body: JSON.stringify(buildRetryRequest(image, tried, MODEL, lg)),
             });
             if (retry.ok) {
               const { candidates, usage: u2 } = parseRetryResponse(await retry.json());

@@ -1,6 +1,6 @@
 import { productClassifier } from "./queries";
 import type { Matcher, ProductQuery } from "./queries";
-import { searchItems, suggestCategory, toRaw } from "./client";
+import { hasDeviceCategory, searchItems, suggestCategory, toRaw } from "./client";
 import type { MarketplaceId } from "./client";
 import { runPipeline } from "../pipeline/run";
 
@@ -152,7 +152,7 @@ export async function runLookup(
   opts: { specs?: string[]; deviceType?: string; fetchImpl?: typeof fetch; minValid?: number } = {},
 ): Promise<LookupResult | null> {
   const fetchImpl = opts.fetchImpl ?? fetch;
-  const minValid = opts.minValid ?? 5;
+  const minValid = opts.minValid ?? 8;
   const specs = cleanSpecs(opts.specs ?? []);
   const type = cleanDeviceType(opts.deviceType);
 
@@ -178,7 +178,10 @@ export async function runLookup(
   }
   // Último recurso (armazenamento, memória...): marca + tipo + capacidade.
   if (type && specs.length > 0) tiers.push({ name: `${words[0]} ${type} ${specs[0]}`, family: true });
-  for (const cat of category ? [category, null] : [null]) {
+  // Tipo de aparelho com categoria própria: pesquisa só nessa categoria (e salta o país onde ela não existe).
+  // Tipo desconhecido: pesquisa sem categoria.
+  const catChoices = category ? [category] : hasDeviceCategory(type) ? [] : [null];
+  for (const cat of catChoices) {
   const seen = new Set<string>();
 
   for (const tier of tiers) {

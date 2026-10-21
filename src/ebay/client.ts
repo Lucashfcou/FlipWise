@@ -90,6 +90,38 @@ export function toRaw(items: EbayItem[]): unknown[] {
   }));
 }
 
+/** Nomes de categoria (em ES, EN, FR, DE, IT) por tipo de aparelho, para escolher a categoria certa em cada país. */
+const DEVICE: Record<string, RegExp> = (() => {
+  const laptop = /(port[aá]til|laptop|notebook|netbook|ordinateur|portatili|\bpc\b)/i;
+  const phone = /(m[oó]vil|smartphone|cell\s?phone|t[eé]l[eé]phone|handy|cellulari|telefon)/i;
+  const headphones = /(auricular|headphone|earbud|headset|cascos|casque|kopfh|cuffie|[eé]couteur|ohrh)/i;
+  const storage = /(disco|ssd|hdd|drive|almacenamiento|disque|festplatte|hard\s?disk|speicher|storage|memoria)/i;
+  const cpu = /(cpu|procesador|processor|processeur|prozessor|processori)/i;
+  const gpu = /(gr[aá]fica|graphics|video\s?card|carte\s?graphique|grafikkarte|schede\s?video|video)/i;
+  return {
+    laptop, notebook: laptop,
+    smartphone: phone, phone, "mobile phone": phone,
+    tablet: /(tablet|ipad|ebook|liseuse|e-?reader)/i,
+    smartwatch: /(reloj|watch|montre|uhr|orologi|wearable|smartband)/i,
+    camera: /(c[aá]mara|camera|appareil\s?photo|fotocamer|kamera)/i,
+    "game console": /(consola|console|konsole)/i, console: /(consola|console|konsole)/i,
+    controller: /(mando|controller|manette|gamepad|joystick)/i,
+    speaker: /(altavoz|speaker|enceinte|lautsprecher|casse)/i,
+    headphones, earbuds: headphones, headset: headphones,
+    "graphics card": gpu, gpu,
+    cpu, processor: cpu,
+    ssd: storage, "hard drive": storage, hdd: storage,
+    ram: /(memoria|\bram\b|m[eé]moire|arbeitsspeicher|speicher)/i,
+    monitor: /(monitor|[eé]cran|bildschirm|schermo)/i,
+    motherboard: /(placa\s?base|motherboard|carte\s?m[eè]re|mainboard|scheda\s?madre)/i,
+    keyboard: /(teclado|keyboard|clavier|tastatur|tastiera)/i,
+    mouse: /(rat[oó]n|mouse|souris|maus)/i,
+  };
+})();
+
+/** Há categoria própria para este tipo de aparelho? Se sim, a pesquisa deve ficar nela (sem categoria só entram peças e lixo). */
+export const hasDeviceCategory = (hint: string) => Boolean(DEVICE[hint.toLowerCase().trim()]);
+
 const treeIds = new Map<string, string>();
 
 /**
@@ -107,27 +139,8 @@ export async function suggestCategory(token: string, marketplace: MarketplaceId,
     tree = d.categoryTreeId;
     treeIds.set(marketplace, tree);
   }
-  const generic = /\b(otros?|other|varios|various|miscellaneous|sonstige|altri|autres?|diversos)\b/i;
-  const parts = /(bater[ií]a|battery|cargador|charger|funda|case|bolsa|bag|accesorio|accessor|repuesto|spare|pieza|part|cable|adaptador|soporte|protector|pantalla|screen|teclado|keyboard)/i;
-  const DEVICE: Record<string, RegExp> = {
-    laptop: /(port[aá]til|laptop|notebook|netbook)/i,
-    headphones: /(auricular|headphone|earbud|headset|cascos)/i,
-    earbuds: /(auricular|headphone|earbud|headset|cascos)/i,
-    smartphone: /(m[oó]vil|smartphone|cell\s?phone|tel[eé]fono)/i,
-    tablet: /(tablet|ipad|ebook)/i,
-    smartwatch: /(reloj|watch|wearable|smartband)/i,
-    camera: /(c[aá]mara|camera)/i,
-    console: /(consola|console)/i,
-    speaker: /(altavoz|speaker)/i,
-    "graphics card": /(gr[aá]fica|graphics|video\s?card)/i,
-    cpu: /(cpu|procesador|processor)/i,
-    processor: /(cpu|procesador|processor)/i,
-    ssd: /(disco|ssd|hdd|drive|almacenamiento)/i,
-    "hard drive": /(disco|ssd|hdd|drive|almacenamiento)/i,
-    ram: /(memoria|\bram\b)/i,
-    monitor: /monitor/i,
-    motherboard: /(placa\s?base|motherboard)/i,
-  };
+  const generic = /\b(otros?|other|varios|various|miscellaneous|sonstige[rn]?|altr[oie]|autres?|diversos|divers)\b/i;
+  const parts = /(bater[ií]a|battery|batterie|batteria|akku|cargador|charger|chargeur|caricabatterie|ladeger|funda|case|h[uü]lle|custodia|coque|housse|bolsa|bag|tasche|borsa|accesorio|accessor|zubeh|repuesto|ricambi|ricambio|spare|ersatz|pi[eè]ces?|pieza|part|cable|kabel|c[aâ]ble|cavo|adaptador|adapter|soporte|protector|pantalla|screen|[eé]cran|schermo|display|teclado|keyboard|clavier|tastatur|tastiera|r[eé]paration|riparazione|reparatur|defekt|adattator|caricator|alimentat|netzteil|adaptateur|alimentation|\bpara\b|\bper\b|\bpour\b|f[uü]r\b|\bfor\b)/i;
   const wanted = DEVICE[hint.toLowerCase().trim()];
   // Tipo de aparelho desconhecido: sem categoria (uma categoria errada esconde os anúncios certos).
   if (!wanted) return null;

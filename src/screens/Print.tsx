@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { captureStatus, demoResult, lookupPrice, readPrint, shrinkImage } from "../capture/client";
 import type { LookupData } from "../capture/client";
+import { matchCatalog } from "../capture/match";
+import { cleanLookupQuery } from "../ebay/lookup";
 import type { CaptureResult, CaptureStatus } from "../capture/types";
 import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
 import type { Condition } from "../domain/types";
@@ -19,12 +21,24 @@ export interface PrintPick {
 
 const eur = (n: number) => `${Math.round(n)} €`;
 
-/** Produto fora do catálogo: pesquisa o nome no eBay e dá o mesmo veredito do catálogo, com a base da comparação e um aviso. */
-function Lookup({ q, specs, deviceType, asked, preset }: { q: string; specs: string[]; deviceType: string; asked: number | null; preset?: LookupData | null }) {
+/**
+ * Produto fora do catálogo: mostra o nome que a IA entendeu (editável), pesquisa no eBay e dá o mesmo veredito do catálogo.
+ * Se só se sabe a linha ("Ryzen 7"), pergunta o modelo com opções. Preço só aparece com anúncios suficientes.
+ */
+function Lookup({ q: q0, specs, deviceType, asked, preset, options, needsModel, onCatalog }: {
+  q: string; specs: string[]; deviceType: string; asked: number | null; preset?: LookupData | null; options: string[]; needsModel: boolean; onCatalog: (id: string) => void;
+}) {
   const { settings } = useApp();
-  const [state, setState] = useState<"loading" | "none" | "error" | LookupData>(preset === undefined ? "loading" : preset ?? "none");
+  const [q, setQ] = useState(q0);
+  const [draft, setDraft] = useState(q0);
+  const first = q === q0;
+  const [state, setState] = useState<"idle" | "loading" | "none" | "error" | LookupData>(needsModel ? "idle" : preset === undefined ? "loading" : preset ?? "none");
   useEffect(() => {
-    if (preset !== undefined) {
+    if (first && needsModel) {
+      setState("idle");
+      return;
+    }
+    if (first && preset !== undefined) {
       setState(preset ?? "none");
       return;
     }
@@ -36,8 +50,9 @@ function Lookup({ q, specs, deviceType, asked, preset }: { q: string; specs: str
     return () => {
       alive = false;
     };
-  }, [q, specs.join(","), deviceType, preset]);
+  }, [q, specs.join(","), deviceType, preset, first, needsModel]);
 
+  const inCatalog = matchCatalog(q, specs).exact;
   const data = typeof state === "object" ? state : null;
   const price = data
     ? estimate(
@@ -45,20 +60,45 @@ function Lookup({ q, specs, deviceType, asked, preset }: { q: string; specs: str
         { shipping: settings.shipping, promo: settings.promo, margin: settings.targetMargin },
       )
     : null;
+  const search = (name: string) => {
+    const c = cleanLookupQuery(name);
+    if (c) {
+      setDraft(c);
+      setQ(c);
+    }
+  };
   return (
     <div className="panel" style={{ marginTop: 12 }}>
       <strong>{t("lookup.title")}</strong>
-      <p className="hint">{q}{specs.length > 0 ? " · " + specs.join(" · ") : ""}</p>
+      <label className="label" htmlFor="lookupname">{needsModel ? t("lookup.pickModel") : t("lookup.understood")}</label>
+      <div className="row" style={{ gap: 8 }}>
+        <input id="lookupname" className="field" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search(draft)} placeholder={t("lookup.otherModel")} />
+        <button className="btn small" onClick={() => search(draft)} disabled={!cleanLookupQuery(draft)}>{t("lookup.search")}</button>
+      </div>
+      {options.length > 0 && (
+        <div className="chips" style={{ marginTop: 8 }}>
+          {options.map((o) => (
+            <button key={o} className="chip" onClick={() => search(o)}>{o}</button>
+          ))}
+        </div>
+      )}
+      {inCatalog && (
+        <p className="note">
+          {t("lookup.inCatalog", { name: productLabel(inCatalog) })}{" "}
+          <button className="btn small" onClick={() => onCatalog(inCatalog.id)}>{t("lookup.useCatalog")}</button>
+        </p>
+      )}
       {state === "loading" && <p className="hint">{t("lookup.loading")}</p>}
       {state === "none" && <p className="note">{t("lookup.none")}</p>}
       {state === "error" && <p className="loss" role="alert">{t("lookup.error")}</p>}
       {data && price && (
         <>
-          <Verdict price={price} asked={asked} productLabel={q} margin={settings.targetMargin} />
+          <Verdict price={price} asked={asked} productLabel={data.searched ?? q} margin={settings.targetMargin} />
           <p className="hint">{t("lookup.range", { low: eur(data.low), high: eur(data.high) })}</p>
           <p className="hint">
             {t("lookup.n", { n: data.n })} {data.basis === "specs" ? t("lookup.basisSpecs", { specs: specs.join(", ") }) : data.basis === "family" ? t("lookup.basisFamily", { name: data.searched ?? q }) : t("lookup.basisModel")}
           </p>
+          {asked && (data.median < asked * 0.25 || data.median > asked * 4) && <p className="loss" role="alert">{t("lookup.suspicious")}</p>}
           <p className="note">{data.reliability === "media" ? t("lookup.warnMedium") : t("lookup.warn")}</p>
         </>
       )}
@@ -231,10 +271,34 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               ))}
             </ul>
           )}
-          {!result.productId && (
+          {!productId && !result.searchQuery && (
             <p className="note"><strong>{t("print.unknownTitle")}.</strong> {t("print.unknownText")}</p>
           )}
-          {!result.productId && result.searchQuery && status?.lookup && !result.demo && <Lookup q={result.searchQuery} specs={result.specs ?? []} deviceType={result.deviceType ?? ""} asked={priceNum} preset={result.lookup as LookupData | null | undefined} />}
+          {!productId && (result.candidates?.length ?? 0) > 0 && (
+            <div className="panel" style={{ marginTop: 12 }}>
+              <strong>{t("lookup.pickOne")}</strong>
+              <div className="chips" style={{ marginTop: 8 }}>
+                {result.candidates!.map((c) => (
+                  <button key={c.id} className="chip" onClick={() => setProductId(c.id)}>{c.label}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          {!productId && result.searchQuery && status?.lookup && !result.demo && !(result.candidates?.length) && (
+            <Lookup
+              q={result.searchQuery}
+              specs={result.specs ?? []}
+              deviceType={result.deviceType ?? ""}
+              asked={priceNum}
+              preset={result.lookup as LookupData | null | undefined}
+              options={result.modelOptions ?? []}
+              needsModel={result.needsModel === true}
+              onCatalog={(id) => {
+                setProductId(id);
+                setCondition("");
+              }}
+            />
+          )}
           {result.notes && <p className="hint">{result.notes}</p>}
           {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
           {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}

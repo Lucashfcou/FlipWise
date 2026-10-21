@@ -34,6 +34,14 @@ export interface CaptureResult {
   searchQuery?: string;
   /** Especificações que mudam o preço (processador, RAM, armazenamento...), em formato curto. */
   specs?: string[];
+  /** Só se sabe a linha do produto (ex.: "Ryzen 7"): o app pergunta o modelo. */
+  needsModel?: boolean;
+  /** Modelos prováveis, do conhecimento da IA (não vêm do eBay). */
+  modelOptions?: string[];
+  /** Vários produtos do catálogo possíveis (ex.: capacidades diferentes): o app pergunta qual. */
+  candidates?: { id: string; label: string }[];
+  /** Estado genérico lido (A/B/C/P), para produtos fora do catálogo. */
+  genericCondition?: "A" | "B" | "C" | "P";
   /** Preços do eBay para produtos fora do catálogo, já calculados no servidor (pode ser null: sem anúncios fiáveis). */
   lookup?: LookupResult | null;
   /** Tipo de aparelho (laptop, headphones, tablet...), para achar a categoria no eBay. */
