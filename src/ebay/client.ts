@@ -107,10 +107,6 @@ export async function suggestCategory(token: string, marketplace: MarketplaceId,
     tree = d.categoryTreeId;
     treeIds.set(marketplace, tree);
   }
-  const r = await fetchImpl(`https://api.ebay.com/commerce/taxonomy/v1/category_tree/${tree}/get_category_suggestions?q=${encodeURIComponent(`${hint} ${query}`.trim())}`, { headers });
-  if (!r.ok) return null;
-  const d = (await r.json()) as { categorySuggestions?: { category?: { categoryId?: string; categoryName?: string } }[] };
-  // Categorias genéricas ("Otros", "Other"...) não ajudam: usa a primeira específica.
   const generic = /\b(otros?|other|varios|various|miscellaneous|sonstige|altri|autres?|diversos)\b/i;
   const parts = /(bater[ií]a|battery|cargador|charger|funda|case|bolsa|bag|accesorio|accessor|repuesto|spare|pieza|part|cable|adaptador|soporte|protector|pantalla|screen|teclado|keyboard)/i;
   const DEVICE: Record<string, RegExp> = {
@@ -124,11 +120,25 @@ export async function suggestCategory(token: string, marketplace: MarketplaceId,
     console: /(consola|console)/i,
     speaker: /(altavoz|speaker)/i,
     "graphics card": /(gr[aá]fica|graphics|video\s?card)/i,
+    cpu: /(cpu|procesador|processor)/i,
+    processor: /(cpu|procesador|processor)/i,
+    ssd: /(disco|ssd|hdd|drive|almacenamiento)/i,
+    "hard drive": /(disco|ssd|hdd|drive|almacenamiento)/i,
+    ram: /(memoria|\bram\b)/i,
+    monitor: /monitor/i,
+    motherboard: /(placa\s?base|motherboard)/i,
   };
-  const cats = (d.categorySuggestions ?? []).map((x) => x.category).filter((x): x is { categoryId?: string; categoryName?: string } => Boolean(x?.categoryId));
   const wanted = DEVICE[hint.toLowerCase().trim()];
-  const pick =
-    (wanted && cats.find((x) => wanted.test(x.categoryName ?? "") && !parts.test(x.categoryName ?? ""))) ||
-    cats.find((x) => !generic.test(x.categoryName ?? "") && !parts.test(x.categoryName ?? ""));
-  return pick?.categoryId ? { id: pick.categoryId, name: pick.categoryName ?? "" } : null;
+  // Tipo de aparelho desconhecido: sem categoria (uma categoria errada esconde os anúncios certos).
+  if (!wanted) return null;
+  const brand = query.split(/\s+/)[0] ?? "";
+  for (const text of [`${hint} ${query}`.trim(), `${hint} ${brand}`.trim(), hint]) {
+    const r = await fetchImpl(`https://api.ebay.com/commerce/taxonomy/v1/category_tree/${tree}/get_category_suggestions?q=${encodeURIComponent(text)}`, { headers });
+    if (!r.ok) continue;
+    const d = (await r.json()) as { categorySuggestions?: { category?: { categoryId?: string; categoryName?: string } }[] };
+    const cats = (d.categorySuggestions ?? []).map((x) => x.category).filter((x): x is { categoryId?: string; categoryName?: string } => Boolean(x?.categoryId));
+    const pick = cats.find((x) => wanted.test(x.categoryName ?? "") && !parts.test(x.categoryName ?? "") && !generic.test(x.categoryName ?? ""));
+    if (pick?.categoryId) return { id: pick.categoryId, name: pick.categoryName ?? "" };
+  }
+  return null;
 }

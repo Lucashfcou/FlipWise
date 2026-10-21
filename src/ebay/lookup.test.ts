@@ -46,3 +46,14 @@ describe("busca fora do catálogo: especificações", () => {
     expect(cleanSpecs(["i7", " 8 GB ", "x", "<b>", "256GB", 5])).toEqual(["i7", "8GB", "256GB"]);
   });
 });
+
+describe("busca fora do catálogo: código do modelo", () => {
+  it("5700X não casa com 5700X3D nem com 5700G", () => {
+    const q = lookupProductQuery("AMD Ryzen 7 5700X");
+    const ok = (title: string) => q.must.every((m) => m.test(title));
+    expect(ok("Procesador AMD Ryzen 7 5700X CPU de escritorio")).toBe(true);
+    expect(lookupProductQuery("Ryzen 7 5700X").must.every((m) => m.test("CPU Ryzen 7 5700X, AM4"))).toBe(true);
+    expect(ok("AMD Ryzen 7 5700X3D 8 núcleos")).toBe(false);
+    expect(ok("AMD Ryzen 7 5700G")).toBe(false);
+  });
+});

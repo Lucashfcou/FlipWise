@@ -1,4 +1,5 @@
 import type { Condition } from "../domain/types";
+import type { LookupResult } from "../ebay/lookup";
 
 export type ImageType = "anuncio" | "foto_sem_texto" | "outro";
 
@@ -33,6 +34,8 @@ export interface CaptureResult {
   searchQuery?: string;
   /** Especificações que mudam o preço (processador, RAM, armazenamento...), em formato curto. */
   specs?: string[];
+  /** Preços do eBay para produtos fora do catálogo, já calculados no servidor (pode ser null: sem anúncios fiáveis). */
+  lookup?: LookupResult | null;
   /** Tipo de aparelho (laptop, headphones, tablet...), para achar a categoria no eBay. */
   deviceType?: string;
   /** true quando é só um exemplo de demonstração, sem ler nenhuma imagem. */

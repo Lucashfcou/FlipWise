@@ -20,10 +20,14 @@ export interface PrintPick {
 const eur = (n: number) => `${Math.round(n)} €`;
 
 /** Produto fora do catálogo: pesquisa o nome no eBay e dá o mesmo veredito do catálogo, com a base da comparação e um aviso. */
-function Lookup({ q, specs, deviceType, asked }: { q: string; specs: string[]; deviceType: string; asked: number | null }) {
+function Lookup({ q, specs, deviceType, asked, preset }: { q: string; specs: string[]; deviceType: string; asked: number | null; preset?: LookupData | null }) {
   const { settings } = useApp();
-  const [state, setState] = useState<"loading" | "none" | "error" | LookupData>("loading");
+  const [state, setState] = useState<"loading" | "none" | "error" | LookupData>(preset === undefined ? "loading" : preset ?? "none");
   useEffect(() => {
+    if (preset !== undefined) {
+      setState(preset ?? "none");
+      return;
+    }
     let alive = true;
     setState("loading");
     lookupPrice(q, specs, deviceType)
@@ -32,7 +36,7 @@ function Lookup({ q, specs, deviceType, asked }: { q: string; specs: string[]; d
     return () => {
       alive = false;
     };
-  }, [q, specs.join(","), deviceType]);
+  }, [q, specs.join(","), deviceType, preset]);
 
   const data = typeof state === "object" ? state : null;
   const price = data
@@ -230,7 +234,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
           {!result.productId && (
             <p className="note"><strong>{t("print.unknownTitle")}.</strong> {t("print.unknownText")}</p>
           )}
-          {!result.productId && result.searchQuery && status?.lookup && !result.demo && <Lookup q={result.searchQuery} specs={result.specs ?? []} deviceType={result.deviceType ?? ""} asked={priceNum} />}
+          {!result.productId && result.searchQuery && status?.lookup && !result.demo && <Lookup q={result.searchQuery} specs={result.specs ?? []} deviceType={result.deviceType ?? ""} asked={priceNum} preset={result.lookup as LookupData | null | undefined} />}
           {result.notes && <p className="hint">{result.notes}</p>}
           {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
           {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}

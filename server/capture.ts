@@ -5,8 +5,9 @@ import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { EbayError, MARKETPLACES, getToken } from "../src/ebay/client";
 import type { MarketplaceId } from "../src/ebay/client";
-import { cleanDeviceType, cleanLookupQuery, cleanSpecs, runLookup } from "../src/ebay/lookup";
-import { DEFAULT_MODEL, MAX_IMAGE_BYTES, buildVisionRequest, parseVisionResponse } from "../src/capture/vision";
+import { cleanDeviceType, cleanLookupQuery, cleanSpecs, lookupConfident, lookupScore, runLookup } from "../src/ebay/lookup";
+import type { LookupResult } from "../src/ebay/lookup";
+import { DEFAULT_MODEL, MAX_IMAGE_BYTES, buildRetryRequest, buildVisionRequest, parseRetryResponse, parseVisionResponse } from "../src/capture/vision";
 
 // As chaves vêm do ficheiro .env (fora do git), se existir.
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -28,6 +29,19 @@ let lookupsToday = 0;
 let ebayToken: { value: string; until: number } | null = null;
 const lookupCache = new Map<string, { at: number; result: unknown }>();
 const CACHE_MS = 6 * 60 * 60 * 1000;
+
+/** Busca com cache de 6 h e limite diário. */
+async function doLookup(query: string, specs: string[], deviceType: string): Promise<LookupResult | null> {
+  const key = `${query.toLowerCase()}|${specs.join(",").toLowerCase()}|${deviceType.toLowerCase()}`;
+  const hit = lookupCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.result as LookupResult | null;
+  if (lookupsToday >= LOOKUP_DAILY_LIMIT) throw new Error(`Limite diário de ${LOOKUP_DAILY_LIMIT} buscas atingido.`);
+  lookupsToday++;
+  const result = await runLookup(await tokenForLookup(), LOOKUP_SITE, query, { specs, deviceType });
+  lookupCache.set(key, { at: Date.now(), result });
+  console.log(`[busca] "${query}" ${specs.join("/")} -> ${result ? result.n + " anúncios, mediana " + result.median + " (" + result.basis + ", " + (result.category ?? "sem categoria") + ", " + result.reliability + ")" : "sem resultado fiável"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
+  return result;
+}
 
 async function tokenForLookup(): Promise<string> {
   if (ebayToken && ebayToken.until > Date.now() + 60_000) return ebayToken.value;
@@ -108,14 +122,7 @@ const server = createServer(async (req, res) => {
       if (!query) return send(res, 400, { error: "Nome do produto inválido." });
       const specs = cleanSpecs(rawSpecs);
       const deviceType = cleanDeviceType(rawType);
-      const key = `${query.toLowerCase()}|${specs.join(",").toLowerCase()}|${deviceType.toLowerCase()}`;
-      const hit = lookupCache.get(key);
-      if (hit && Date.now() - hit.at < CACHE_MS) return send(res, 200, { result: hit.result, cached: true });
-      if (lookupsToday >= LOOKUP_DAILY_LIMIT) return send(res, 429, { error: `Limite diário de ${LOOKUP_DAILY_LIMIT} buscas atingido.` });
-      lookupsToday++;
-      const result = await runLookup(await tokenForLookup(), LOOKUP_SITE, query, { specs, deviceType });
-      lookupCache.set(key, { at: Date.now(), result });
-      console.log(`[busca] "${query}" -> ${result ? result.n + " anúncios, mediana " + result.median + " (" + result.basis + ", " + (result.category ?? "sem categoria") + ", " + result.reliability + ")" : "poucos anúncios"} (hoje ${lookupsToday}/${LOOKUP_DAILY_LIMIT})`);
+      const result = await doLookup(query, specs, deviceType);
       return send(res, 200, { result });
     } catch (e) {
       if (e instanceof EbayError) console.error(`eBay: ${e.message}`);
@@ -149,7 +156,38 @@ const server = createServer(async (req, res) => {
         console.error(`Claude API ${api.status}: ${(await api.text()).slice(0, 300)}`);
         return send(res, 502, { error: "O serviço de leitura falhou. Tenta outra vez." });
       }
-      const { result, usage } = parseVisionResponse(await api.json());
+      let { result, usage } = parseVisionResponse(await api.json());
+      if (LOOKUP_ON && !result.productId && result.searchQuery) {
+        try {
+          let best = { q: result.searchQuery, specs: result.specs ?? [], type: result.deviceType ?? "", lookup: await doLookup(result.searchQuery, result.specs ?? [], result.deviceType ?? "") };
+          if (!lookupConfident(best.lookup) && usedToday < DAILY_LIMIT) {
+            const tried = [best.q];
+            usedToday++;
+            const retry = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
+              body: JSON.stringify(buildRetryRequest(image, tried, MODEL, lang === "en" ? "en" : "pt")),
+            });
+            if (retry.ok) {
+              const { candidates, usage: u2 } = parseRetryResponse(await retry.json());
+              console.log(`[captura] segunda leitura entrada=${u2.input} saída=${u2.output} candidatos=${candidates.map((c) => c.searchQuery).join(" | ")}`);
+              for (const c of candidates) {
+                if (tried.some((x) => x.toLowerCase() === c.searchQuery.toLowerCase())) continue;
+                tried.push(c.searchQuery);
+                const l = await doLookup(c.searchQuery, c.specs.length ? c.specs : best.specs, c.deviceType || best.type);
+                if (lookupScore(l) > lookupScore(best.lookup)) best = { q: c.searchQuery, specs: c.specs.length ? c.specs : best.specs, type: c.deviceType || best.type, lookup: l };
+                if (lookupConfident(best.lookup)) break;
+              }
+            } else {
+              usedToday--;
+              console.error(`Claude API (segunda leitura) ${retry.status}`);
+            }
+          }
+          result = { ...result, searchQuery: best.q, specs: best.specs, deviceType: best.type, lookup: best.lookup };
+        } catch (e) {
+          console.error(`busca: ${e instanceof Error ? e.message : e}`);
+        }
+      }
       // Para medir o custo real por leitura: tokens de entrada e saída de cada pedido.
       console.log(`[captura] modelo=${MODEL} entrada=${usage.input} saída=${usage.output} hoje=${usedToday}/${DAILY_LIMIT}`);
       return send(res, 200, { result, usage, usedToday, dailyLimit: DAILY_LIMIT });
