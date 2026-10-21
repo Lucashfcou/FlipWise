@@ -50,9 +50,9 @@ describe("parseVisionResponse", () => {
   });
 
   it("produto fora do catálogo fica com o nome para a busca no eBay, sem erro", () => {
-    const { result } = parseVisionResponse(reply(ad({ searchQuery: "Lenovo IdeaPad S145-15IWL", title: "Portátil Lenovo", price: 185, specs: ["i7", "8GB"], deviceType: "laptop" })));
+    const { result } = parseVisionResponse(reply(ad({ searchQuery: "Foobar Zzyzx X9000 Pro", title: "Portátil Foobar", price: 185, specs: ["i7", "8GB"], deviceType: "laptop" })));
     expect(result.productId).toBeNull();
-    expect(result.searchQuery).toBe("Lenovo IdeaPad S145-15IWL");
+    expect(result.searchQuery).toBe("Foobar Zzyzx X9000 Pro");
     expect(result.specs).toEqual(["i7", "8GB"]);
     expect(result.problems.map((p) => p.code)).not.toContain("SEM_PRODUTO");
   });

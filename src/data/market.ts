@@ -87,9 +87,9 @@ export interface EbayFile {
 }
 
 /** Estado assumido para anúncios do eBay ("usado"): consolas e telemóveis B, comandos sem drift, jogos completos. */
-const EBAY_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo", shoe: "B" } as const;
+const EBAY_CONDITION = { console: "B", phone: "B", tablet: "B", laptop: "B", watch: "B", audio: "B", camera: "B", gpu: "B", controller: "sem-drift", game: "completo", shoe: "B", cpu: "B", storage: "B", monitor: "B", peripheral: "B", desktop: "B" } as const;
 /** Anúncios "para peças ou sem funcionar" do eBay. Jogos não têm este estado. */
-const EBAY_PARTS_CONDITION = { console: "P", phone: "P", tablet: "P", laptop: "P", watch: "P", audio: "P", camera: "P", gpu: "P", controller: "defeito" } as const;
+const EBAY_PARTS_CONDITION = { console: "P", phone: "P", tablet: "P", laptop: "P", watch: "P", audio: "P", camera: "P", gpu: "P", controller: "defeito", cpu: "P", storage: "P", monitor: "P", peripheral: "P", desktop: "P" } as const;
 
 /** Preço de referência do CeX (piso e teto) para um produto e estado, quando existir. */
 export function referenceFor(productId: string, condition: Condition): { floor?: number; ceiling?: number } {

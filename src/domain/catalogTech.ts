@@ -17,6 +17,12 @@ export interface TechOptions {
   min?: number;
   /** Sem consulta: os anúncios "usados" saem misturados (PCs, artigos novos) e davam preços sem sentido. */
   skip?: boolean;
+  /** Catálogo gerado por listas: o filtro sai do nome (código do modelo inteiro, capacidades, sem peças). */
+  auto?: boolean;
+  /** Tipo de aparelho ("laptop", "cpu"...): pesquisa dentro da categoria certa do eBay. */
+  type?: string;
+  /** Capacidades que o título tem de ter ("128GB"). */
+  specs?: string[];
 }
 export interface TechSeed {
   id: string;

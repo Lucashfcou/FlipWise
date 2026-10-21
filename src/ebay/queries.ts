@@ -1,24 +1,13 @@
 import { PRODUCTS } from "../domain/catalog";
+import { MORE_ALL } from "../domain/catalogMore";
 import { SHOES } from "../domain/catalogShoes";
+import { lookupProductQuery, specMatcher } from "./titleMatch";
 import { TECH } from "../domain/catalogTech";
 import { createRulesClassifier, rulesClassifier } from "../pipeline/rulesClassifier";
 import type { Classifier, Listing, Verdict } from "../pipeline/types";
+import type { Matcher, ProductQuery } from "./titleMatch";
 
-/** Qualquer coisa com test(): uma expressão regular ou uma regra feita em código. */
-export interface Matcher {
-  test(s: string): boolean;
-}
-
-export interface ProductQuery {
-  /** Texto de pesquisa no eBay. */
-  q: string;
-  /** O título tem de cumprir TODAS. Evita outro modelo ou capacidade. */
-  must: Matcher[];
-  /** O título não pode cumprir NENHUMA. */
-  mustNot: Matcher[];
-  /** Piso de preço em euros, quando o catálogo o define. */
-  min?: number;
-}
+export type { Matcher, ProductQuery } from "./titleMatch";
 
 /** Acessórios em PT, ES, EN, DE, FR e IT. */
 const ACCESSORY_WORDS =
@@ -122,13 +111,17 @@ function gameQuery(productId: string): ProductQuery | undefined {
   };
 }
 
-const TECH_BY_ID = new Map([...TECH, ...SHOES].map((x) => [x.id, x]));
+const TECH_BY_ID = new Map([...TECH, ...SHOES, ...MORE_ALL].map((x) => [x.id, x]));
 
 /** Produtos de catalogTech: o título tem de cumprir o que está definido; acessórios e lotes saem sempre. */
 function techQuery(productId: string): ProductQuery | undefined {
   const seed = TECH_BY_ID.get(productId);
   if (!seed || seed.opts.skip) return undefined;
-  const { q, must = [], not = [], min } = seed.opts;
+  const { q, must = [], not = [], min, auto, specs = [] } = seed.opts;
+  if (auto) {
+    const base = lookupProductQuery(q ?? `${seed.brand} ${seed.name}`);
+    return { q: base.q, must: [...base.must, ...specs.map(specMatcher)], mustNot: [...base.mustNot, ...not, ACCESSORY_WORDS, BUNDLE_WORDS], min };
+  }
   return {
     q: q ?? `${seed.name} ${seed.variant}`.trim(),
     must,

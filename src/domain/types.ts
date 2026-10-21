@@ -1,4 +1,4 @@
-export type Category = "console" | "phone" | "tablet" | "laptop" | "watch" | "audio" | "camera" | "gpu" | "controller" | "game" | "shoe";
+export type Category = "console" | "phone" | "tablet" | "laptop" | "watch" | "audio" | "camera" | "gpu" | "controller" | "game" | "shoe" | "cpu" | "storage" | "monitor" | "peripheral" | "desktop";
 
 export type Condition =
   | "A" | "B" | "C" | "P"

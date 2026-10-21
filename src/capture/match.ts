@@ -35,9 +35,6 @@ function capacities(s: string): Set<string> {
   return out;
 }
 
-/** Junta números e letras separados ("S21" fica; "5700 X" -> "5700x") para comparar códigos de modelo. */
-const squash = (s: string) => norm(s).replace(/[^a-z0-9]/g, "");
-
 interface Indexed {
   p: Product;
   nameTokens: string[];
@@ -68,11 +65,13 @@ export interface CatalogMatch {
  */
 export function matchCatalog(query: string, specs: string[] = []): CatalogMatch {
   const qw = new Set(words(query));
-  const qsquash = squash(query);
   const qcaps = capacities(`${query} ${specs.join(" ")}`);
   if (qw.size === 0) return { options: [] };
 
-  const hit = (tok: string) => qw.has(tok) || (tok.length >= 4 && qsquash.includes(tok));
+  // Palavra inteira, ou duas palavras seguidas coladas ("joy con" -> "joycon"). Nada de pedaços de palavra ("sense" em "dualsense").
+  const ordered = words(query);
+  for (let k = 0; k + 1 < ordered.length; k++) qw.add(ordered[k] + ordered[k + 1]);
+  const hit = (tok: string) => qw.has(tok);
 
   let best = 0;
   let cands: Indexed[] = [];

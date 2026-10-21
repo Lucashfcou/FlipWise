@@ -14,7 +14,7 @@ describe("casar o nome lido com o catálogo", () => {
   it("telemóveis: o modelo mais específico ganha e a capacidade escolhe a variante", () => {
     expect(id("Samsung Galaxy S21 Ultra 256GB")).toBe("galaxy-s21-ultra-256");
     expect(id("Samsung Galaxy S21", ["128GB"])).toBe("galaxy-s21-128");
-    expect(id("Samsung Galaxy S21 Ultra")).toBe("galaxy-s21-ultra-256");
+    expect(matchCatalog("Samsung Galaxy S21 Ultra").options.length).toBeGreaterThan(1);
   });
 
   it("sem capacidade e com várias no catálogo devolve opções, não adivinha", () => {
@@ -23,7 +23,7 @@ describe("casar o nome lido com o catálogo", () => {
   });
 
   it("produto que não existe no catálogo devolve nada", () => {
-    const m = matchCatalog("Lenovo IdeaPad S145-15IWL");
+    const m = matchCatalog("Foobar Zzyzx X9000 Pro");
     expect(m.exact).toBeUndefined();
     expect(m.options).toHaveLength(0);
   });

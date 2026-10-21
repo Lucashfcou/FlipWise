@@ -1,5 +1,6 @@
 import { t } from "../i18n";
 import type { Key } from "../i18n";
+import { MORE } from "./catalogMore";
 import { SHOES } from "./catalogShoes";
 import { TECH } from "./catalogTech";
 import type { Category, Condition, Product } from "./types";
@@ -45,6 +46,11 @@ export const CONDITIONS: Record<Category, { id: Condition; label: string; hint: 
     cond("drift-leve", "cond.drift-leve", "cond.drift-leve.hint"),
     cond("defeito", "cond.defeito", "cond.defeito.hint"),
   ],
+  cpu: DEVICE_CONDITIONS,
+  storage: DEVICE_CONDITIONS,
+  monitor: DEVICE_CONDITIONS,
+  peripheral: DEVICE_CONDITIONS,
+  desktop: DEVICE_CONDITIONS,
   shoe: [
     cond("A", "cond.shoeA", "cond.shoeA.hint"),
     cond("B", "cond.shoeB", "cond.shoeB.hint"),
@@ -90,6 +96,21 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   },
   get shoe() {
     return t("cat.shoe");
+  },
+  get cpu() {
+    return t("cat.cpu");
+  },
+  get storage() {
+    return t("cat.storage");
+  },
+  get monitor() {
+    return t("cat.monitor");
+  },
+  get peripheral() {
+    return t("cat.peripheral");
+  },
+  get desktop() {
+    return t("cat.desktop");
   },
 };
 
@@ -223,7 +244,7 @@ function gameSeeds(titles: string[], platform: Platform, suffix: string): Seed[]
   return titles.map((name) => ({ id: `game-${slug(name)}${suffix}`, category: "game" as const, brand: platform, name, variant: platform }));
 }
 
-const techSeeds: Seed[] = [...TECH, ...SHOES].map(({ id, category, brand, name, variant }) => ({ id, category, brand, name, variant }));
+const techSeeds: Seed[] = [...TECH, ...SHOES, ...MORE].map(({ id, category, brand, name, variant }) => ({ id, category, brand, name, variant }));
 
 const SEEDS: Seed[] = [
   ...consoleSeeds,
@@ -235,7 +256,18 @@ const SEEDS: Seed[] = [
   ...gameSeeds(PS5_GAMES, "PS5", "-ps5"),
 ];
 
-export const PRODUCTS: Product[] = SEEDS.map(({ id, category, brand, name, variant }) => ({
+/** Mesmo nome e variante já existente: fica o primeiro (os escritos à mão vêm antes dos gerados por listas). */
+const seenKeys = new Set<string>();
+const seenIds = new Set<string>();
+const UNIQUE_SEEDS = SEEDS.filter((s) => {
+  const k = `${s.name} ${s.variant}`.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (seenKeys.has(k) || seenIds.has(s.id)) return false;
+  seenKeys.add(k);
+  seenIds.add(s.id);
+  return true;
+});
+
+export const PRODUCTS: Product[] = UNIQUE_SEEDS.map(({ id, category, brand, name, variant }) => ({
   id,
   category,
   brand,
