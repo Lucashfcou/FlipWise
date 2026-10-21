@@ -39,17 +39,25 @@ function capacities(s: string): Set<string> {
 interface Indexed {
   p: Product;
   nameTokens: string[];
+  brandTokens: string[];
+  /** Nome genérico ("7", "One", "Go"): só casa se a marca também aparecer no texto. */
+  weak: boolean;
   caps: Set<string>;
 }
 
 let INDEX: Indexed[] | null = null;
 function index(): Indexed[] {
   if (INDEX) return INDEX;
-  INDEX = PRODUCTS.map((p) => ({
-    p,
-    nameTokens: words(p.name).filter((w) => !STOP.has(w) && w.length > 0),
-    caps: capacities(p.variant + " " + p.name),
-  }));
+  INDEX = PRODUCTS.map((p) => {
+    const nameTokens = words(p.name).filter((w) => !STOP.has(w) && w.length > 0);
+    return {
+      p,
+      nameTokens,
+      brandTokens: words(p.brand),
+      weak: !nameTokens.some((t) => t.length >= 4 || (/\d/.test(t) && /[a-z]/.test(t))),
+      caps: capacities(p.variant + " " + p.name),
+    };
+  });
   return INDEX;
 }
 
@@ -79,6 +87,7 @@ export function matchCatalog(query: string, specs: string[] = []): CatalogMatch 
   for (const ix of index()) {
     if (ix.nameTokens.length === 0) continue;
     if (!ix.nameTokens.every(hit)) continue;
+    if (ix.weak && !ix.brandTokens.every(hit)) continue;
     const score = ix.nameTokens.length;
     if (score > best) {
       best = score;

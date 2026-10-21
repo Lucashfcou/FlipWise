@@ -26,6 +26,11 @@ describe("casar o nome lido com o catálogo", () => {
     expect(matchCatalog("Apple Watch Series 8 45mm").exact?.id).toBe("apple-watch-s8-45");
   });
 
+  it("nomes genéricos como \"7\" só casam com a marca no texto", () => {
+    expect(matchCatalog("Processador Ryzen 7 AM4").exact).toBeUndefined();
+    expect(matchCatalog("Processador Ryzen 7 AM4").options).toHaveLength(0);
+  });
+
   it("produto que não existe no catálogo devolve nada", () => {
     const m = matchCatalog("Foobar Zzyzx X9000 Pro");
     expect(m.exact).toBeUndefined();
