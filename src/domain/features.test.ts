@@ -124,3 +124,13 @@ describe("taxSummary e salesCsv", () => {
     expect(lines[1]).toContain("46,00");
   });
 });
+
+describe("veredicto no limite", () => {
+  it("compra colada ao máximo avisa que está no limite", async () => {
+    const { decide } = await import("../ui/Verdict");
+    const price = { low: 20, typical: 25, high: 28, maxBuy: 20, firm: true, confidence: "media", count: 6, derived: false } as const;
+    expect(decide(price, 19)?.title).toBe("Buy, but tight");
+    expect(decide(price, 12)?.title).toBe("Buy");
+    expect(decide(price, 22)?.title).toBe("Negotiate");
+  });
+});

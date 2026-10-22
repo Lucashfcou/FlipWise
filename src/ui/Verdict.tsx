@@ -7,9 +7,16 @@ import { money, pct } from "../format";
 
 type Light = "go" | "maybe" | "stop";
 
+/** A partir desta fração do máximo, a compra já está "no limite". */
+export const TIGHT_FROM = 0.85;
+
 export function decide(price: PriceEstimate, asked: number | null): { light: Light; title: string; text: string } | null {
   if (asked === null || !Number.isFinite(asked) || asked <= 0 || price.count === 0) return null;
   if (asked <= price.maxBuy) {
+    // Colado ao máximo: serve para ficar ou usar, mas a revenda rende pouco e qualquer imprevisto come o lucro.
+    if (asked >= price.maxBuy * TIGHT_FROM) {
+      return { light: "go", title: t("decide.tight"), text: t("decide.tightText", { amount: money(price.maxBuy - asked) }) };
+    }
     return { light: "go", title: t("decide.buy"), text: t("decide.buyText", { amount: money(price.maxBuy - asked) }) };
   }
   if (price.safeBuy !== undefined && asked <= price.safeBuy) {
