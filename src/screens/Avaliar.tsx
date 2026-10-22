@@ -80,7 +80,7 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
     pushRecent(id);
     setProductId(id);
     const conds = CONDITIONS[p.category];
-    setCondition(conds[Math.min(1, conds.length - 1)].id);
+    setCondition(conds[0].id);
     setQuery("");
     setSaved(false);
   }

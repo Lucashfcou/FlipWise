@@ -46,7 +46,7 @@ describe("parseVisionResponse", () => {
   it("o estado da IA é traduzido para os estados da categoria (comandos)", () => {
     const { result } = parseVisionResponse(reply(ad({ searchQuery: "Sony DualSense", condition: "C" })));
     expect(result.productId).toBe("dualsense");
-    expect(result.condition).toBe("drift-leve");
+    expect(result.condition).toBe("sem-drift");
   });
 
   it("produto fora do catálogo fica com o nome para a busca no eBay, sem erro", () => {

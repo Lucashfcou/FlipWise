@@ -33,11 +33,11 @@ describe("idiomas", () => {
 
   it("categorias, estados e variantes acompanham o idioma", () => {
     expect(CATEGORY_LABEL.console).toBe("Consoles");
-    expect(CONDITIONS.console[0].label).toBe("A · like new");
+    expect(CONDITIONS.console[0].label).toBe("Used · good");
     expect(variantLabel("disc")).toBe("disc");
     setLang("pt");
     expect(CATEGORY_LABEL.console).toBe("Consolas");
-    expect(CONDITIONS.console[0].label).toBe("A · como novo");
+    expect(CONDITIONS.console[0].label).toBe("Usado · bom");
     expect(variantLabel("disc")).toBe("com leitor");
     const ps5 = PRODUCTS.find((p) => p.id === "ps5-disc")!;
     expect(productLabel(ps5)).toBe("PlayStation 5 com leitor");

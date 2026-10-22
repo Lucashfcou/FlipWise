@@ -73,28 +73,28 @@ var EN = {
   "lookup.warnMedium": "Based on used listings on eBay (asking prices, not sale prices). Check the exact version before buying.",
   "cond.shoeA": "A \xB7 new / unworn",
   "cond.shoeA.hint": "Never worn, ideally with the box and tags.",
-  "cond.shoeB": "B \xB7 lightly worn",
+  "cond.shoeB": "Used \xB7 good",
   "cond.shoeB.hint": "Worn a few times, clean, soles and upper in good shape.",
-  "cond.shoeC": "C \xB7 worn",
+  "cond.shoeC": "Worn / defective",
   "cond.shoeC.hint": "Clear wear: creased, scuffed or soles worn down.",
   "cond.A": "A \xB7 like new",
   "cond.A.hint": "Complete, boxed with accessories, no marks.",
-  "cond.B": "B \xB7 good",
-  "cond.B.hint": "Light marks, no box or one accessory missing.",
+  "cond.B": "Used \xB7 good",
+  "cond.B.hint": "Working, light marks. Box or an accessory may be missing.",
   "cond.C": "C \xB7 worn",
   "cond.C.hint": "Visible wear or missing accessories.",
-  "cond.P": "P \xB7 for parts",
-  "cond.P.hint": "Does not turn on or faulty.",
+  "cond.P": "For parts / faulty",
+  "cond.P.hint": "Does not turn on or has a fault. Priced as parts.",
   "cond.phoneA.hint": "No scratches, battery above 90%, ideally boxed.",
-  "cond.phoneB.hint": "Light marks, battery between 80% and 90%.",
+  "cond.phoneB.hint": "Works fully. Light marks, battery around 80% or better.",
   "cond.phoneC.hint": "Visible scratches or battery below 80%.",
-  "cond.phoneP.hint": "Cracked screen, dead or locked.",
-  "cond.sem-drift": "No drift",
+  "cond.phoneP.hint": "Cracked screen, dead, locked or battery failing. Priced as parts.",
+  "cond.sem-drift": "Used \xB7 no drift",
   "cond.sem-drift.hint": "Sticks and buttons work well.",
   "cond.drift-leve": "Light drift",
   "cond.drift-leve.hint": "Small drift, still usable.",
   "cond.defeito": "Faulty",
-  "cond.defeito.hint": "Button, battery or heavy drift problems.",
+  "cond.defeito.hint": "Any drift, button or battery problem. Priced as parts.",
   "cond.lacrado": "Sealed",
   "cond.lacrado.hint": "Unopened.",
   "cond.completo": "Complete",
@@ -410,28 +410,28 @@ var PT = {
   "lookup.warnMedium": "Com base em an\xFAncios usados do eBay (pre\xE7os pedidos, n\xE3o de venda). Confirma a vers\xE3o exata antes de comprar.",
   "cond.shoeA": "A \xB7 novo / sem uso",
   "cond.shoeA.hint": "Nunca usado, de prefer\xEAncia com caixa e etiquetas.",
-  "cond.shoeB": "B \xB7 pouco usado",
+  "cond.shoeB": "Usado \xB7 bom",
   "cond.shoeB.hint": "Usado poucas vezes, limpo, sola e cabedal em bom estado.",
-  "cond.shoeC": "C \xB7 gasto",
+  "cond.shoeC": "Gasto / com defeito",
   "cond.shoeC.hint": "Desgaste claro: vincos, riscos ou sola gasta.",
   "cond.A": "A \xB7 como novo",
   "cond.A.hint": "Completo, caixa e acess\xF3rios, sem marcas.",
-  "cond.B": "B \xB7 bom",
-  "cond.B.hint": "Marcas leves, sem caixa ou com um acess\xF3rio a menos.",
+  "cond.B": "Usado \xB7 bom",
+  "cond.B.hint": "A funcionar, marcas leves. Pode faltar a caixa ou um acess\xF3rio.",
   "cond.C": "C \xB7 gasto",
   "cond.C.hint": "Desgaste vis\xEDvel ou falta de acess\xF3rios.",
-  "cond.P": "P \xB7 para pe\xE7as",
-  "cond.P.hint": "N\xE3o liga ou com avaria.",
+  "cond.P": "Para pe\xE7as / com defeito",
+  "cond.P.hint": "N\xE3o liga ou tem avaria. Pre\xE7o de pe\xE7as.",
   "cond.phoneA.hint": "Sem riscos, bateria acima de 90%, de prefer\xEAncia com caixa.",
-  "cond.phoneB.hint": "Marcas leves, bateria entre 80% e 90%.",
+  "cond.phoneB.hint": "Funciona tudo. Marcas leves, bateria \xE0 volta de 80% ou melhor.",
   "cond.phoneC.hint": "Riscos vis\xEDveis ou bateria abaixo de 80%.",
-  "cond.phoneP.hint": "Ecr\xE3 partido, n\xE3o liga ou bloqueado.",
-  "cond.sem-drift": "Sem drift",
+  "cond.phoneP.hint": "Ecr\xE3 partido, n\xE3o liga, bloqueado ou bateria a falhar. Pre\xE7o de pe\xE7as.",
+  "cond.sem-drift": "Usado \xB7 sem drift",
   "cond.sem-drift.hint": "Anal\xF3gicos e bot\xF5es a funcionar bem.",
   "cond.drift-leve": "Drift leve",
   "cond.drift-leve.hint": "Pequeno desvio, ainda us\xE1vel.",
   "cond.defeito": "Com defeito",
-  "cond.defeito.hint": "Falha de bot\xE3o, bateria ou drift forte.",
+  "cond.defeito.hint": "Qualquer drift, falha de bot\xE3o ou bateria. Pre\xE7o de pe\xE7as.",
   "cond.lacrado": "Lacrado",
   "cond.lacrado.hint": "Por abrir.",
   "cond.completo": "Completo",
@@ -2914,15 +2914,11 @@ function cond(id, labelKey, hintKey) {
   };
 }
 var DEVICE_CONDITIONS = [
-  cond("A", "cond.A", "cond.A.hint"),
   cond("B", "cond.B", "cond.B.hint"),
-  cond("C", "cond.C", "cond.C.hint"),
   cond("P", "cond.P", "cond.P.hint")
 ];
 var PHONE_CONDITIONS = [
-  cond("A", "cond.A", "cond.phoneA.hint"),
   cond("B", "cond.B", "cond.phoneB.hint"),
-  cond("C", "cond.C", "cond.phoneC.hint"),
   cond("P", "cond.P", "cond.phoneP.hint")
 ];
 var CONDITIONS = {
@@ -2936,7 +2932,6 @@ var CONDITIONS = {
   gpu: DEVICE_CONDITIONS,
   controller: [
     cond("sem-drift", "cond.sem-drift", "cond.sem-drift.hint"),
-    cond("drift-leve", "cond.drift-leve", "cond.drift-leve.hint"),
     cond("defeito", "cond.defeito", "cond.defeito.hint")
   ],
   cpu: DEVICE_CONDITIONS,
@@ -2945,12 +2940,10 @@ var CONDITIONS = {
   peripheral: DEVICE_CONDITIONS,
   desktop: DEVICE_CONDITIONS,
   shoe: [
-    cond("A", "cond.shoeA", "cond.shoeA.hint"),
     cond("B", "cond.shoeB", "cond.shoeB.hint"),
     cond("C", "cond.shoeC", "cond.shoeC.hint")
   ],
   game: [
-    cond("lacrado", "cond.lacrado", "cond.lacrado.hint"),
     cond("completo", "cond.completo", "cond.completo.hint"),
     cond("so-disco", "cond.so-disco", "cond.so-disco.hint")
   ]
@@ -3841,9 +3834,9 @@ function conditionFor(category, generic) {
   if (generic !== "A" && generic !== "B" && generic !== "C" && generic !== "P") return null;
   const valid = CONDITIONS[category];
   if (valid.some((c) => c.id === generic)) return generic;
-  if (category === "controller") return generic === "P" ? "defeito" : generic === "C" ? "drift-leve" : "sem-drift";
-  if (category === "game") return generic === "C" || generic === "P" ? "so-disco" : "completo";
-  return null;
+  if (category === "controller") return generic === "P" ? "defeito" : "sem-drift";
+  if (category === "game") return generic === "P" ? "so-disco" : "completo";
+  return generic === "P" ? "P" : "B";
 }
 function parseVisionResponse(data) {
   const block = data.content?.find((b) => b.type === "tool_use" && b.name === TOOL_NAME);

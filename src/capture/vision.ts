@@ -98,9 +98,9 @@ function conditionFor(category: Category, generic: unknown): Condition | null {
   if (generic !== "A" && generic !== "B" && generic !== "C" && generic !== "P") return null;
   const valid = CONDITIONS[category];
   if (valid.some((c) => c.id === generic)) return generic;
-  if (category === "controller") return generic === "P" ? "defeito" : generic === "C" ? "drift-leve" : "sem-drift";
-  if (category === "game") return generic === "C" || generic === "P" ? "so-disco" : "completo";
-  return null;
+  if (category === "controller") return generic === "P" ? "defeito" : "sem-drift";
+  if (category === "game") return generic === "P" ? "so-disco" : "completo";
+  return generic === "P" ? "P" : "B";
 }
 
 /** Interpreta a resposta da IA e casa o nome com o catálogo (em código). Nada do que a IA escreve entra na app sem esta validação. */

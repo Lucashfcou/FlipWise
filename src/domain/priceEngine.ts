@@ -26,6 +26,16 @@ const HALF_LIFE_DAYS = 60;
 const RECENT_DAYS = 90;
 const DAY_MS = 86_400_000;
 
+/**
+ * Oferta sempre redonda e para baixo (24 -> 20, 77 -> 75): números fáceis de propor e uma folga a favor de quem compra.
+ * Abaixo de 10 € arredonda ao euro; até 100 € ao múltiplo de 5; até 500 € ao de 10; acima, ao de 25.
+ */
+export function friendlyDown(n: number): number {
+  if (n <= 0) return 0;
+  const step = n < 10 ? 1 : n < 100 ? 5 : n < 500 ? 10 : 25;
+  return Math.floor(n / step) * step;
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 function ageDays(date: string, today: Date): number {
@@ -129,12 +139,12 @@ export function estimate(observations: Observation[], costs: Costs, today = new 
     low: round2(low),
     typical: round2(typical),
     high: round2(high),
-    maxBuy: round2(maxBuy),
+    maxBuy: friendlyDown(maxBuy),
     firm: confidence !== "baixa",
     confidence,
     count,
     derived,
-    safeBuy: floor === undefined ? undefined : round2(Math.max(0, floor * (1 - SAFE_MARGIN))),
+    safeBuy: floor === undefined ? undefined : friendlyDown(floor * (1 - SAFE_MARGIN)),
     floor: floor === undefined ? undefined : round2(floor),
     ceiling: ceiling === undefined ? undefined : round2(ceiling),
   };

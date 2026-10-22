@@ -1,6 +1,7 @@
+import { findProduct, normalizeCondition } from "../domain/catalog";
 import { marketObservations } from "./market";
 import { DEFAULT_SETTINGS } from "../domain/types";
-import type { Observation, Settings, StockItem } from "../domain/types";
+import type { Condition, Observation, Settings, StockItem } from "../domain/types";
 
 /**
  * Camada de dados. Hoje usa localStorage; trocar por Supabase = nova
@@ -52,10 +53,16 @@ function write(key: string, value: unknown) {
   }
 }
 
+/** Itens guardados com estados antigos (como novo, gasto, drift leve, lacrado) passam para os dois atuais. */
+function fixCondition<T extends { productId: string; condition: Condition }>(x: T): T {
+  const p = findProduct(x.productId);
+  return p ? { ...x, condition: normalizeCondition(p.category, x.condition) } : x;
+}
+
 export const localRepo: Repo = {
-  loadStock: () => readList<StockItem>("garimpo.stock"),
+  loadStock: () => readList<StockItem>("garimpo.stock").map(fixCondition),
   saveStock: (items) => write("garimpo.stock", items),
-  loadObservations: () => [...marketObservations(), ...readList<Observation>("garimpo.observations")],
+  loadObservations: () => [...marketObservations(), ...readList<Observation>("garimpo.observations").map(fixCondition)],
   addObservations: (list) => {
     const mine = readList<Observation>("garimpo.observations");
     write("garimpo.observations", [...mine, ...list]);

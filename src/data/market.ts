@@ -93,7 +93,7 @@ const EBAY_PARTS_CONDITION = { console: "P", phone: "P", tablet: "P", laptop: "P
 
 /** Preço de referência do CeX (piso e teto) para um produto e estado, quando existir. */
 export function referenceFor(productId: string, condition: Condition): { floor?: number; ceiling?: number } {
-  const row = CONSOLES[productId]?.find((r) => r[0] === condition);
+  const row = CONSOLES[productId]?.find((r) => r[0] === condition && (r[0] === "B" || r[0] === "sem-drift"));
   if (row) return { ceiling: row[1], floor: row[2] };
   const p = PRODUCTS.find((x) => x.id === productId);
   if (p?.category === "game" && p.variant === "PS4" && condition === "completo") {
@@ -137,7 +137,8 @@ export function marketObservations(): Observation[] {
     );
   }
   for (const [id, rows] of Object.entries(CONSOLES)) {
-    for (const [cond, sell, buy] of rows) out.push(...pair(id, cond, sell, buy));
+    // Só o estado normal (usado em bom estado): "A" e "C" do CeX são extremos e não entram na base.
+    for (const [cond, sell, buy] of rows) if (cond === "B" || cond === "sem-drift") out.push(...pair(id, cond, sell, buy));
   }
   for (const [name, sell, buy] of GAMES) {
     const p = PRODUCTS.find((x) => x.category === "game" && x.variant === "PS4" && x.name === name);

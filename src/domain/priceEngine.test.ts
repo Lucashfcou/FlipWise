@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimate } from "./priceEngine";
+import { estimate, friendlyDown } from "./priceEngine";
 import type { Observation } from "./types";
 
 const TODAY = new Date("2026-10-16");
@@ -68,7 +68,7 @@ describe("estimate", () => {
     expect(r.typical).toBeCloseTo(60 + 0.3 * 80, 0);
     expect(r.low).toBeCloseTo(60 + 0.2 * 80, 0);
     expect(r.high).toBeCloseTo(60 + 0.4 * 80, 0);
-    expect(r.safeBuy).toBeCloseTo(60 * 0.92, 1);
+    expect(r.safeBuy).toBe(55); // 55,2 arredondado para baixo
   });
 
   it("o típico nunca fica abaixo do piso da loja", () => {
@@ -76,7 +76,7 @@ describe("estimate", () => {
     const r = estimate([...list, obs(400, "buyback", "2026-10-10", "cex"), obs(600, "refurb", "2026-10-10", "cex2")], costs, TODAY);
     expect(r.typical).toBe(400);
     expect(r.low).toBe(400);
-    expect(r.safeBuy).toBeCloseTo(400 * 0.92, 1);
+    expect(r.safeBuy).toBe(360); // 368 arredondado para baixo
   });
 
   it("limita o típico ao teto de loja", () => {
@@ -99,7 +99,7 @@ describe("estimate", () => {
   it("maxBuy desconta custos e margem e nunca é negativo", () => {
     const list = Array.from({ length: 10 }, (_, i) => obs(200, "sold", "2026-10-10", `s${i}`));
     const r = estimate(list, costs, TODAY);
-    expect(r.maxBuy).toBeCloseTo(200 - 4 - 50, 0);
+    expect(r.maxBuy).toBe(140); // 146 arredondado para baixo
     const cheap = Array.from({ length: 10 }, (_, i) => obs(5, "sold", "2026-10-10", `s${i}`));
     expect(estimate(cheap, { shipping: 20, promo: 0, margin: 0.5 }, TODAY).maxBuy).toBe(0);
   });
@@ -109,5 +109,15 @@ describe("estimate", () => {
     expect(r.count).toBe(0);
     expect(r.typical).toBe(0);
     expect(r.confidence).toBe("baixa");
+  });
+});
+
+describe("friendlyDown", () => {
+  it("arredonda a oferta para baixo em números redondos", () => {
+    expect(friendlyDown(24)).toBe(20);
+    expect(friendlyDown(77)).toBe(75);
+    expect(friendlyDown(7.8)).toBe(7);
+    expect(friendlyDown(146)).toBe(140);
+    expect(friendlyDown(0)).toBe(0);
   });
 });

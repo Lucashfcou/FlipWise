@@ -18,17 +18,14 @@ function cond(id: Condition, labelKey: Key, hintKey: Key): { id: Condition; labe
   };
 }
 
+/** Só dois estados: usado em bom estado (o normal, onde estão os preços fiáveis) e para peças / com defeito. */
 const DEVICE_CONDITIONS = [
-  cond("A", "cond.A", "cond.A.hint"),
   cond("B", "cond.B", "cond.B.hint"),
-  cond("C", "cond.C", "cond.C.hint"),
   cond("P", "cond.P", "cond.P.hint"),
 ];
 
 const PHONE_CONDITIONS = [
-  cond("A", "cond.A", "cond.phoneA.hint"),
   cond("B", "cond.B", "cond.phoneB.hint"),
-  cond("C", "cond.C", "cond.phoneC.hint"),
   cond("P", "cond.P", "cond.phoneP.hint"),
 ];
 
@@ -43,7 +40,6 @@ export const CONDITIONS: Record<Category, { id: Condition; label: string; hint: 
   gpu: DEVICE_CONDITIONS,
   controller: [
     cond("sem-drift", "cond.sem-drift", "cond.sem-drift.hint"),
-    cond("drift-leve", "cond.drift-leve", "cond.drift-leve.hint"),
     cond("defeito", "cond.defeito", "cond.defeito.hint"),
   ],
   cpu: DEVICE_CONDITIONS,
@@ -52,12 +48,10 @@ export const CONDITIONS: Record<Category, { id: Condition; label: string; hint: 
   peripheral: DEVICE_CONDITIONS,
   desktop: DEVICE_CONDITIONS,
   shoe: [
-    cond("A", "cond.shoeA", "cond.shoeA.hint"),
     cond("B", "cond.shoeB", "cond.shoeB.hint"),
     cond("C", "cond.shoeC", "cond.shoeC.hint"),
   ],
   game: [
-    cond("lacrado", "cond.lacrado", "cond.lacrado.hint"),
     cond("completo", "cond.completo", "cond.completo.hint"),
     cond("so-disco", "cond.so-disco", "cond.so-disco.hint"),
   ],
@@ -127,6 +121,14 @@ export function productLabel(p: Pick<Product, "name" | "variant">): string {
   // Sem variante vazia nem repetida ("PlayStation 2 Slim slim", "Nintendo 3DS XL XL").
   if (!v || p.name.toLowerCase().includes(v.toLowerCase())) return p.name;
   return `${p.name} ${v}`;
+}
+
+/** Estados antigos (como novo, gasto, drift leve, lacrado) passam para os dois atuais; o resto fica igual. */
+export function normalizeCondition(category: Category, c: Condition): Condition {
+  if (CONDITIONS[category].some((x) => x.id === c)) return c;
+  if (category === "controller") return c === "drift-leve" || c === "P" ? "defeito" : "sem-drift";
+  if (category === "game") return c === "lacrado" ? "completo" : "so-disco";
+  return c === "P" ? "P" : "B";
 }
 
 /** Estado sem a letra: "B · good" -> "good". */
