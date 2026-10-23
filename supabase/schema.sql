@@ -170,3 +170,18 @@ create policy "user_data: apagar o próprio" on public.user_data for delete to a
 -- Limite de tamanho por bloco (2 MB), para ninguém usar a tabela como armazenamento livre.
 alter table public.user_data drop constraint if exists user_data_size;
 alter table public.user_data add constraint user_data_size check (octet_length(value::text) < 2000000);
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Feedback dos testadores: só o servidor escreve (chave de serviço); ninguém lê pela app. Lê-se no Table Editor.
+-- ---------------------------------------------------------------------------------------------------------------
+create table if not exists public.feedback (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  user_id uuid references auth.users (id) on delete set null,
+  email text,
+  contact text,
+  message text not null check (char_length(message) between 3 and 2000),
+  lang text,
+  page text
+);
+alter table public.feedback enable row level security;

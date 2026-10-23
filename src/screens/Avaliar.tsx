@@ -9,9 +9,11 @@ import { Lote } from "./Lote";
 import { Print } from "./Print";
 import type { PrintPick } from "./Print";
 import { CategoryIcon } from "../ui/CategoryIcon";
+import { Feedback } from "../ui/Feedback";
 import { MonthCard } from "../ui/MonthCard";
 import { SourceNote } from "../ui/SourceNote";
 import { Verdict, decide } from "../ui/Verdict";
+import { Welcome } from "../ui/Welcome";
 
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as Category[];
 
@@ -135,6 +137,7 @@ export function Avaliar({ goStock, goProfit }: { goStock: () => void; goProfit: 
         <Lote goStock={goStock} />
       ) : !product ? (
         <>
+          {!searching && <Welcome />}
           {!searching && <MonthCard goProfit={goProfit} />}
           {!searching && <Print onUse={usePrint} />}
           <input
@@ -213,6 +216,11 @@ export function Avaliar({ goStock, goProfit }: { goStock: () => void; goProfit: 
             </ul>
           )}
           {!searching && !category && <p className="hint">{t("eval.pick")}</p>}
+          {!searching && !category && (
+            <div className="feedbackrow">
+              <Feedback page="home" />
+            </div>
+          )}
         </>
       ) : (
         <>

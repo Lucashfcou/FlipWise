@@ -83,3 +83,12 @@ export async function consume(e: SupabaseEnv, userId: string, kind: "read" | "sm
 export async function refund(e: SupabaseEnv, userId: string, kind: "read" | "smart" | "lookup"): Promise<void> {
   await rest(e, "rpc/refund_usage", { method: "POST", body: JSON.stringify({ p_user: userId, p_kind: kind }) });
 }
+
+/** Guarda uma mensagem de feedback (tabela feedback; só o servidor escreve). */
+export async function saveFeedback(
+  e: SupabaseEnv,
+  row: { user_id: string | null; email: string | null; message: string; contact: string | null; lang: string; page: string },
+): Promise<void> {
+  const r = await rest(e, "feedback", { method: "POST", headers: { prefer: "return=minimal" }, body: JSON.stringify(row) });
+  if (!r.ok) throw new Error(`Supabase feedback ${r.status}`);
+}

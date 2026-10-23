@@ -1447,3 +1447,38 @@ input[type="search"].field::placeholder {
 .monthhint {
   margin: 0 0 8px;
 }
+
+/* Guia da primeira abertura, botão de partilha e feedback */
+.welcome {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: 14px;
+}
+
+.welcome ol {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 12px;
+  padding-left: 20px;
+  font-size: 15px;
+}
+
+.welcome li b {
+  display: block;
+}
+
+.sharebtn {
+  margin-top: 12px;
+}
+
+.feedbackrow {
+  margin: 20px 0 8px;
+}
+
+textarea.field {
+  resize: vertical;
+  min-height: 96px;
+  font-family: var(--body);
+}

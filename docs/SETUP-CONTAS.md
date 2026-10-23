@@ -51,7 +51,11 @@ No Supabase, **Table Editor > plan_limits**: muda `reads_per_day`, `smart_per_da
 
 Para dar o plano Pro a alguém (até haver pagamento): **Table Editor > profiles**, muda `plan` para `pro`.
 
-## 5. Notas
+## 5. Feedback dos testadores
+
+O botão **Enviar feedback** (início e Ajustes) grava na tabela `feedback` do Supabase (criada pelo mesmo `schema.sql`). Lê as mensagens em **Table Editor > feedback**. Não precisa de login para enviar; se a pessoa estiver logada, guarda o e-mail. Limite de 3 mensagens por minuto por IP.
+
+## 6. Notas
 
 - O limite de tempo das funções está em 60 s (`vercel.json`). Uma leitura com busca em vários países pode levar de 10 a 25 s. Se o teu plano da Vercel não aceitar 60 s, a implantação avisa: baixa o valor e eu separo a leitura da busca.
 - O plano grátis da Vercel (Hobby) costuma ser só para uso pessoal; ao cobrar, confere os termos.

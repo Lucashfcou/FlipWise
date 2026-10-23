@@ -9,6 +9,7 @@ const entries = [
   ["api-src/capture.ts", "api/capture.mjs"],
   ["api-src/status.ts", "api/capture/status.mjs"],
   ["api-src/lookup.ts", "api/lookup.mjs"],
+  ["api-src/feedback.ts", "api/feedback.mjs"],
 ];
 for (const [entry, out] of entries) {
   await build({

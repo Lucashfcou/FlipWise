@@ -4,6 +4,7 @@ import { t } from "../i18n";
 import type { Key } from "../i18n";
 import type { PriceEstimate } from "../domain/types";
 import { money, pct } from "../format";
+import { shareCard } from "./shareCard";
 
 type Light = "go" | "maybe" | "stop";
 
@@ -126,6 +127,31 @@ export function Verdict({
         <span className="sw tick" aria-hidden="true" />
         {t("verdict.legendTick", { price: money(price.typical) })}
       </p>
+
+      {d && hasAsked && (
+        <button
+          className="btn ghost small sharebtn"
+          onClick={() =>
+            shareCard(
+              {
+                product: productLabel,
+                asked: money(asked as number),
+                title: d.title,
+                text: d.text,
+                limit: money(price.maxBuy),
+                limitLabel: t("verdict.offerUpTo"),
+                askedLabel: t("share.asked"),
+                footer: t("share.footer"),
+                light: d.light,
+              },
+              "flipfind-verdict.png",
+              t("share.title"),
+            ).catch(() => undefined)
+          }
+        >
+          {t("share.button")}
+        </button>
+      )}
 
       <details className="more">
         <summary>{t("verdict.show")}</summary>

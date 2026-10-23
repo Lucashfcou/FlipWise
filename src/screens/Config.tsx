@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CSV_TEMPLATE, parseCsv } from "../domain/csv";
 import { t } from "../i18n";
 import { useApp } from "../state";
+import { Feedback } from "../ui/Feedback";
 import { AccountPanel } from "../auth/AccountPanel";
 
 function ImportPanel() {
@@ -111,6 +112,9 @@ export function Config() {
           {t("settings.wipe")}
         </button>
       </div>
+
+      <h2>{t("feedback.heading")}</h2>
+      <Feedback page="settings" />
 
       <h2>{t("settings.about")}</h2>
       <p className="hint">{t("settings.aboutText")}</p>
