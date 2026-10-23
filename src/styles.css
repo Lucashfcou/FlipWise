@@ -559,7 +559,7 @@ span.chip {
 }
 
 .typical .num {
-  font: 500 clamp(44px, 14vw, 60px) / 1 var(--mono);
+  font: 500 clamp(28px, 8vw, 34px) / 1 var(--mono);
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
@@ -1218,4 +1218,24 @@ span.chip {
 
 .cards .actions {
   margin: 12px 0 0;
+}
+
+/* Resumo do que o app leu no print, com Editar */
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line, currentColor);
+  border-radius: 10px;
+}
+
+.summary strong {
+  display: block;
+}
+
+.summary small {
+  color: var(--muted);
 }

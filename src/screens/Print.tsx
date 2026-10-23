@@ -120,6 +120,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const [productId, setProductId] = useState("");
   const [condition, setCondition] = useState<Condition | "">("");
   const [price, setPrice] = useState("");
+  const [editing, setEditing] = useState(false);
   const demo = status !== null && !status.enabled;
   const confirmRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -138,6 +139,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
     setProductId(r.productId ?? "");
     setCondition(r.condition ?? "");
     setPrice(r.price ? String(r.price) : "");
+    setEditing(false);
   }
 
   async function onFile(file: File | undefined) {
@@ -179,6 +181,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const product = productId ? findProduct(productId) : undefined;
   const priceNum = price === "" ? null : Number(price.replace(",", "."));
   const canUse = Boolean(product && condition);
+  const showLookup = Boolean(result && !productId && result.searchQuery && status?.lookup && !result.demo && !(result.candidates?.length));
   const notAd = result?.problems.some((p) => p.code === "NAO_E_ANUNCIO") ?? false;
 
   if (!open) {
@@ -315,41 +318,61 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
           {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
           {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}
 
-          <p className="hint">{t("print.confirm")}</p>
+          {product && condition && !editing && (
+            <div className="summary">
+              <div>
+                <strong>{productLabel(product)}</strong>
+                <small>
+                  {CONDITIONS[product.category].find((c) => c.id === condition)?.label}
+                  {priceNum !== null && Number.isFinite(priceNum) && priceNum > 0 ? ` · ${priceNum} €` : ""}
+                </small>
+              </div>
+              <button className="btn ghost small" onClick={() => setEditing(true)}>{t("print.edit")}</button>
+            </div>
+          )}
+          {!(product && condition) && !editing && showLookup && (
+            <button className="btn ghost small" onClick={() => setEditing(true)}>{t("print.pickCatalog")}</button>
+          )}
 
-          <label className="label" htmlFor="cp">{t("eval.product")}</label>
-          <select
-            id="cp"
-            className="field"
-            value={productId}
-            onChange={(e) => {
-              setProductId(e.target.value);
-              setCondition("");
-            }}
-          >
-            <option value="">{t("print.choose")}</option>
-            {PRODUCTS.map((p) => (
-              <option key={p.id} value={p.id}>{productLabel(p)}</option>
-            ))}
-          </select>
-
-          <div className="two">
-            <div>
-              <label className="label" htmlFor="cc">{t("eval.condition")}</label>
-              <select id="cc" className="field" value={condition} onChange={(e) => setCondition(e.target.value as Condition)} disabled={!product}>
+          {(editing || (!(product && condition) && !showLookup)) && (
+            <>
+              <p className="hint">{t("print.confirm")}</p>
+              <label className="label" htmlFor="cp">{t("eval.product")}</label>
+              <select
+                id="cp"
+                className="field"
+                value={productId}
+                onChange={(e) => {
+                  setProductId(e.target.value);
+                  setCondition("");
+                }}
+              >
                 <option value="">{t("print.choose")}</option>
-                {product && CONDITIONS[product.category].map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
+                {PRODUCTS.map((p) => (
+                  <option key={p.id} value={p.id}>{productLabel(p)}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="label" htmlFor="cpr">{t("eval.price")}</label>
-              <input id="cpr" className="field mono" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
-            </div>
-          </div>
+
+              <div className="two">
+                <div>
+                  <label className="label" htmlFor="cc">{t("eval.condition")}</label>
+                  <select id="cc" className="field" value={condition} onChange={(e) => setCondition(e.target.value as Condition)} disabled={!product}>
+                    <option value="">{t("print.choose")}</option>
+                    {product && CONDITIONS[product.category].map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label" htmlFor="cpr">{t("eval.price")}</label>
+                  <input id="cpr" className="field mono" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+                </div>
+              </div>
+            </>
+          )}
           {result.conditionReason && <p className="hint">{t("print.conditionNote", { note: result.conditionReason })}</p>}
 
+          {(canUse || editing || !showLookup) && (
           <div className="actions">
             <button
               className="btn primary"
@@ -359,6 +382,7 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               {t("print.use")}
             </button>
           </div>
+          )}
         </div>
       )}
     </div>

@@ -7,27 +7,26 @@ import { money, pct } from "../format";
 
 type Light = "go" | "maybe" | "stop";
 
-/** A partir desta fração do máximo, a compra já está "no limite". */
+/** A partir desta fração do limite de revenda, comprar já deixa pouca folga de lucro. */
 export const TIGHT_FROM = 0.85;
 
+/**
+ * Quatro zonas pelo preço pedido, do mais barato ao mais caro:
+ *  - até 85% do limite: comprar, há lucro;
+ *  - até o limite (ou até o que a loja paga): compra segura, mas o lucro é curto ou nulo depois de fretes e custos;
+ *  - até o preço de revenda: bom para ficar com ele, não para revender;
+ *  - acima: deixar.
+ */
 export function decide(price: PriceEstimate, asked: number | null): { light: Light; title: string; text: string } | null {
   if (asked === null || !Number.isFinite(asked) || asked <= 0 || price.count === 0) return null;
-  if (asked <= price.maxBuy) {
-    // Colado ao máximo: serve para ficar ou usar, mas a revenda rende pouco e qualquer imprevisto come o lucro.
-    if (asked >= price.maxBuy * TIGHT_FROM) {
-      return { light: "go", title: t("decide.tight"), text: t("decide.tightText", { amount: money(price.maxBuy - asked) }) };
-    }
+  if (asked <= price.maxBuy * TIGHT_FROM) {
     return { light: "go", title: t("decide.buy"), text: t("decide.buyText", { amount: money(price.maxBuy - asked) }) };
   }
-  if (price.safeBuy !== undefined && asked <= price.safeBuy) {
-    return { light: "maybe", title: t("decide.thin"), text: t("decide.thinText", { floor: money(price.floor ?? 0) }) };
+  if (asked <= price.maxBuy || (price.safeBuy !== undefined && asked <= price.safeBuy)) {
+    return { light: "go", title: t("decide.tight"), text: t("decide.tightText") };
   }
   if (asked <= price.typical) {
-    return {
-      light: "maybe",
-      title: t("decide.negotiate"),
-      text: t("decide.negotiateText") + (price.safeBuy !== undefined ? t("decide.negotiateRisk") : ""),
-    };
+    return { light: "maybe", title: t("decide.own"), text: t("decide.ownText", { max: money(price.maxBuy) }) };
   }
   return { light: "stop", title: t("decide.pass"), text: t("decide.passText", { amount: money(asked - price.typical) }) };
 }
@@ -73,8 +72,8 @@ export function Verdict({
     );
   }
   const hasAsked = asked !== null && Number.isFinite(asked) && asked > 0;
-  const headline = price.safeBuy ?? price.maxBuy;
-  const headlineLabel = d ? t("verdict.offerUpTo") : price.safeBuy !== undefined ? t("verdict.safeUpTo") : t("verdict.payAtMost");
+  const headline = price.maxBuy;
+  const headlineLabel = d ? t("verdict.offerUpTo") : t("verdict.payAtMost");
   const resaleLabel = price.derived ? t("verdict.resaleEst") : t("verdict.typical");
   const conf = t(`conf.${price.confidence}` as Key);
 
