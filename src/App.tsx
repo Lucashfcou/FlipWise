@@ -71,7 +71,7 @@ export function App() {
         </div>
       </header>
       <main className="page" ref={main} key={tab}>
-        {tab === "avaliar" && <Avaliar goStock={() => setTab("stock")} />}
+        {tab === "avaliar" && <Avaliar goStock={() => setTab("stock")} goProfit={() => setTab("vendas")} />}
         {tab === "stock" && <Stock />}
         {tab === "vendas" && <Vendas />}
         {tab === "catalogo" && <Catalogo />}

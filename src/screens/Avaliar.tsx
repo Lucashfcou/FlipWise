@@ -8,12 +8,14 @@ import { useApp } from "../state";
 import { Lote } from "./Lote";
 import { Print } from "./Print";
 import type { PrintPick } from "./Print";
+import { CategoryIcon } from "../ui/CategoryIcon";
+import { MonthCard } from "../ui/MonthCard";
 import { SourceNote } from "../ui/SourceNote";
 import { Verdict, decide } from "../ui/Verdict";
 
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as Category[];
 
-export function Avaliar({ goStock }: { goStock: () => void }) {
+export function Avaliar({ goStock, goProfit }: { goStock: () => void; goProfit: () => void }) {
   const { priceFor, settings, contribute, addStock, recent, pushRecent } = useApp();
   const [mode, setMode] = useState<"item" | "lote">("item");
   const [category, setCategory] = useState<Category | null>(null);
@@ -132,6 +134,8 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
         <Lote goStock={goStock} />
       ) : !product ? (
         <>
+          {!searching && <MonthCard goProfit={goProfit} />}
+          {!searching && <Print onUse={usePrint} />}
           <input
             className="field"
             type="search"
@@ -144,18 +148,25 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
           {!searching && recent.length > 0 && (
             <div className="recent">
               <span className="label">{t("eval.recent")}</span>
-              <div className="chips">
+              <div className="recentrow">
                 {recent.map((id) => {
                   const rp = findProduct(id);
-                  return rp ? (
-                    <button key={id} className="chip" onClick={() => pick(id)}>{productLabel(rp)}</button>
-                  ) : null;
+                  if (!rp) return null;
+                  const est = priceFor(id, CONDITIONS[rp.category][0].id);
+                  return (
+                    <button key={id} className="recentcard" onClick={() => pick(id)}>
+                      <strong>{productLabel(rp)}</strong>
+                      <small>{est.count > 0 ? t("home.market", { price: money(est.typical) }) : t("home.noData")}</small>
+                    </button>
+                  );
                 })}
               </div>
             </div>
           )}
 
           {!searching && (
+            <>
+            <span className="label browse">{t("home.browse")}</span>
             <div className="tiles" role="group" aria-label={t("eval.categoryAria")}>
               {CATEGORIES.map((c) => (
                 <button
@@ -167,11 +178,15 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
                     setBrand(null);
                   }}
                 >
-                  <strong>{CATEGORY_LABEL[c]}</strong>
-                  <small>{t("eval.products", { n: PRODUCTS.filter((p) => p.category === c).length })}</small>
+                  <CategoryIcon category={c} />
+                  <span className="tiletext">
+                    <strong>{CATEGORY_LABEL[c]}</strong>
+                    <small>{t("eval.products", { n: PRODUCTS.filter((p) => p.category === c).length })}</small>
+                  </span>
                 </button>
               ))}
             </div>
+            </>
           )}
 
           {!searching && category && brands.length > 1 && (
@@ -197,7 +212,6 @@ export function Avaliar({ goStock }: { goStock: () => void }) {
             </ul>
           )}
           {!searching && !category && <p className="hint">{t("eval.pick")}</p>}
-          {!searching && <Print onUse={usePrint} />}
         </>
       ) : (
         <>

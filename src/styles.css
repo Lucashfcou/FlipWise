@@ -1239,3 +1239,179 @@ span.chip {
 .summary small {
   color: var(--muted);
 }
+
+/* Início: resumo do mês, ação principal, recentes e categorias com ícone */
+.monthcard {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.monthcard .row {
+  align-items: baseline;
+}
+
+.linkbtn {
+  min-height: 44px;
+  margin: -12px -8px -12px 0;
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font: 700 14px var(--body);
+  cursor: pointer;
+}
+
+.monthprofit {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+
+.monthprofit .mono {
+  font-size: clamp(30px, 9vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.monthprofit small {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.monthstats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.monthstats b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.monthstats .warnText,
+.monthstats .warnText b {
+  color: var(--warn);
+}
+
+/* Ler um print: o cartão que abre a função principal ganha o acento */
+.printcard {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--accent);
+  border: 0;
+  color: var(--on-accent);
+}
+
+.printcard strong {
+  font-size: 17px;
+}
+
+.printcard small {
+  color: var(--on-accent);
+  opacity: 0.85;
+}
+
+.printcard .chip {
+  background: transparent;
+  border: 1px solid var(--on-accent);
+  color: var(--on-accent);
+}
+
+.recent {
+  margin-top: 20px;
+}
+
+.recentrow {
+  display: flex;
+  gap: 8px;
+  margin: 8px -16px 0;
+  padding: 0 16px 2px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.recentrow::-webkit-scrollbar {
+  display: none;
+}
+
+.recentcard {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 2px;
+  min-width: 140px;
+  max-width: 200px;
+  min-height: 56px;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.recentcard strong {
+  font: 700 14px/1.25 var(--body);
+}
+
+.recentcard small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.label.browse {
+  display: block;
+  margin-top: 20px;
+}
+
+.tiles {
+  margin-top: 8px;
+}
+
+.tile {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 10px 12px;
+}
+
+.tiletext {
+  display: grid;
+  gap: 1px;
+}
+
+.tile strong {
+  font-size: 15px;
+}
+
+.tile small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cat-icon {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.printcard + .field {
+  margin-top: 12px;
+}
+
+.recentrow {
+  scroll-padding-left: 16px;
+}
