@@ -4,10 +4,9 @@ import { money, today } from "../format";
 import { t } from "../i18n";
 import { useApp } from "../state";
 
-/** Resumo do mês no topo do início. Só aparece quando já há itens guardados; sem eles o início fica só com a ação e as categorias. */
+/** Resumo do mês no topo do início. Sem itens guardados mostra zeros e uma dica de como começar. */
 export function MonthCard({ goProfit }: { goProfit: () => void }) {
   const { stock, settings } = useApp();
-  if (stock.length === 0) return null;
   const m = monthlySummary(stock, today().slice(0, 7));
   const parked = stock.filter((i) => !i.sale && daysHeld(i) >= settings.staleDays).length;
   const month = new Date().toLocaleString(settings.lang === "pt" ? "pt-PT" : "en-GB", { month: "long" });
@@ -21,6 +20,7 @@ export function MonthCard({ goProfit }: { goProfit: () => void }) {
         <span className={`mono ${m.profit >= 0 ? "gain" : "loss"}`}>{m.profit > 0 ? "+" : ""}{money(m.profit)}</span>
         <small>{t("home.profit")}</small>
       </div>
+      {stock.length === 0 && <p className="hint monthhint">{t("home.empty")}</p>}
       <div className="monthstats">
         <span><b>{m.sold}</b> {t("home.sold")}</span>
         <span><b>{m.unsold}</b> {t("home.inStock")}</span>

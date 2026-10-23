@@ -1443,3 +1443,7 @@ input[type="search"].field::placeholder {
   color: var(--ink);
   opacity: 0.6;
 }
+
+.monthhint {
+  margin: 0 0 8px;
+}
