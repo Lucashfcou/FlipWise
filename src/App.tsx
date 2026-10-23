@@ -52,7 +52,15 @@ function Logo() {
 export function App() {
   const { settings, updateSettings } = useApp();
   const [tab, setTab] = useState<Tab>("avaliar");
+  const [homeKey, setHomeKey] = useState(0);
   const main = useRef<HTMLElement>(null);
+
+  /** O logo volta ao início da avaliação, como se nada tivesse sido aberto. */
+  function goHome() {
+    setTab("avaliar");
+    setHomeKey((k) => k + 1);
+    window.scrollTo({ top: 0 });
+  }
 
   // Troca de ecrã: o conteúdo sobe em escada, como no jogo do PAS.
   useFx(main, (root) => stagger([...(root.firstElementChild?.children ?? [])], 12, 40), [tab]);
@@ -60,8 +68,10 @@ export function App() {
   return (
     <div className="shell">
       <header className="top">
-        <Logo />
-        <span className="brand">{t("app.name")}</span>
+        <button className="home" onClick={goHome} aria-label={t("app.home")}>
+          <Logo />
+          <span className="brand">{t("app.name")}</span>
+        </button>
         <div className="langs" role="group" aria-label={t("lang.aria")}>
           {(["en", "pt"] as const).map((l) => (
             <button key={l} className={settings.lang === l ? "on" : ""} aria-pressed={settings.lang === l} onClick={() => updateSettings({ ...settings, lang: l })}>
@@ -70,7 +80,7 @@ export function App() {
           ))}
         </div>
       </header>
-      <main className="page" ref={main} key={tab}>
+      <main className="page" ref={main} key={`${tab}-${homeKey}`}>
         {tab === "avaliar" && <Avaliar goStock={() => setTab("stock")} goProfit={() => setTab("vendas")} />}
         {tab === "stock" && <Stock />}
         {tab === "vendas" && <Vendas />}

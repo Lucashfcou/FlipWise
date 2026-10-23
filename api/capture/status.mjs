@@ -128,6 +128,7 @@ async function suggestCategory(token, marketplace, query, fetchImpl = fetch, hin
 var EN = {
   // App
   "app.name": "Flipfind",
+  "app.home": "Flipfind home",
   "app.tag": "EUR",
   "nav.aria": "Sections",
   "nav.evaluate": "Evaluate",
@@ -482,6 +483,7 @@ var EN = {
 };
 var PT = {
   "app.name": "Flipfind",
+  "app.home": "In\xEDcio do Flipfind",
   "app.tag": "EUR",
   "nav.aria": "Sec\xE7\xF5es",
   "nav.evaluate": "Avaliar",

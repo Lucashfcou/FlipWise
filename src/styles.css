@@ -1415,3 +1415,31 @@ span.chip {
 .recentrow {
   scroll-padding-left: 16px;
 }
+
+/* Logo e nome levam ao início */
+.home {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.home:active {
+  opacity: 0.7;
+}
+
+/* Campo de busca: borda de acento e texto de apoio mais legíveis, para não se perder entre os cartões */
+input[type="search"].field {
+  border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+input[type="search"].field::placeholder {
+  color: var(--ink);
+  opacity: 0.6;
+}

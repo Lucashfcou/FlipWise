@@ -8,6 +8,7 @@ export type Lang = "en" | "pt";
 const EN = {
   // App
   "app.name": "Flipfind",
+  "app.home": "Flipfind home",
   "app.tag": "EUR",
   "nav.aria": "Sections",
   "nav.evaluate": "Evaluate",
@@ -377,6 +378,7 @@ export type Key = keyof typeof EN;
 
 const PT: Record<Key, string> = {
   "app.name": "Flipfind",
+  "app.home": "Início do Flipfind",
   "app.tag": "EUR",
   "nav.aria": "Secções",
   "nav.evaluate": "Avaliar",

@@ -97,6 +97,7 @@ export function Avaliar({ goStock, goProfit }: { goStock: () => void; goProfit: 
   }
 
   function reset() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setProductId(null);
     setAsked("");
     setSaved(false);
