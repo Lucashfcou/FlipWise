@@ -128,10 +128,11 @@ describe("taxSummary e salesCsv", () => {
 describe("veredicto no limite", () => {
   it("compra colada ao máximo avisa que está no limite", async () => {
     const { decide } = await import("../ui/Verdict");
-    const price = { low: 20, typical: 25, high: 28, maxBuy: 20, firm: true, confidence: "media", count: 6, derived: false } as const;
+    const price = { low: 24, typical: 28, high: 32, maxBuy: 20, firm: true, confidence: "media", count: 6, derived: false } as const;
     expect(decide(price, 19)?.title).toBe("Safe, thin profit");
     expect(decide(price, 12)?.title).toBe("Buy");
     expect(decide(price, 22)?.title).toBe("Good for you, not to resell");
-    expect(decide(price, 30)?.title).toBe("Pass");
+    expect(decide(price, 25)?.title).toBe("Pass");
+    expect(decide(price, 40)?.title).toBe("Pass");
   });
 });

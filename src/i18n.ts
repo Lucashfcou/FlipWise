@@ -176,6 +176,7 @@ const EN = {
   "decide.negotiateRisk": " Above it, profit depends on a slower private sale.",
   "decide.pass": "Pass",
   "decide.passText": "{amount} above the estimated resale between people.",
+  "decide.passClose": "Too close to the resale price: no room to profit.",
 
   // Source note
   "source.note": "Prices based on {sources} (collected {date}){mine}. Without real sales, the typical price is an estimate between what the shop pays and what it sells for.",
@@ -532,6 +533,7 @@ const PT: Record<Key, string> = {
   "decide.negotiateRisk": " Acima dela, o lucro depende de uma venda privada mais lenta.",
   "decide.pass": "Deixar",
   "decide.passText": "{amount} acima da revenda estimada entre pessoas.",
+  "decide.passClose": "Perto demais do preço de revenda: sem folga para lucrar.",
 
   "source.note": "Preços baseados em {sources} (recolhidos a {date}){mine}. Sem vendas reais, o preço típico é uma estimativa entre o que a loja paga e o que vende.",
   "source.mine": " e em {n} registos teus",

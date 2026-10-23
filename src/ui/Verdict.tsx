@@ -9,12 +9,14 @@ type Light = "go" | "maybe" | "stop";
 
 /** A partir desta fração do limite de revenda, comprar já deixa pouca folga de lucro. */
 export const TIGHT_FROM = 0.85;
+/** "Bom para ti" só vai até um pouco abaixo da faixa baixa da revenda: perto do preço a que os outros vendem, quem compra para ficar também acha melhor outro anúncio. */
+export const OWN_USE_TO = 0.95;
 
 /**
  * Quatro zonas pelo preço pedido, do mais barato ao mais caro:
  *  - até 85% do limite: comprar, há lucro;
  *  - até o limite (ou até o que a loja paga): compra segura, mas o lucro é curto ou nulo depois de fretes e custos;
- *  - até o preço de revenda: bom para ficar com ele, não para revender;
+ *  - até 95% da faixa baixa da revenda: bom para ficar com ele, não para revender;
  *  - acima: deixar.
  */
 export function decide(price: PriceEstimate, asked: number | null): { light: Light; title: string; text: string } | null {
@@ -25,10 +27,11 @@ export function decide(price: PriceEstimate, asked: number | null): { light: Lig
   if (asked <= price.maxBuy || (price.safeBuy !== undefined && asked <= price.safeBuy)) {
     return { light: "go", title: t("decide.tight"), text: t("decide.tightText") };
   }
-  if (asked <= price.typical) {
+  if (asked <= Math.min(price.typical, price.low * OWN_USE_TO)) {
     return { light: "maybe", title: t("decide.own"), text: t("decide.ownText", { max: money(price.maxBuy) }) };
   }
-  return { light: "stop", title: t("decide.pass"), text: t("decide.passText", { amount: money(asked - price.typical) }) };
+  const text = asked <= price.typical ? t("decide.passClose") : t("decide.passText", { amount: money(asked - price.typical) });
+  return { light: "stop", title: t("decide.pass"), text };
 }
 
 /** Preço grande com dígitos que rolam (animação do jogo do PAS). O leitor de ecrã recebe o valor em texto normal. */
