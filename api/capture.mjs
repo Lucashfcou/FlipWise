@@ -3,7 +3,7 @@
 // src/i18n.ts
 var EN = {
   // App
-  "app.name": "Flipwise",
+  "app.name": "Flipfind",
   "app.tag": "EUR",
   "nav.aria": "Sections",
   "nav.evaluate": "Evaluate",
@@ -297,7 +297,7 @@ var EN = {
   "settings.wipe": "Delete everything",
   "settings.wipeConfirm": "Delete stock, sales and prices stored on this device? This cannot be undone.",
   "settings.about": "About",
-  "settings.aboutText": "Flipwise v0.3. Starter prices come from CeX Portugal and eBay. Your sales and the ones you import weigh more than those.",
+  "settings.aboutText": "Flipfind v0.3. Starter prices come from CeX Portugal and eBay. Your sales and the ones you import weigh more than those.",
   "settings.language": "Language",
   // Print
   "print.card": "Evaluate from a screenshot",
@@ -348,7 +348,7 @@ var EN = {
   "listing.condition": "Condition: {label}. {hint}"
 };
 var PT = {
-  "app.name": "Flipwise",
+  "app.name": "Flipfind",
   "app.tag": "EUR",
   "nav.aria": "Sec\xE7\xF5es",
   "nav.evaluate": "Avaliar",
@@ -632,7 +632,7 @@ var PT = {
   "settings.wipe": "Apagar tudo",
   "settings.wipeConfirm": "Apagar stock, vendas e pre\xE7os guardados neste aparelho? Isto n\xE3o se pode desfazer.",
   "settings.about": "Sobre",
-  "settings.aboutText": "Flipwise v0.3. Os pre\xE7os de arranque v\xEAm do CeX Portugal e do eBay. As tuas vendas e as que importares passam a pesar mais que eles.",
+  "settings.aboutText": "Flipfind v0.3. Os pre\xE7os de arranque v\xEAm do CeX Portugal e do eBay. As tuas vendas e as que importares passam a pesar mais que eles.",
   "settings.language": "Idioma",
   "print.card": "Avaliar por print",
   "print.cardText": "Tira um print do an\xFAncio e o app l\xEA o produto, o estado e o pre\xE7o.",

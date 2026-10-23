@@ -19,7 +19,7 @@ const user = (email) => ({
   created_at: new Date().toISOString(),
 });
 
-let lastEmail = "demo@flipwise.test";
+let lastEmail = "demo@flipfind.test";
 const token = (email) => `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: user(email).id, email, role: "authenticated", aud: "authenticated", exp: now() + 3600 })}.demo`;
 const session = (email) => ({ access_token: token(email), token_type: "bearer", expires_in: 3600, expires_at: now() + 3600, refresh_token: "demo-refresh", user: user(email) });
 

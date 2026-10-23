@@ -1,16 +1,16 @@
-# Flipwise: estado do projeto (para retomar noutra conversa)
+# Flipfind: estado do projeto (para retomar noutra conversa)
 
 Última atualização: 2026-10-18. Ler isto primeiro. A spec antiga (`docs/spec.md`) está desatualizada em vários pontos; este ficheiro manda.
 
 ## O que é
 PWA para revendedores de eletrónicos usados, para a **Europa** (inglês por omissão, português à escolha). Dá, a partir do preço de um anúncio, a **oferta máxima segura**, a faixa de revenda estimada e uma decisão **Buy / Negotiate / Pass**. Tem stock, lucro, fiscal (DAC7), lotes e gerador de anúncio. O fundador (Lucas) revende em Portugal PS4, comandos, jogos e às vezes ténis (Vinted, OLX, feiras). É renda extra, quer lançar com plano grátis + pago.
-- Pasta: `C:\Projetos\Garimpo` (o nome da pasta é antigo; a app chama-se **Flipwise**). Git local, sem remoto e sem push.
+- Pasta: `C:\Projetos\Garimpo` (o nome da pasta é antigo; a app chama-se **Flipfind**, antes Flipwise; o repositório do GitHub e o endereço da Vercel ainda usam o nome antigo). Git local, sem remoto e sem push.
 - Preview privada (artifact): https://claude.ai/artifact/KFREkHphfmdSEp1j6y75hi (versão 13).
 
 ## Stack e comandos
 Vite + React 18 + TypeScript, Vitest (95 testes), `tsx` para scripts, biblioteca `motion` só no `fx.ts` indireto (a maior parte usa Web Animations API). Dados **locais** (localStorage, chaves `garimpo.*`), sem contas nem servidor.
 - `npm run dev` (porta 5174), `npm test`, `npm run build`
-- `node scripts/make-artifact.mjs` gera `dist-artifact/flipwise.html` (ficheiro único) para publicar no artifact
+- `node scripts/make-artifact.mjs` gera `dist-artifact/flipfind.html` (ficheiro único) para publicar no artifact
 - `npm run ebay:refresh` com `--only id`, `--ids a,b,c`, `--category x`, `--missing`, `--no-parts`
 - `npm run capture:server` (leitura de print), `npm run pipeline:demo`
 - Chaves em `.env` (gitignored): `EBAY_CLIENT_ID` (é o **App ID**, não o Dev ID), `EBAY_CLIENT_SECRET` (Cert ID), `EBAY_SITES`, `EBAY_MAX_CALLS=800`, `ANTHROPIC_API_KEY` (vazia), `CAPTURE_MODEL`, `CAPTURE_DAILY_LIMIT`. As do eBay estão preenchidas e funcionam. **Nunca pedir nem mostrar chaves.**
@@ -62,7 +62,7 @@ Plano pago em estudo: **grátis** = catálogo, avaliar, lotes, stock, lucro, "o 
 
 **Catálogo** (`src/domain/catalogMore.ts`, gerado por listas): ~2.400 produtos novos em 14 categorias (5 novas: processadores, SSD e memória, monitores, periféricos, computadores) com filtro automático. Os preços vêm de `npm run ebay:refresh -- --more --missing --no-parts` (e `--thin` com `EBAY_SITES=EBAY_DE` para ir buscar a outros países). `npm run prune:more` guarda em `src/data/more-keep.json` só o que tem 6+ anúncios; `npm run slim:prices` reduz o ficheiro de preços (40 por produto). Ténis em `catalogShoes.ts`.
 - eBay: Browse API 5.000 chamadas/dia por omissão. Contrato: proíbe enviar dados de "Restricted APIs" a IA de terceiros e limita copiar/guardar conteúdo do eBay (**rever antes de cobrar**).
-- Falta: servidor hospedado com as chaves só lá, limite por utilizador, login/pagamento, teste de segurança final com a IA ligada. Vídeos em `C:\Projetos\flipwise-video` (PT) e `flipwise-video-en` (EN).
+- Falta: servidor hospedado com as chaves só lá, limite por utilizador, login/pagamento, teste de segurança final com a IA ligada. Vídeos em `C:\Projetos\flipfind-video` (PT) e `flipfind-video-en` (EN).
 
 ## Contas e Vercel (2026-10-21)
 - Site: https://flip-wise-chi.vercel.app (Vercel, região cdg1). Funções em `api/*.mjs` geradas de `api-src/` por `npm run build:api` (esbuild; fazer commit de `api/`). Núcleo partilhado com o servidor local: `server/core.ts`.

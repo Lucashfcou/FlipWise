@@ -1,4 +1,4 @@
-const CACHE = "flipwise-v3";
+const CACHE = "flipfind-v4";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/icon.svg", "/manifest.webmanifest"])));

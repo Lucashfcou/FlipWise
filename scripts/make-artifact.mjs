@@ -1,4 +1,4 @@
-// Gera dist-artifact/flipwise.html: o app inteiro num único ficheiro (CSS, JS e fontes embutidos).
+// Gera dist-artifact/flipfind.html: o app inteiro num único ficheiro (CSS, JS e fontes embutidos).
 import { build } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
@@ -22,11 +22,11 @@ const js = readFileSync(join(assets, jsFile), "utf8");
 const doto = readFileSync("public/fonts/doto-latin.woff2").toString("base64");
 css = css.replace(/url\(["']?[^)"']*doto-latin\.woff2["']?\)/g, `url(data:font/woff2;base64,${doto})`);
 
-const html = `<title>Flipwise</title>
+const html = `<title>Flipfind</title>
 <style>${css}</style>
 <div id="root"></div>
 <script type="module">${js.replaceAll("</script", "<\\/script")}</script>
 `;
 mkdirSync("dist-artifact", { recursive: true });
-writeFileSync("dist-artifact/flipwise.html", html);
+writeFileSync("dist-artifact/flipfind.html", html);
 console.log("ok", (html.length / 1024).toFixed(0) + " KB");

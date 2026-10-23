@@ -1,4 +1,4 @@
--- Flipwise: esquema do Supabase (contas, planos, uso diário e dados sincronizados).
+-- Flipfind: esquema do Supabase (contas, planos, uso diário e dados sincronizados).
 -- Como aplicar: Supabase > SQL Editor > New query > cola tudo isto > Run. Pode correr mais de uma vez.
 -- Segurança: todas as tabelas têm Row Level Security. Cada utilizador só lê as suas linhas; quem escreve o plano e o
 -- uso é o servidor (chave "service role", só na Vercel). A app no navegador nunca recebe essa chave.

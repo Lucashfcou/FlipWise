@@ -1,6 +1,6 @@
 {
-  "name": "Flipwise",
-  "short_name": "Flipwise",
+  "name": "Flipfind",
+  "short_name": "Flipfind",
   "description": "Market price, safe buy price and real profit for used-electronics resellers.",
   "start_url": "/",
   "display": "standalone",

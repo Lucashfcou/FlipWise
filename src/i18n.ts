@@ -7,7 +7,7 @@ export type Lang = "en" | "pt";
 
 const EN = {
   // App
-  "app.name": "Flipwise",
+  "app.name": "Flipfind",
   "app.tag": "EUR",
   "nav.aria": "Sections",
   "nav.evaluate": "Evaluate",
@@ -311,7 +311,7 @@ const EN = {
   "settings.wipe": "Delete everything",
   "settings.wipeConfirm": "Delete stock, sales and prices stored on this device? This cannot be undone.",
   "settings.about": "About",
-  "settings.aboutText": "Flipwise v0.3. Starter prices come from CeX Portugal and eBay. Your sales and the ones you import weigh more than those.",
+  "settings.aboutText": "Flipfind v0.3. Starter prices come from CeX Portugal and eBay. Your sales and the ones you import weigh more than those.",
   "settings.language": "Language",
 
   // Print
@@ -367,7 +367,7 @@ const EN = {
 export type Key = keyof typeof EN;
 
 const PT: Record<Key, string> = {
-  "app.name": "Flipwise",
+  "app.name": "Flipfind",
   "app.tag": "EUR",
   "nav.aria": "Secções",
   "nav.evaluate": "Avaliar",
@@ -661,7 +661,7 @@ const PT: Record<Key, string> = {
   "settings.wipe": "Apagar tudo",
   "settings.wipeConfirm": "Apagar stock, vendas e preços guardados neste aparelho? Isto não se pode desfazer.",
   "settings.about": "Sobre",
-  "settings.aboutText": "Flipwise v0.3. Os preços de arranque vêm do CeX Portugal e do eBay. As tuas vendas e as que importares passam a pesar mais que eles.",
+  "settings.aboutText": "Flipfind v0.3. Os preços de arranque vêm do CeX Portugal e do eBay. As tuas vendas e as que importares passam a pesar mais que eles.",
   "settings.language": "Idioma",
 
   "print.card": "Avaliar por print",

@@ -99,7 +99,7 @@ export function Config() {
       <h2>{t("settings.data")}</h2>
       <p className="hint">{t("settings.dataHint")}</p>
       <div className="actions">
-        <button className="btn ghost" onClick={() => download("flipwise-data.json", { stock, observations: observations.filter((o) => o.source === "eu") })}>
+        <button className="btn ghost" onClick={() => download("flipfind-data.json", { stock, observations: observations.filter((o) => o.source === "eu") })}>
           {t("settings.export")}
         </button>
         <button

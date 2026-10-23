@@ -22,7 +22,7 @@ function Fiscal({ year }: { year: string }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `flipwise-sales-${year}.csv`;
+      a.download = `flipfind-sales-${year}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
