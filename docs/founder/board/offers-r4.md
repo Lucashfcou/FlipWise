@@ -53,7 +53,7 @@ Consider cutting from paid: generic exports and "more categories" as headline fe
 
 ## Next 3 actions, in order
 1. Check eBay API terms for a paid commercial product. Cheap, and it can kill the business model. Do first.
-2. Measure the number: compare Flipwise's predicted price against the founder's real sold prices (and any friends') on 30+ items. Run print reading on 50+ real screenshots and record the hit rate.
+2. Measure the number: compare Flipfind's predicted price against the founder's real sold prices (and any friends') on 30+ items. Run print reading on 50+ real screenshots and record the hit rate.
 3. Put the free version in front of 10-20 real resellers (public link, minimal hosting, no accounts) and watch usage. Then run a pre-sale or waitlist with a real price for the paid tier.
 
 Build accounts and payments only after step 3 shows a signal.
