@@ -42,3 +42,22 @@ describe("casar o nome lido com o catálogo", () => {
     expect(m.exact).toBeUndefined();
   });
 });
+
+describe("jogos: cada plataforma tem o seu preço", () => {
+  it("jogo de outra plataforma não casa com o do PS4", () => {
+    expect(matchCatalog("Minecraft Wii U Edition").exact).toBeUndefined();
+    expect(matchCatalog("Minecraft Wii U Edition").options).toHaveLength(0);
+    expect(matchCatalog("Minecraft Xbox One").exact).toBeUndefined();
+  });
+
+  it("com a plataforma certa casa", () => {
+    expect(id("Minecraft PS4")).toBe("game-minecraft");
+    expect(id("Minecraft PlayStation 4")).toBe("game-minecraft");
+  });
+
+  it("sem plataforma no texto pergunta em vez de assumir", () => {
+    const m = matchCatalog("Minecraft");
+    expect(m.exact).toBeUndefined();
+    expect(m.options.length).toBeGreaterThan(0);
+  });
+});

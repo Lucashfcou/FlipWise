@@ -3905,6 +3905,20 @@ function index() {
   });
   return INDEX;
 }
+var PLATFORMS = [
+  ["ps5", /\bplaystation 5\b/],
+  ["ps4", /\bplaystation 4\b/],
+  ["ps3", /\bplaystation 3\b/],
+  ["ps2", /\bplaystation 2\b/],
+  ["switch", /\bswitch\b/],
+  ["wii", /\bwii\b/],
+  ["xbox", /\bxbox\b/],
+  ["3ds", /\b3ds\b/],
+  ["ds", /\bnintendo ds\b|\bnds\b/],
+  ["pc", /\bpc\b|\bsteam\b/]
+];
+var platformsIn = (text) => new Set(PLATFORMS.filter(([, re]) => re.test(text)).map(([k]) => k));
+var platformOf = (variant) => [...platformsIn(norm(variant))][0];
 function matchCatalog(query, specs = []) {
   const qw = new Set(words(query));
   const qcaps = capacities(`${query} ${specs.join(" ")}`);
@@ -3912,12 +3926,14 @@ function matchCatalog(query, specs = []) {
   const ordered = words(query);
   for (let k = 0; k + 1 < ordered.length; k++) qw.add(ordered[k] + ordered[k + 1]);
   const hit = (tok) => qw.has(tok);
+  const qplat = platformsIn(norm(query));
   let best = 0;
   let cands = [];
   for (const ix of index()) {
     if (ix.nameTokens.length === 0) continue;
     if (!ix.nameTokens.every(hit)) continue;
     if (ix.weak && !ix.brandTokens.every(hit)) continue;
+    if (ix.p.category === "game" && qplat.size > 0 && !qplat.has(platformOf(ix.p.variant) ?? "")) continue;
     const score = ix.nameTokens.length;
     if (score > best) {
       best = score;
@@ -3936,6 +3952,7 @@ function matchCatalog(query, specs = []) {
   });
   if (withVariant.length > 0) cands = withVariant;
   const uniq = [...new Map(cands.map((c) => [c.p.id, c.p])).values()];
+  if (uniq.length === 1 && uniq[0].category === "game" && qplat.size === 0) return { options: uniq };
   if (uniq.length === 1) return { exact: uniq[0], options: [] };
   return { options: uniq.slice(0, 8) };
 }
@@ -3948,7 +3965,7 @@ var SYSTEM = `L\xEAs prints de an\xFAncios de eletr\xF3nicos usados (Vinted, OLX
 
 Regras:
 - "searchQuery": o nome do artigo principal como as pessoas o escrevem nos an\xFAncios: marca + linha + modelo exato (e a capacidade se for armazenamento, mem\xF3ria, telem\xF3vel ou tablet). Por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL", "AMD Ryzen 7 5700X", "Samsung Galaxy S21 Ultra 256GB", "Kingston A400 480GB". Usa TUDO o que se v\xEA: t\xEDtulo, descri\xE7\xE3o, r\xF3tulos, capturas de ecr\xE3 de programas (CPU-Z, CrystalDiskInfo...), e a forma e as marcas do aparelho nas fotos. Prefere o nome comercial aos c\xF3digos internos do fabricante. O artigo principal \xE9 o mais caro do an\xFAncio.
-- Lote: se o an\xFAncio vende v\xE1rios artigos juntos por um s\xF3 pre\xE7o (consola + comandos + jogos, computador + perif\xE9ricos), p\xF5e "isLot": true e lista em "lotItems" cada artigo que consegues identificar, no m\xE1ximo 10, com o principal em primeiro. Cada item: "name" (marca + modelo como nas pessoas escrevem; num jogo, o t\xEDtulo e a plataforma), "qty" (quantas unidades, inteiro) e "deviceType" (em ingl\xEAs). Jogos cujo t\xEDtulo n\xE3o se l\xEA agrupa-os num s\xF3 item ("Xbox One games") com a quantidade que o an\xFAncio diz. N\xE3o inventes artigos nem quantidades: s\xF3 o que o texto ou as fotos mostram. Um an\xFAncio de um s\xF3 artigo com um cabo ou um comando a acompanhar N\xC3O \xE9 lote: "isLot": false e o resto em "includes".
+- Lote: se o an\xFAncio vende v\xE1rios artigos juntos por um s\xF3 pre\xE7o (consola + comandos + jogos, computador + perif\xE9ricos), p\xF5e "isLot": true e lista em "lotItems" cada artigo que consegues identificar, no m\xE1ximo 10, com o principal em primeiro. Cada item: "name" (marca + modelo como as pessoas escrevem; num jogo, o t\xEDtulo e a plataforma), "qty" (quantas unidades, inteiro), "kind" ("console" para consolas e port\xE1teis de jogos, "controller" para comandos, "game" para jogos, "accessory" para carregadores, estojos, canetas, cart\xF5es de mem\xF3ria, cabos e afins, "device" para qualquer outro aparelho) e "deviceType" (em ingl\xEAs). Conta cada aparelho uma s\xF3 vez: "3 Nintendo DS" \xE9 um item com qty 3, n\xE3o dois. Jogos cujo t\xEDtulo n\xE3o se l\xEA agrupa-os num s\xF3 item com kind "game" ("Nintendo DS games") e a quantidade que o an\xFAncio diz. N\xE3o inventes artigos nem quantidades: s\xF3 o que o texto ou as fotos mostram. Um an\xFAncio de um s\xF3 artigo com um cabo ou um comando a acompanhar N\xC3O \xE9 lote: "isLot": false e o resto em "includes".
 - Se s\xF3 se sabe a linha mas n\xE3o o modelo exato (por exemplo "Ryzen 7", "Sony WH", "Lenovo IdeaPad", "iPhone"), p\xF5e "needsModel": true, escreve em "searchQuery" a linha e d\xE1 em "modelOptions" at\xE9 6 nomes completos dos modelos mais comuns dessa linha no mercado de usados (do teu conhecimento). Se o modelo se l\xEA, "needsModel" \xE9 false e "modelOptions" fica vazio.
 - Se nem a marca se percebe, searchQuery null.
 - "deviceType": tipo de aparelho em ingl\xEAs, uma ou duas palavras (laptop, headphones, smartphone, tablet, smartwatch, camera, game console, controller, speaker, graphics card, cpu, ssd, ram, monitor, motherboard, keyboard, mouse, sneakers...).
@@ -3983,9 +4000,10 @@ var TOOL = {
           properties: {
             name: { type: "string", description: "Marca + modelo (ou t\xEDtulo do jogo + plataforma)" },
             qty: { type: "integer", description: "Unidades" },
+            kind: { type: "string", enum: ["console", "controller", "game", "accessory", "device"] },
             deviceType: { type: "string", description: "Tipo de aparelho em ingl\xEAs" }
           },
-          required: ["name", "qty"]
+          required: ["name", "qty", "kind"]
         }
       },
       title: { type: "string" },
@@ -4038,6 +4056,18 @@ function conditionFor(category, generic) {
   return generic === "P" ? "P" : "B";
 }
 var MAX_LOT_ITEMS = 10;
+var LOT_KINDS = ["console", "controller", "game", "accessory", "device"];
+var KIND_CATEGORIES = {
+  console: ["console"],
+  controller: ["controller"],
+  game: ["game"],
+  accessory: null,
+  device: ["phone", "tablet", "laptop", "watch", "audio", "camera", "gpu", "cpu", "storage", "monitor", "peripheral", "desktop", "console"]
+};
+function lotKind(raw, name) {
+  if (typeof raw === "string" && LOT_KINDS.includes(raw)) return raw;
+  return /\b(games?|jogos?|jeux|spiele|giochi|juegos)\b/i.test(name) ? "game" : "device";
+}
 function parseLot(input, mainId, generic) {
   if (input.isLot !== true || !Array.isArray(input.lotItems)) return void 0;
   const raw = input.lotItems;
@@ -4046,7 +4076,10 @@ function parseLot(input, mainId, generic) {
     const name = cleanLookupQuery(it?.name);
     if (!name) continue;
     const qty = Math.max(1, Math.min(20, Math.round(Number(it.qty) || 1)));
-    const m = matchCatalog(name, []).exact;
+    const kind = lotKind(it.kind, name);
+    const allowed = KIND_CATEGORIES[kind];
+    const found = allowed ? matchCatalog(name, []).exact : void 0;
+    const m = found && allowed.includes(found.category) ? found : void 0;
     items.push({
       name,
       qty,
@@ -4057,7 +4090,7 @@ function parseLot(input, mainId, generic) {
     if (items.length >= MAX_LOT_ITEMS) break;
   }
   if (items.length < 2) return void 0;
-  if (mainId && !items[0].productId) items[0].productId = mainId;
+  if (mainId && !items[0].productId && !/\b(games?|jogos?)\b/i.test(items[0].name)) items[0].productId = mainId;
   return { items, more: Math.max(0, raw.length - items.length) };
 }
 function parseVisionResponse(data) {

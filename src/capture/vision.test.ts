@@ -143,3 +143,25 @@ describe("lote no print", () => {
     expect(result.lot!.items[1].qty).toBe(20);
   });
 });
+
+describe("lote: jogos não viram consola", () => {
+  const it2 = (name: string, qty: number, kind?: string) => ({ name, qty, kind });
+
+  it("'Nintendo DS games' (jogos) não casa com a consola Nintendo DS do catálogo", () => {
+    const { result } = parseVisionResponse(reply(ad({
+      searchQuery: "Nintendo DS Lite", isLot: true,
+      lotItems: [it2("Nintendo DS Lite", 3, "console"), it2("Nintendo DS games", 13, "game")],
+    })));
+    expect(result.lot!.items[0].productId).toBe("nds-lite");
+    expect(result.lot!.items[1].productId).toBeNull();
+  });
+
+  it("sem 'kind', um nome com 'games' é tratado como jogos; acessórios nunca casam com o catálogo", () => {
+    const { result } = parseVisionResponse(reply(ad({
+      searchQuery: "Nintendo DS Lite", isLot: true,
+      lotItems: [it2("Nintendo DS Lite", 3), it2("Nintendo DS games", 13), it2("Nintendo DS charger", 2, "accessory")],
+    })));
+    expect(result.lot!.items[1].productId).toBeNull();
+    expect(result.lot!.items[2].productId).toBeNull();
+  });
+});

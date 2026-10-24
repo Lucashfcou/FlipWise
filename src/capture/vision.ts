@@ -15,7 +15,7 @@ export const SYSTEM = `Lês prints de anúncios de eletrónicos usados (Vinted, 
 
 Regras:
 - "searchQuery": o nome do artigo principal como as pessoas o escrevem nos anúncios: marca + linha + modelo exato (e a capacidade se for armazenamento, memória, telemóvel ou tablet). Por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL", "AMD Ryzen 7 5700X", "Samsung Galaxy S21 Ultra 256GB", "Kingston A400 480GB". Usa TUDO o que se vê: título, descrição, rótulos, capturas de ecrã de programas (CPU-Z, CrystalDiskInfo...), e a forma e as marcas do aparelho nas fotos. Prefere o nome comercial aos códigos internos do fabricante. O artigo principal é o mais caro do anúncio.
-- Lote: se o anúncio vende vários artigos juntos por um só preço (consola + comandos + jogos, computador + periféricos), põe "isLot": true e lista em "lotItems" cada artigo que consegues identificar, no máximo 10, com o principal em primeiro. Cada item: "name" (marca + modelo como nas pessoas escrevem; num jogo, o título e a plataforma), "qty" (quantas unidades, inteiro) e "deviceType" (em inglês). Jogos cujo título não se lê agrupa-os num só item ("Xbox One games") com a quantidade que o anúncio diz. Não inventes artigos nem quantidades: só o que o texto ou as fotos mostram. Um anúncio de um só artigo com um cabo ou um comando a acompanhar NÃO é lote: "isLot": false e o resto em "includes".
+- Lote: se o anúncio vende vários artigos juntos por um só preço (consola + comandos + jogos, computador + periféricos), põe "isLot": true e lista em "lotItems" cada artigo que consegues identificar, no máximo 10, com o principal em primeiro. Cada item: "name" (marca + modelo como as pessoas escrevem; num jogo, o título e a plataforma), "qty" (quantas unidades, inteiro), "kind" ("console" para consolas e portáteis de jogos, "controller" para comandos, "game" para jogos, "accessory" para carregadores, estojos, canetas, cartões de memória, cabos e afins, "device" para qualquer outro aparelho) e "deviceType" (em inglês). Conta cada aparelho uma só vez: "3 Nintendo DS" é um item com qty 3, não dois. Jogos cujo título não se lê agrupa-os num só item com kind "game" ("Nintendo DS games") e a quantidade que o anúncio diz. Não inventes artigos nem quantidades: só o que o texto ou as fotos mostram. Um anúncio de um só artigo com um cabo ou um comando a acompanhar NÃO é lote: "isLot": false e o resto em "includes".
 - Se só se sabe a linha mas não o modelo exato (por exemplo "Ryzen 7", "Sony WH", "Lenovo IdeaPad", "iPhone"), põe "needsModel": true, escreve em "searchQuery" a linha e dá em "modelOptions" até 6 nomes completos dos modelos mais comuns dessa linha no mercado de usados (do teu conhecimento). Se o modelo se lê, "needsModel" é false e "modelOptions" fica vazio.
 - Se nem a marca se percebe, searchQuery null.
 - "deviceType": tipo de aparelho em inglês, uma ou duas palavras (laptop, headphones, smartphone, tablet, smartwatch, camera, game console, controller, speaker, graphics card, cpu, ssd, ram, monitor, motherboard, keyboard, mouse, sneakers...).
@@ -51,9 +51,10 @@ const TOOL = {
           properties: {
             name: { type: "string", description: "Marca + modelo (ou título do jogo + plataforma)" },
             qty: { type: "integer", description: "Unidades" },
+            kind: { type: "string", enum: ["console", "controller", "game", "accessory", "device"] },
             deviceType: { type: "string", description: "Tipo de aparelho em inglês" },
           },
-          required: ["name", "qty"],
+          required: ["name", "qty", "kind"],
         },
       },
       title: { type: "string" },
@@ -121,6 +122,23 @@ function conditionFor(category: Category, generic: unknown): Condition | null {
 /** Máximo de artigos lidos de um lote. */
 export const MAX_LOT_ITEMS = 10;
 
+const LOT_KINDS = ["console", "controller", "game", "accessory", "device"] as const;
+type LotKind = (typeof LOT_KINDS)[number];
+
+/** Categorias do catálogo que cada tipo de artigo do lote pode casar. Evita contar "jogos de DS" como consolas DS. */
+const KIND_CATEGORIES: Record<LotKind, Category[] | null> = {
+  console: ["console"],
+  controller: ["controller"],
+  game: ["game"],
+  accessory: null,
+  device: ["phone", "tablet", "laptop", "watch", "audio", "camera", "gpu", "cpu", "storage", "monitor", "peripheral", "desktop", "console"],
+};
+
+function lotKind(raw: unknown, name: string): LotKind {
+  if (typeof raw === "string" && (LOT_KINDS as readonly string[]).includes(raw)) return raw as LotKind;
+  return /\b(games?|jogos?|jeux|spiele|giochi|juegos)\b/i.test(name) ? "game" : "device";
+}
+
 /** Lote lido do print: cada artigo é casado com o catálogo em código; os que não casam ficam sem preço. */
 function parseLot(input: Record<string, unknown>, mainId: string | null, generic: unknown): CaptureResult["lot"] {
   if (input.isLot !== true || !Array.isArray(input.lotItems)) return undefined;
@@ -130,7 +148,10 @@ function parseLot(input: Record<string, unknown>, mainId: string | null, generic
     const name = cleanLookupQuery(it?.name);
     if (!name) continue;
     const qty = Math.max(1, Math.min(20, Math.round(Number(it.qty) || 1)));
-    const m = matchCatalog(name, []).exact;
+    const kind = lotKind(it.kind, name);
+    const allowed = KIND_CATEGORIES[kind];
+    const found = allowed ? matchCatalog(name, []).exact : undefined;
+    const m = found && allowed!.includes(found.category) ? found : undefined;
     items.push({
       name,
       qty,
@@ -142,7 +163,7 @@ function parseLot(input: Record<string, unknown>, mainId: string | null, generic
   }
   if (items.length < 2) return undefined;
   // O principal do lote é o primeiro; se o catálogo reconheceu o artigo principal da leitura, usa esse.
-  if (mainId && !items[0].productId) items[0].productId = mainId;
+  if (mainId && !items[0].productId && !/\b(games?|jogos?)\b/i.test(items[0].name)) items[0].productId = mainId;
   return { items, more: Math.max(0, raw.length - items.length) };
 }
 

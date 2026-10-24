@@ -61,6 +61,22 @@ function index(): Indexed[] {
   return INDEX;
 }
 
+/** Plataformas de jogos reconhecidas no texto. Os jogos do catálogo têm preço por plataforma: nunca se casa um jogo de outra. */
+const PLATFORMS: [string, RegExp][] = [
+  ["ps5", /\bplaystation 5\b/],
+  ["ps4", /\bplaystation 4\b/],
+  ["ps3", /\bplaystation 3\b/],
+  ["ps2", /\bplaystation 2\b/],
+  ["switch", /\bswitch\b/],
+  ["wii", /\bwii\b/],
+  ["xbox", /\bxbox\b/],
+  ["3ds", /\b3ds\b/],
+  ["ds", /\bnintendo ds\b|\bnds\b/],
+  ["pc", /\bpc\b|\bsteam\b/],
+];
+const platformsIn = (text: string) => new Set(PLATFORMS.filter(([, re]) => re.test(text)).map(([k]) => k));
+const platformOf = (variant: string) => [...platformsIn(norm(variant))][0];
+
 export interface CatalogMatch {
   /** Produto certo, quando só há um candidato. */
   exact?: Product;
@@ -81,6 +97,7 @@ export function matchCatalog(query: string, specs: string[] = []): CatalogMatch 
   const ordered = words(query);
   for (let k = 0; k + 1 < ordered.length; k++) qw.add(ordered[k] + ordered[k + 1]);
   const hit = (tok: string) => qw.has(tok);
+  const qplat = platformsIn(norm(query));
 
   let best = 0;
   let cands: Indexed[] = [];
@@ -88,6 +105,8 @@ export function matchCatalog(query: string, specs: string[] = []): CatalogMatch 
     if (ix.nameTokens.length === 0) continue;
     if (!ix.nameTokens.every(hit)) continue;
     if (ix.weak && !ix.brandTokens.every(hit)) continue;
+    // Jogo de outra plataforma (ex.: "Minecraft Wii U" contra o do PS4): não é o mesmo produto nem o mesmo preço.
+    if (ix.p.category === "game" && qplat.size > 0 && !qplat.has(platformOf(ix.p.variant) ?? "")) continue;
     const score = ix.nameTokens.length;
     if (score > best) {
       best = score;
@@ -110,6 +129,8 @@ export function matchCatalog(query: string, specs: string[] = []): CatalogMatch 
   if (withVariant.length > 0) cands = withVariant;
 
   const uniq = [...new Map(cands.map((c) => [c.p.id, c.p])).values()];
+  // Jogo sem plataforma no texto: não dá para saber qual é, pergunta em vez de assumir.
+  if (uniq.length === 1 && uniq[0].category === "game" && qplat.size === 0) return { options: uniq };
   if (uniq.length === 1) return { exact: uniq[0], options: [] };
   return { options: uniq.slice(0, 8) };
 }
