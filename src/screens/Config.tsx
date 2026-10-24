@@ -3,6 +3,7 @@ import { CSV_TEMPLATE, parseCsv } from "../domain/csv";
 import { t } from "../i18n";
 import { useApp } from "../state";
 import { Feedback } from "../ui/Feedback";
+import { Legal } from "../ui/Legal";
 import { AccountPanel } from "../auth/AccountPanel";
 
 function ImportPanel() {
@@ -115,6 +116,8 @@ export function Config() {
 
       <h2>{t("feedback.heading")}</h2>
       <Feedback page="settings" />
+
+      <Legal />
 
       <h2>{t("settings.about")}</h2>
       <p className="hint">{t("settings.aboutText")}</p>

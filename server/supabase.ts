@@ -92,3 +92,12 @@ export async function saveFeedback(
   const r = await rest(e, "feedback", { method: "POST", headers: { prefer: "return=minimal" }, body: JSON.stringify(row) });
   if (!r.ok) throw new Error(`Supabase feedback ${r.status}`);
 }
+
+/** Apaga a conta (Auth) e, por cascata, perfil, uso e dados sincronizados. Só com a chave de serviço. */
+export async function deleteUser(e: SupabaseEnv, userId: string): Promise<void> {
+  const r = await fetch(`${e.url}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    headers: { apikey: e.serviceKey, authorization: `Bearer ${e.serviceKey}` },
+  });
+  if (!r.ok) throw new Error(`Supabase delete user ${r.status}`);
+}

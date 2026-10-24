@@ -55,7 +55,11 @@ Para dar o plano Pro a alguém (até haver pagamento): **Table Editor > profiles
 
 O botão **Enviar feedback** (início e Ajustes) grava na tabela `feedback` do Supabase (criada pelo mesmo `schema.sql`). Lê as mensagens em **Table Editor > feedback**. Não precisa de login para enviar; se a pessoa estiver logada, guarda o e-mail. Limite de 3 mensagens por minuto por IP.
 
-## 6. Notas
+## 6. Privacidade e apagar a conta
+
+Em **Ajustes** há "Privacidade" e "Termos do beta" (texto simples) e, com sessão iniciada, o botão **Apagar a minha conta** (`DELETE /api/account`, apaga o utilizador no Supabase; perfil, uso e dados sincronizados saem por cascata). Revê os textos em `src/i18n.ts` (chaves `legal.*`) se mudares o que recolhes.
+
+## 7. Notas
 
 - O limite de tempo das funções está em 60 s (`vercel.json`). Uma leitura com busca em vários países pode levar de 10 a 25 s. Se o teu plano da Vercel não aceitar 60 s, a implantação avisa: baixa o valor e eu separo a leitura da busca.
 - O plano grátis da Vercel (Hobby) costuma ser só para uso pessoal; ao cobrar, confere os termos.

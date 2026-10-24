@@ -3,6 +3,7 @@ import { captureStatus } from "../capture/client";
 import type { CaptureStatus } from "../capture/types";
 import { t } from "../i18n";
 import { useAuth } from "./AuthProvider";
+import { accessToken } from "./supabase";
 
 /** Entrar (e-mail com link ou Google). Sem as variáveis do Supabase não aparece nada. */
 export function LoginPanel({ compact = false }: { compact?: boolean }) {
@@ -67,9 +68,27 @@ export function AccountPanel() {
     if (user) captureStatus().then(setStatus);
     else setStatus(null);
   }, [user?.id]);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   if (!configured) return null;
   if (loading) return <p className="hint">{t("auth.loading")}</p>;
   if (!user) return <LoginPanel />;
+
+  async function deleteAccount() {
+    if (!confirm(t("account.deleteConfirm"))) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const token = await accessToken();
+      const res = await fetch("/api/account", { method: "DELETE", headers: token ? { authorization: `Bearer ${token}` } : {} });
+      if (!res.ok) throw new Error();
+      await signOut();
+    } catch {
+      setDeleteError(t("account.deleteError"));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const days = status?.trialEndsAt ? Math.max(0, Math.ceil((new Date(status.trialEndsAt).getTime() - Date.now()) / 86_400_000)) : 0;
   return (
@@ -84,7 +103,9 @@ export function AccountPanel() {
       )}
       <div className="actions">
         <button className="btn ghost" onClick={() => signOut()}>{t("auth.signOut")}</button>
+        <button className="btn ghost" disabled={deleting} onClick={deleteAccount}>{deleting ? t("account.deleting") : t("account.delete")}</button>
       </div>
+      {deleteError && <p className="loss" role="alert">{deleteError}</p>}
     </div>
   );
 }
