@@ -165,3 +165,33 @@ describe("lote: jogos não viram consola", () => {
     expect(result.lot!.items[2].productId).toBeNull();
   });
 });
+
+describe("lote: o nome manda mais que o 'kind' do modelo", () => {
+  const mk = (name: string, qty: number, kind: string) => ({ name, qty, kind });
+
+  it("'13x Nintendo DS games' marcado como console não vira 13 consolas", () => {
+    const { result } = parseVisionResponse(reply(ad({
+      searchQuery: "Nintendo DS Lite", isLot: true,
+      lotItems: [mk("Nintendo DS Lite", 3, "console"), mk("Nintendo DS games", 13, "console"), mk("Nintendo DS stylus", 2, "console"), mk("Nintendo DS charger", 2, "device")],
+    })));
+    expect(result.lot!.items[0].productId).toBe("nds-lite");
+    expect(result.lot!.items.slice(1).every((i) => i.productId === null)).toBe(true);
+  });
+
+  it("mais de 6 consolas iguais não recebem preço", () => {
+    const { result } = parseVisionResponse(reply(ad({
+      isLot: true, lotItems: [mk("Nintendo DS Lite", 3, "console"), mk("Nintendo DS", 13, "console")],
+    })));
+    expect(result.lot!.items[1].productId).toBeNull();
+  });
+});
+
+describe("lote: placa gráfica não é confundida com jogo ou acessório", () => {
+  it("'NVIDIA graphics card' continua a poder casar como aparelho", () => {
+    const { result } = parseVisionResponse(reply(ad({
+      searchQuery: "RTX 3060", isLot: true,
+      lotItems: [{ name: "Intel Core i5 PC", qty: 1, kind: "device" }, { name: "RTX 3060 graphics card", qty: 1, kind: "device" }, { name: "SD card", qty: 2, kind: "device" }],
+    })));
+    expect(result.lot!.items[2].productId).toBeNull();
+  });
+});

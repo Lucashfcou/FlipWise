@@ -134,9 +134,15 @@ const KIND_CATEGORIES: Record<LotKind, Category[] | null> = {
   device: ["phone", "tablet", "laptop", "watch", "audio", "camera", "gpu", "cpu", "storage", "monitor", "peripheral", "desktop", "console"],
 };
 
+const GAME_WORDS = /\b(games?|videogames?|jogos?|jeux|spiele|giochi|juegos|cartridges?|cartuchos?|cartouches?)\b/i;
+const ACCESSORY_WORDS = /\b(chargers?|carregadores?|chargeurs?|stylus|styluses|stylets?|canetas?|pouch|case|estojos?|pochette|cables?|cabos?|c[aâ]bles?|dock|stand|memory cards?|sd cards?|cartes? (?:sd|m[eé]moire)|cart[aã]o de mem[oó]ria)\b/i;
+
+/** O tipo do item: palavras do próprio nome mandam mais do que o que o modelo marcou (ele erra ao agrupar jogos, canetas, carregadores). */
 function lotKind(raw: unknown, name: string): LotKind {
+  if (GAME_WORDS.test(name)) return "game";
+  if (ACCESSORY_WORDS.test(name)) return "accessory";
   if (typeof raw === "string" && (LOT_KINDS as readonly string[]).includes(raw)) return raw as LotKind;
-  return /\b(games?|jogos?|jeux|spiele|giochi|juegos)\b/i.test(name) ? "game" : "device";
+  return "device";
 }
 
 /** Lote lido do print: cada artigo é casado com o catálogo em código; os que não casam ficam sem preço. */
@@ -151,7 +157,9 @@ function parseLot(input: Record<string, unknown>, mainId: string | null, generic
     const kind = lotKind(it.kind, name);
     const allowed = KIND_CATEGORIES[kind];
     const found = allowed ? matchCatalog(name, []).exact : undefined;
-    const m = found && allowed!.includes(found.category) ? found : undefined;
+    // Mais de 6 consolas ou aparelhos iguais num anúncio quase sempre é a leitura dos jogos ou acessórios: não se põe preço.
+    const implausible = (kind === "console" || kind === "device") && qty > 6;
+    const m = found && allowed!.includes(found.category) && !implausible ? found : undefined;
     items.push({
       name,
       qty,

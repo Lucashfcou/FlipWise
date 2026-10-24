@@ -4064,9 +4064,13 @@ var KIND_CATEGORIES = {
   accessory: null,
   device: ["phone", "tablet", "laptop", "watch", "audio", "camera", "gpu", "cpu", "storage", "monitor", "peripheral", "desktop", "console"]
 };
+var GAME_WORDS = /\b(games?|videogames?|jogos?|jeux|spiele|giochi|juegos|cartridges?|cartuchos?|cartouches?)\b/i;
+var ACCESSORY_WORDS2 = /\b(chargers?|carregadores?|chargeurs?|stylus|styluses|stylets?|canetas?|pouch|case|estojos?|pochette|cables?|cabos?|c[aâ]bles?|dock|stand|memory cards?|sd cards?|cartes? (?:sd|m[eé]moire)|cart[aã]o de mem[oó]ria)\b/i;
 function lotKind(raw, name) {
+  if (GAME_WORDS.test(name)) return "game";
+  if (ACCESSORY_WORDS2.test(name)) return "accessory";
   if (typeof raw === "string" && LOT_KINDS.includes(raw)) return raw;
-  return /\b(games?|jogos?|jeux|spiele|giochi|juegos)\b/i.test(name) ? "game" : "device";
+  return "device";
 }
 function parseLot(input, mainId, generic) {
   if (input.isLot !== true || !Array.isArray(input.lotItems)) return void 0;
@@ -4079,7 +4083,8 @@ function parseLot(input, mainId, generic) {
     const kind = lotKind(it.kind, name);
     const allowed = KIND_CATEGORIES[kind];
     const found = allowed ? matchCatalog(name, []).exact : void 0;
-    const m = found && allowed.includes(found.category) ? found : void 0;
+    const implausible = (kind === "console" || kind === "device") && qty > 6;
+    const m = found && allowed.includes(found.category) && !implausible ? found : void 0;
     items.push({
       name,
       qty,
