@@ -5,6 +5,9 @@ import { t } from "../i18n";
 import { useAuth } from "./AuthProvider";
 import { accessToken } from "./supabase";
 
+/** O botão do Google só aparece com VITE_AUTH_GOOGLE=1 (depois de ligar o provedor no Supabase). */
+const GOOGLE_ON = import.meta.env.VITE_AUTH_GOOGLE === "1";
+
 /** Entrar (e-mail com link ou Google). Sem as variáveis do Supabase não aparece nada. */
 export function LoginPanel({ compact = false }: { compact?: boolean }) {
   const { configured, signInEmail, signInGoogle } = useAuth();
@@ -49,9 +52,11 @@ export function LoginPanel({ compact = false }: { compact?: boolean }) {
             <button className="btn primary" onClick={send} disabled={state === "sending" || !/\S+@\S+\.\S+/.test(email)}>
               {state === "sending" ? t("auth.sending") : t("auth.sendLink")}
             </button>
-            <button className="btn ghost" onClick={() => signInGoogle().catch((e) => setError(e instanceof Error ? e.message : t("auth.error")))}>
-              {t("auth.google")}
-            </button>
+            {GOOGLE_ON && (
+              <button className="btn ghost" onClick={() => signInGoogle().catch((e) => setError(e instanceof Error ? e.message : t("auth.error")))}>
+                {t("auth.google")}
+              </button>
+            )}
           </div>
         </>
       )}

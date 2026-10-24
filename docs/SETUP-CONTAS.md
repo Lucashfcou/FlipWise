@@ -35,6 +35,8 @@ Navegador (app)  ──login──▶  Supabase (contas, plano, uso diário)
 | `VITE_SUPABASE_URL` | Project URL (usada ao construir o app) | não |
 | `VITE_SUPABASE_ANON_KEY` | chave anon (usada ao construir o app) | não |
 
+Para mostrar o botão do Google (só depois de ligar o provedor no Supabase): `VITE_AUTH_GOOGLE=1` e novo Redeploy.
+
 Opcionais: `SMART_MODEL` (modelo forte, por omissão `claude-sonnet-5-5`; vazio desliga), `LOOKUP_SITES` (por omissão `EBAY_ES,EBAY_DE,EBAY_FR,EBAY_IT`), `CAPTURE_MODEL`.
 
 Depois: **Deployments > Redeploy** (as variáveis `VITE_*` só entram numa nova construção).
