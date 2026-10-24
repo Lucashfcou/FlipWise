@@ -14,7 +14,8 @@ const TOOL_NAME = "ler_anuncio";
 export const SYSTEM = `Lês prints de anúncios de eletrónicos usados (Vinted, OLX, eBay, Wallapop, Facebook Marketplace...) e identificas o artigo principal como faria um revendedor experiente. Devolves SEMPRE através da ferramenta ${TOOL_NAME}.
 
 Regras:
-- "searchQuery": o nome do artigo principal como as pessoas o escrevem nos anúncios: marca + linha + modelo exato (e a capacidade se for armazenamento, memória, telemóvel ou tablet). Por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL", "AMD Ryzen 7 5700X", "Samsung Galaxy S21 Ultra 256GB", "Kingston A400 480GB". Usa TUDO o que se vê: título, descrição, rótulos, capturas de ecrã de programas (CPU-Z, CrystalDiskInfo...), e a forma e as marcas do aparelho nas fotos. Prefere o nome comercial aos códigos internos do fabricante. Se o anúncio é um lote (computador + rato, consola + jogos), usa só o artigo principal (o mais caro) e põe o resto em "includes".
+- "searchQuery": o nome do artigo principal como as pessoas o escrevem nos anúncios: marca + linha + modelo exato (e a capacidade se for armazenamento, memória, telemóvel ou tablet). Por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL", "AMD Ryzen 7 5700X", "Samsung Galaxy S21 Ultra 256GB", "Kingston A400 480GB". Usa TUDO o que se vê: título, descrição, rótulos, capturas de ecrã de programas (CPU-Z, CrystalDiskInfo...), e a forma e as marcas do aparelho nas fotos. Prefere o nome comercial aos códigos internos do fabricante. O artigo principal é o mais caro do anúncio.
+- Lote: se o anúncio vende vários artigos juntos por um só preço (consola + comandos + jogos, computador + periféricos), põe "isLot": true e lista em "lotItems" cada artigo que consegues identificar, no máximo 10, com o principal em primeiro. Cada item: "name" (marca + modelo como nas pessoas escrevem; num jogo, o título e a plataforma), "qty" (quantas unidades, inteiro) e "deviceType" (em inglês). Jogos cujo título não se lê agrupa-os num só item ("Xbox One games") com a quantidade que o anúncio diz. Não inventes artigos nem quantidades: só o que o texto ou as fotos mostram. Um anúncio de um só artigo com um cabo ou um comando a acompanhar NÃO é lote: "isLot": false e o resto em "includes".
 - Se só se sabe a linha mas não o modelo exato (por exemplo "Ryzen 7", "Sony WH", "Lenovo IdeaPad", "iPhone"), põe "needsModel": true, escreve em "searchQuery" a linha e dá em "modelOptions" até 6 nomes completos dos modelos mais comuns dessa linha no mercado de usados (do teu conhecimento). Se o modelo se lê, "needsModel" é false e "modelOptions" fica vazio.
 - Se nem a marca se percebe, searchQuery null.
 - "deviceType": tipo de aparelho em inglês, uma ou duas palavras (laptop, headphones, smartphone, tablet, smartwatch, camera, game console, controller, speaker, graphics card, cpu, ssd, ram, monitor, motherboard, keyboard, mouse, sneakers...).
@@ -41,6 +42,20 @@ const TOOL = {
       modelOptions: { type: "array", items: { type: "string" }, description: "Até 6 nomes completos de modelos prováveis (só quando needsModel)" },
       deviceType: { type: ["string", "null"], description: "Tipo de aparelho em inglês" },
       specs: { type: "array", items: { type: "string" }, description: "Especificações curtas que mudam o preço, só as legíveis" },
+      isLot: { type: "boolean", description: "true se o anúncio vende vários artigos juntos por um só preço" },
+      lotItems: {
+        type: "array",
+        description: "Só no lote: até 10 artigos, o principal primeiro",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Marca + modelo (ou título do jogo + plataforma)" },
+            qty: { type: "integer", description: "Unidades" },
+            deviceType: { type: "string", description: "Tipo de aparelho em inglês" },
+          },
+          required: ["name", "qty"],
+        },
+      },
       title: { type: "string" },
       price: { type: ["number", "null"] },
       currency: { type: "string" },
@@ -69,7 +84,7 @@ export function buildVisionRequest(imageDataUrl: string, model = DEFAULT_MODEL, 
   if (!img) throw new Error("Imagem inválida: usa JPEG, PNG, WebP ou GIF.");
   return {
     model,
-    max_tokens: 1600,
+    max_tokens: 2200,
     system: SYSTEM,
     tools: [TOOL],
     tool_choice: forceTool ? { type: "tool" as const, name: TOOL_NAME } : { type: "auto" as const },
@@ -103,6 +118,34 @@ function conditionFor(category: Category, generic: unknown): Condition | null {
   return generic === "P" ? "P" : "B";
 }
 
+/** Máximo de artigos lidos de um lote. */
+export const MAX_LOT_ITEMS = 10;
+
+/** Lote lido do print: cada artigo é casado com o catálogo em código; os que não casam ficam sem preço. */
+function parseLot(input: Record<string, unknown>, mainId: string | null, generic: unknown): CaptureResult["lot"] {
+  if (input.isLot !== true || !Array.isArray(input.lotItems)) return undefined;
+  const raw = input.lotItems as Record<string, unknown>[];
+  const items: NonNullable<CaptureResult["lot"]>["items"] = [];
+  for (const it of raw) {
+    const name = cleanLookupQuery(it?.name);
+    if (!name) continue;
+    const qty = Math.max(1, Math.min(20, Math.round(Number(it.qty) || 1)));
+    const m = matchCatalog(name, []).exact;
+    items.push({
+      name,
+      qty,
+      productId: m ? m.id : null,
+      condition: m ? conditionFor(m.category, generic) : null,
+      deviceType: typeof it.deviceType === "string" ? it.deviceType.replace(/[^\p{L}\s-]/gu, "").trim().slice(0, 24) || undefined : undefined,
+    });
+    if (items.length >= MAX_LOT_ITEMS) break;
+  }
+  if (items.length < 2) return undefined;
+  // O principal do lote é o primeiro; se o catálogo reconheceu o artigo principal da leitura, usa esse.
+  if (mainId && !items[0].productId) items[0].productId = mainId;
+  return { items, more: Math.max(0, raw.length - items.length) };
+}
+
 /** Interpreta a resposta da IA e casa o nome com o catálogo (em código). Nada do que a IA escreve entra na app sem esta validação. */
 export function parseVisionResponse(data: ApiResponse): { result: CaptureResult; usage: { input: number; output: number } } {
   const block = data.content?.find((b) => b.type === "tool_use" && b.name === TOOL_NAME);
@@ -124,7 +167,10 @@ export function parseVisionResponse(data: ApiResponse): { result: CaptureResult;
   const hasCode = (searchQuery ?? "").split(/s+/).some(isDistinctive);
   const needsModel = input.needsModel === true || (modelOptions.length > 0 && !hasCode && !product);
 
+  const lot = parseLot(input, product ? product.id : null, input.condition);
+
   const base = {
+    lot,
     productId: product ? product.id : null,
     title: str(input.title).slice(0, 200),
     price: p,

@@ -5,6 +5,21 @@ var EN = {
   // App
   "app.name": "Flipfind",
   "app.home": "Flipfind home",
+  "print.pick": "Choose a screenshot",
+  "print.pickHint": "The listing page, with title and price visible",
+  "print.change": "Change screenshot",
+  "print.remove": "Remove",
+  "print.found": "Found",
+  "print.noPrice": "Price not read",
+  "print.more": "More from the listing",
+  "print.lotTitle": "Lot \xB7 {n} items",
+  "print.lotNoPrice": "no price",
+  "print.lotMore": "{n} more items were not read.",
+  "print.lotUse": "See lot verdict",
+  "print.lotMain": "Only the main item",
+  "lot.fromPrint": "Lot read from the screenshot. Check the pieces and the price.",
+  "lot.skipped": "Not counted (no price): {list}.",
+  "lot.addPiece": "Add another piece",
   "legal.privacy": "Privacy",
   "legal.terms": "Terms of the beta",
   "legal.p1": "Your stock, sales and settings stay on your device (in the browser). We do not receive them.",
@@ -358,11 +373,11 @@ var EN = {
   "print.paid": "Paid",
   "print.close": "Close",
   "print.checking": "Checking the service\u2026",
-  "print.on": "Reading is on. Today: {used} of {limit} reads.",
+  "print.on": "Reading on \xB7 {used} of {limit} today",
   "print.off": "Screenshot reading is off: no server or key is set up, so it costs nothing. You can see the flow with an example result.",
   "print.file": "Listing screenshot",
   "print.preview": "Screenshot preview",
-  "print.privacy": "The image is shrunk on your device, sent for reading and not stored.",
+  "print.privacy": "Read, not stored.",
   "print.read": "Read screenshot",
   "print.reading": "Reading\u2026",
   "print.guideTitle": "What to send",
@@ -387,7 +402,7 @@ var EN = {
   "print.pickCatalog": "Pick from the catalog instead",
   "print.tryAgain": "Try another screenshot",
   "print.unknownTitle": "Not in the catalog",
-  "print.unknownText": "This product is not in the catalog, so the price cannot be trusted much. Treat it as a rough guide.",
+  "print.unknownText": "The price is only a rough guide.",
   "capture.notAdPhoto": "This looks like a photo of the device, with no title or price. Take a screenshot of the listing page, with the title and price visible.",
   "capture.notAdOther": "This image does not look like a listing. Take a screenshot of the listing page, with the title and price visible.",
   "capture.noProduct": "I could not identify the product. It may not be in the catalog, or the title is not readable.",
@@ -403,6 +418,21 @@ var EN = {
 var PT = {
   "app.name": "Flipfind",
   "app.home": "In\xEDcio do Flipfind",
+  "print.pick": "Escolher um print",
+  "print.pickHint": "A p\xE1gina do an\xFAncio, com t\xEDtulo e pre\xE7o vis\xEDveis",
+  "print.change": "Trocar o print",
+  "print.remove": "Remover",
+  "print.found": "Encontrado",
+  "print.noPrice": "Pre\xE7o n\xE3o lido",
+  "print.more": "Mais do an\xFAncio",
+  "print.lotTitle": "Lote \xB7 {n} artigos",
+  "print.lotNoPrice": "sem pre\xE7o",
+  "print.lotMore": "Mais {n} artigos n\xE3o foram lidos.",
+  "print.lotUse": "Ver veredito do lote",
+  "print.lotMain": "S\xF3 o artigo principal",
+  "lot.fromPrint": "Lote lido do print. Confere as pe\xE7as e o pre\xE7o.",
+  "lot.skipped": "N\xE3o contados (sem pre\xE7o): {list}.",
+  "lot.addPiece": "Juntar outra pe\xE7a",
   "legal.privacy": "Privacidade",
   "legal.terms": "Termos do beta",
   "legal.p1": "O teu stock, as vendas e as defini\xE7\xF5es ficam no teu aparelho (no navegador). N\xF3s n\xE3o os recebemos.",
@@ -745,11 +775,11 @@ var PT = {
   "print.paid": "Pago",
   "print.close": "Fechar",
   "print.checking": "A verificar o servi\xE7o\u2026",
-  "print.on": "Leitura ativa. Hoje: {used} de {limit} leituras.",
+  "print.on": "Leitura ativa \xB7 {used} de {limit} hoje",
   "print.off": "A leitura por print est\xE1 desligada: n\xE3o h\xE1 servidor nem chave configurados, por isso n\xE3o custa nada. Podes ver o fluxo com um resultado de exemplo.",
   "print.file": "Print do an\xFAncio",
   "print.preview": "Pr\xE9-visualiza\xE7\xE3o do print",
-  "print.privacy": "A imagem \xE9 reduzida no aparelho, enviada para leitura e n\xE3o \xE9 guardada.",
+  "print.privacy": "Lido e n\xE3o guardado.",
   "print.read": "Ler print",
   "print.reading": "A ler\u2026",
   "print.guideTitle": "O que enviar",
@@ -774,7 +804,7 @@ var PT = {
   "print.pickCatalog": "Escolher do cat\xE1logo",
   "print.tryAgain": "Tentar outro print",
   "print.unknownTitle": "Fora do cat\xE1logo",
-  "print.unknownText": "Este produto n\xE3o est\xE1 no cat\xE1logo, por isso o pre\xE7o \xE9 pouco fi\xE1vel. Usa como indica\xE7\xE3o aproximada.",
+  "print.unknownText": "O pre\xE7o \xE9 s\xF3 uma refer\xEAncia aproximada.",
   "capture.notAdPhoto": "Isto parece uma foto do aparelho, sem t\xEDtulo nem pre\xE7o. Faz print da p\xE1gina do an\xFAncio, com o t\xEDtulo e o pre\xE7o vis\xEDveis.",
   "capture.notAdOther": "Esta imagem n\xE3o parece um an\xFAncio. Faz print da p\xE1gina do an\xFAncio, com o t\xEDtulo e o pre\xE7o vis\xEDveis.",
   "capture.noProduct": "N\xE3o consegui identificar o produto. Pode n\xE3o estar no cat\xE1logo, ou o t\xEDtulo n\xE3o est\xE1 leg\xEDvel.",
@@ -3883,7 +3913,8 @@ var TOOL_NAME = "ler_anuncio";
 var SYSTEM = `L\xEAs prints de an\xFAncios de eletr\xF3nicos usados (Vinted, OLX, eBay, Wallapop, Facebook Marketplace...) e identificas o artigo principal como faria um revendedor experiente. Devolves SEMPRE atrav\xE9s da ferramenta ${TOOL_NAME}.
 
 Regras:
-- "searchQuery": o nome do artigo principal como as pessoas o escrevem nos an\xFAncios: marca + linha + modelo exato (e a capacidade se for armazenamento, mem\xF3ria, telem\xF3vel ou tablet). Por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL", "AMD Ryzen 7 5700X", "Samsung Galaxy S21 Ultra 256GB", "Kingston A400 480GB". Usa TUDO o que se v\xEA: t\xEDtulo, descri\xE7\xE3o, r\xF3tulos, capturas de ecr\xE3 de programas (CPU-Z, CrystalDiskInfo...), e a forma e as marcas do aparelho nas fotos. Prefere o nome comercial aos c\xF3digos internos do fabricante. Se o an\xFAncio \xE9 um lote (computador + rato, consola + jogos), usa s\xF3 o artigo principal (o mais caro) e p\xF5e o resto em "includes".
+- "searchQuery": o nome do artigo principal como as pessoas o escrevem nos an\xFAncios: marca + linha + modelo exato (e a capacidade se for armazenamento, mem\xF3ria, telem\xF3vel ou tablet). Por exemplo "Sony WH-CH720N", "Lenovo IdeaPad S145-15IWL", "AMD Ryzen 7 5700X", "Samsung Galaxy S21 Ultra 256GB", "Kingston A400 480GB". Usa TUDO o que se v\xEA: t\xEDtulo, descri\xE7\xE3o, r\xF3tulos, capturas de ecr\xE3 de programas (CPU-Z, CrystalDiskInfo...), e a forma e as marcas do aparelho nas fotos. Prefere o nome comercial aos c\xF3digos internos do fabricante. O artigo principal \xE9 o mais caro do an\xFAncio.
+- Lote: se o an\xFAncio vende v\xE1rios artigos juntos por um s\xF3 pre\xE7o (consola + comandos + jogos, computador + perif\xE9ricos), p\xF5e "isLot": true e lista em "lotItems" cada artigo que consegues identificar, no m\xE1ximo 10, com o principal em primeiro. Cada item: "name" (marca + modelo como nas pessoas escrevem; num jogo, o t\xEDtulo e a plataforma), "qty" (quantas unidades, inteiro) e "deviceType" (em ingl\xEAs). Jogos cujo t\xEDtulo n\xE3o se l\xEA agrupa-os num s\xF3 item ("Xbox One games") com a quantidade que o an\xFAncio diz. N\xE3o inventes artigos nem quantidades: s\xF3 o que o texto ou as fotos mostram. Um an\xFAncio de um s\xF3 artigo com um cabo ou um comando a acompanhar N\xC3O \xE9 lote: "isLot": false e o resto em "includes".
 - Se s\xF3 se sabe a linha mas n\xE3o o modelo exato (por exemplo "Ryzen 7", "Sony WH", "Lenovo IdeaPad", "iPhone"), p\xF5e "needsModel": true, escreve em "searchQuery" a linha e d\xE1 em "modelOptions" at\xE9 6 nomes completos dos modelos mais comuns dessa linha no mercado de usados (do teu conhecimento). Se o modelo se l\xEA, "needsModel" \xE9 false e "modelOptions" fica vazio.
 - Se nem a marca se percebe, searchQuery null.
 - "deviceType": tipo de aparelho em ingl\xEAs, uma ou duas palavras (laptop, headphones, smartphone, tablet, smartwatch, camera, game console, controller, speaker, graphics card, cpu, ssd, ram, monitor, motherboard, keyboard, mouse, sneakers...).
@@ -3909,6 +3940,20 @@ var TOOL = {
       modelOptions: { type: "array", items: { type: "string" }, description: "At\xE9 6 nomes completos de modelos prov\xE1veis (s\xF3 quando needsModel)" },
       deviceType: { type: ["string", "null"], description: "Tipo de aparelho em ingl\xEAs" },
       specs: { type: "array", items: { type: "string" }, description: "Especifica\xE7\xF5es curtas que mudam o pre\xE7o, s\xF3 as leg\xEDveis" },
+      isLot: { type: "boolean", description: "true se o an\xFAncio vende v\xE1rios artigos juntos por um s\xF3 pre\xE7o" },
+      lotItems: {
+        type: "array",
+        description: "S\xF3 no lote: at\xE9 10 artigos, o principal primeiro",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Marca + modelo (ou t\xEDtulo do jogo + plataforma)" },
+            qty: { type: "integer", description: "Unidades" },
+            deviceType: { type: "string", description: "Tipo de aparelho em ingl\xEAs" }
+          },
+          required: ["name", "qty"]
+        }
+      },
       title: { type: "string" },
       price: { type: ["number", "null"] },
       currency: { type: "string" },
@@ -3933,7 +3978,7 @@ function buildVisionRequest(imageDataUrl, model = DEFAULT_MODEL, lang = "pt", fo
   if (!img) throw new Error("Imagem inv\xE1lida: usa JPEG, PNG, WebP ou GIF.");
   return {
     model,
-    max_tokens: 1600,
+    max_tokens: 2200,
     system: SYSTEM,
     tools: [TOOL],
     tool_choice: forceTool ? { type: "tool", name: TOOL_NAME } : { type: "auto" },
@@ -3958,6 +4003,29 @@ function conditionFor(category, generic) {
   if (category === "game") return generic === "P" ? "so-disco" : "completo";
   return generic === "P" ? "P" : "B";
 }
+var MAX_LOT_ITEMS = 10;
+function parseLot(input, mainId, generic) {
+  if (input.isLot !== true || !Array.isArray(input.lotItems)) return void 0;
+  const raw = input.lotItems;
+  const items = [];
+  for (const it of raw) {
+    const name = cleanLookupQuery(it?.name);
+    if (!name) continue;
+    const qty = Math.max(1, Math.min(20, Math.round(Number(it.qty) || 1)));
+    const m = matchCatalog(name, []).exact;
+    items.push({
+      name,
+      qty,
+      productId: m ? m.id : null,
+      condition: m ? conditionFor(m.category, generic) : null,
+      deviceType: typeof it.deviceType === "string" ? it.deviceType.replace(/[^\p{L}\s-]/gu, "").trim().slice(0, 24) || void 0 : void 0
+    });
+    if (items.length >= MAX_LOT_ITEMS) break;
+  }
+  if (items.length < 2) return void 0;
+  if (mainId && !items[0].productId) items[0].productId = mainId;
+  return { items, more: Math.max(0, raw.length - items.length) };
+}
 function parseVisionResponse(data) {
   const block = data.content?.find((b) => b.type === "tool_use" && b.name === TOOL_NAME);
   const input = block?.input;
@@ -3973,7 +4041,9 @@ function parseVisionResponse(data) {
   const modelOptions = strList(input.modelOptions).map((s) => cleanLookupQuery(s)).filter((s) => Boolean(s)).slice(0, 6);
   const hasCode2 = (searchQuery ?? "").split(/s+/).some(isDistinctive);
   const needsModel = input.needsModel === true || modelOptions.length > 0 && !hasCode2 && !product;
+  const lot = parseLot(input, product ? product.id : null, input.condition);
   const base = {
+    lot,
     productId: product ? product.id : null,
     title: str(input.title).slice(0, 200),
     price: p,

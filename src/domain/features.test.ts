@@ -136,3 +136,19 @@ describe("veredicto no limite", () => {
     expect(decide(price, 40)?.title).toBe("Pass");
   });
 });
+
+describe("lote com artigo fora do catálogo", () => {
+  it("usa o preço próprio da linha e entra na soma", async () => {
+    const { evaluateBundle } = await import("./bundle");
+    const custom = { low: 90, typical: 100, high: 110, maxBuy: 70, firm: true, confidence: "media", count: 8, derived: false } as const;
+    const r = evaluateBundle(
+      [{ productId: "custom:Wii U", condition: "B", qty: 1, custom: { label: "Nintendo Wii U", price: custom } }],
+      () => est(0, { count: 0, maxBuy: 0 }),
+      { targetMargin: 0.25, shipping: 4, promo: 0 },
+      80,
+    );
+    expect(r.items[0].label).toBe("Nintendo Wii U");
+    expect(r.pricedUnits).toBe(1);
+    expect(r.sumTypical).toBe(100);
+  });
+});

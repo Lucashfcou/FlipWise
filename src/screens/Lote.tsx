@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
+import { CONDITIONS, PRODUCTS, conditionShort, findProduct, productLabel } from "../domain/catalog";
 import { allocateCost, evaluateBundle } from "../domain/bundle";
 import type { BundleLine } from "../domain/bundle";
 import type { Condition } from "../domain/types";
@@ -7,13 +7,20 @@ import { t } from "../i18n";
 import { money, today } from "../format";
 import { useApp } from "../state";
 
-export function Lote({ goStock }: { goStock: () => void }) {
+/** Lote vindo do print: linhas já lidas, preço total pedido e os artigos que ficaram sem preço. */
+export interface LotSeed {
+  lines: BundleLine[];
+  asked: number | null;
+  skipped: string[];
+}
+
+export function Lote({ goStock, seed }: { goStock: () => void; seed?: LotSeed }) {
   const { priceFor, settings, addStockMany } = useApp();
-  const [lines, setLines] = useState<BundleLine[]>([]);
+  const [lines, setLines] = useState<BundleLine[]>(seed?.lines ?? []);
   const [productId, setProductId] = useState(PRODUCTS[0].id);
   const [condition, setCondition] = useState<Condition>("B");
   const [qty, setQty] = useState("1");
-  const [asked, setAsked] = useState("");
+  const [asked, setAsked] = useState(seed?.asked ? String(seed.asked) : "");
 
   const product = findProduct(productId)!;
   const askedNum = asked === "" ? null : Number(asked.replace(",", "."));
@@ -34,6 +41,8 @@ export function Lote({ goStock }: { goStock: () => void }) {
     r.items.forEach((it, idx) => {
       const q = Math.max(1, Math.round(lines[idx].qty));
       for (let k = 0; k < q; k++) {
+        // Artigo fora do catálogo não entra no stock (ainda): a conta do custo já o conta, só não é guardado.
+        if (lines[idx].custom) { n++; continue; }
         items.push({
           productId: lines[idx].productId,
           condition: lines[idx].condition,
@@ -51,9 +60,11 @@ export function Lote({ goStock }: { goStock: () => void }) {
 
   return (
     <div>
-      <p className="hint">{t("lot.intro")}</p>
+      {seed ? <p className="note">{t("lot.fromPrint")}</p> : <p className="hint">{t("lot.intro")}</p>}
+      {seed && seed.skipped.length > 0 && <p className="hint">{t("lot.skipped", { list: seed.skipped.join(", ") })}</p>}
 
-      <div className="panel">
+      <details className="panel" open={!seed}>
+        <summary>{t("lot.addPiece")}</summary>
         <label className="label" htmlFor="lp">{t("lot.piece")}</label>
         <select
           id="lp"
@@ -85,7 +96,7 @@ export function Lote({ goStock }: { goStock: () => void }) {
         <div className="actions">
           <button className="btn accent" onClick={add}>{t("lot.add")}</button>
         </div>
-      </div>
+      </details>
 
       {lines.length === 0 ? (
         <p className="empty">{t("lot.empty")}</p>
@@ -94,7 +105,7 @@ export function Lote({ goStock }: { goStock: () => void }) {
           {r.items.map((it, idx) => (
             <li key={idx} className="row">
               <span>
-                {lines[idx].qty}× {it.label} <small>({lines[idx].condition})</small>
+                {lines[idx].qty}× {it.label}{!lines[idx].custom && findProduct(lines[idx].productId) && <small> ({conditionShort(findProduct(lines[idx].productId)!.category, lines[idx].condition)})</small>}
                 {!it.found && <small> · {t("lot.noPrice")}</small>}
               </span>
               <span className="mono">

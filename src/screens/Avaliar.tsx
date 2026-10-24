@@ -6,6 +6,7 @@ import { t } from "../i18n";
 import { money, today } from "../format";
 import { useApp } from "../state";
 import { Lote } from "./Lote";
+import type { LotSeed } from "./Lote";
 import { Print } from "./Print";
 import type { PrintPick } from "./Print";
 import { CategoryIcon } from "../ui/CategoryIcon";
@@ -20,6 +21,7 @@ const CATEGORIES = Object.keys(CATEGORY_LABEL) as Category[];
 export function Avaliar({ goStock, goProfit }: { goStock: () => void; goProfit: () => void }) {
   const { priceFor, settings, contribute, addStock, recent, pushRecent } = useApp();
   const [mode, setMode] = useState<"item" | "lote">("item");
+  const [lotSeed, setLotSeed] = useState<LotSeed | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [brand, setBrand] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -129,17 +131,17 @@ export function Avaliar({ goStock, goProfit }: { goStock: () => void; goProfit: 
     <section>
       <h1>{t("eval.title")}</h1>
       <div className="seg" role="group" aria-label={t("eval.modeAria")}>
-        <button aria-pressed={mode === "item"} onClick={() => setMode("item")}>{t("eval.one")}</button>
-        <button aria-pressed={mode === "lote"} onClick={() => setMode("lote")}>{t("eval.lot")}</button>
+        <button aria-pressed={mode === "item"} onClick={() => { setMode("item"); setLotSeed(null); }}>{t("eval.one")}</button>
+        <button aria-pressed={mode === "lote"} onClick={() => { setMode("lote"); setLotSeed(null); }}>{t("eval.lot")}</button>
       </div>
 
       {mode === "lote" ? (
-        <Lote goStock={goStock} />
+        <Lote goStock={goStock} seed={lotSeed ?? undefined} key={lotSeed ? "seed" : "manual"} />
       ) : !product ? (
         <>
           {!searching && <Welcome />}
           {!searching && <MonthCard goProfit={goProfit} />}
-          {!searching && <Print onUse={usePrint} />}
+          {!searching && <Print onUse={usePrint} onUseLot={(s) => { setLotSeed(s); setMode("lote"); }} />}
           <input
             className="field"
             type="search"

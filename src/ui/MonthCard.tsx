@@ -21,11 +21,11 @@ export function MonthCard({ goProfit }: { goProfit: () => void }) {
         <small>{t("home.profit")}</small>
       </div>
       {stock.length === 0 && <p className="hint monthhint">{t("home.empty")}</p>}
-      <div className="monthstats">
+      {stock.length > 0 && <div className="monthstats">
         <span><b>{m.sold}</b> {t("home.sold")}</span>
         <span><b>{m.unsold}</b> {t("home.inStock")}</span>
         {parked > 0 && <span className="warnText"><b>{parked}</b> {t("home.parked")}</span>}
-      </div>
+      </div>}
     </div>
   );
 }

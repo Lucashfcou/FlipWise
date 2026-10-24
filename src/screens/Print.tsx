@@ -5,7 +5,9 @@ import { matchCatalog } from "../capture/match";
 import { cleanLookupQuery } from "../ebay/lookup";
 import type { CaptureResult, CaptureStatus } from "../capture/types";
 import { CONDITIONS, PRODUCTS, findProduct, productLabel } from "../domain/catalog";
+import type { BundleLine } from "../domain/bundle";
 import type { Condition } from "../domain/types";
+import type { LotSeed } from "./Lote";
 import { pop, stagger, useFx } from "../fx";
 import { estimate } from "../domain/priceEngine";
 import { useApp } from "../state";
@@ -108,7 +110,8 @@ function Lookup({ q: q0, specs, deviceType, asked, preset, options, needsModel, 
   );
 }
 
-export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
+export function Print({ onUse, onUseLot }: { onUse: (p: PrintPick) => void; onUseLot: (s: LotSeed) => void }) {
+  const { settings } = useApp();
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<CaptureStatus | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -121,6 +124,10 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   const [condition, setCondition] = useState<Condition | "">("");
   const [price, setPrice] = useState("");
   const [editing, setEditing] = useState(false);
+  /** Anúncio de lote: true = a pessoa escolheu avaliar só o artigo principal. */
+  const [mainOnly, setMainOnly] = useState(false);
+  const [fileKey, setFileKey] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
   const demo = status !== null && !status.enabled;
   const confirmRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -134,12 +141,28 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
   useFx(panelRef, (el) => pop(el, 1.01), [open]);
   useFx(confirmRef, (el) => stagger([...el.children], 8, 35), [result]);
 
+  /** Volta ao início: sem print, sem resultado, sem nada preenchido. */
+  function reset() {
+    setPreview(null);
+    setImage(null);
+    setResult(null);
+    setProductId("");
+    setCondition("");
+    setPrice("");
+    setEditing(false);
+    setMainOnly(false);
+    setError("");
+    setBusy(false);
+    setFileKey((k) => k + 1);
+  }
+
   function load(r: CaptureResult) {
     setResult(r);
     setProductId(r.productId ?? "");
     setCondition(r.condition ?? "");
     setPrice(r.price ? String(r.price) : "");
     setEditing(false);
+    setMainOnly(false);
   }
 
   async function onFile(file: File | undefined) {
@@ -180,9 +203,45 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
 
   const product = productId ? findProduct(productId) : undefined;
   const priceNum = price === "" ? null : Number(price.replace(",", "."));
+  const validPrice = priceNum !== null && Number.isFinite(priceNum) && priceNum > 0;
   const canUse = Boolean(product && condition);
   const showLookup = Boolean(result && !productId && result.searchQuery && status?.lookup && !result.demo && !(result.candidates?.length));
   const notAd = result?.problems.some((p) => p.code === "NAO_E_ANUNCIO") ?? false;
+  const lot = result?.lot && !mainOnly && !notAd ? result.lot : undefined;
+  const foundName = product ? productLabel(product) : result?.searchQuery || result?.title || "";
+
+  /** Preço do artigo principal do lote fora do catálogo, calculado como no veredito de um artigo. */
+  function mainLookupEstimate() {
+    const prices = result?.lookup?.prices;
+    if (!prices || prices.length === 0) return null;
+    const e = estimate(
+      prices.map((value) => ({ productId: "lookup", condition: "B" as const, kind: "ask" as const, value, source: "eBay", date: new Date().toISOString().slice(0, 10) })),
+      { shipping: settings.shipping, promo: settings.promo, margin: settings.targetMargin },
+    );
+    return e.count > 0 ? e : null;
+  }
+
+  function lotLabel(it: NonNullable<CaptureResult["lot"]>["items"][number]) {
+    const p = it.productId ? findProduct(it.productId) : undefined;
+    return p ? productLabel(p) : it.name;
+  }
+
+  function useLot() {
+    if (!result?.lot) return;
+    const lines: BundleLine[] = [];
+    const skipped: string[] = [];
+    result.lot.items.forEach((it, i) => {
+      const p = it.productId ? findProduct(it.productId) : undefined;
+      if (p) {
+        lines.push({ productId: p.id, condition: it.condition ?? CONDITIONS[p.category][0].id, qty: it.qty });
+        return;
+      }
+      const est = i === 0 ? mainLookupEstimate() : null;
+      if (est) lines.push({ productId: "custom:" + it.name, condition: "B", qty: it.qty, custom: { label: it.name, price: est } });
+      else skipped.push(it.qty > 1 ? `${it.qty}× ${it.name}` : it.name);
+    });
+    onUseLot({ lines, asked: validPrice ? (priceNum as number) : null, skipped });
+  }
 
   if (!open) {
     return (
@@ -200,7 +259,15 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
     <div className="panel capture" ref={panelRef}>
       <div className="row">
         <strong>{t("print.card")}</strong>
-        <button className="btn ghost small" onClick={() => setOpen(false)}>{t("print.close")}</button>
+        <button
+          className="btn ghost small"
+          onClick={() => {
+            reset();
+            setOpen(false);
+          }}
+        >
+          {t("print.close")}
+        </button>
       </div>
 
       {status === null ? (
@@ -221,20 +288,37 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
 
       {status && (
         <>
-          <label className="label" htmlFor="printfile">{t("print.file")}</label>
-          <input id="printfile" className="field" type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />
-          {preview && <img className="printpreview" src={preview} alt={t("print.preview")} />}
+          <input
+            key={fileKey}
+            ref={fileRef}
+            id="printfile"
+            className="sr-only"
+            type="file"
+            accept="image/*"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+          {!preview ? (
+            <button className="dropzone" onClick={() => fileRef.current?.click()}>
+              <strong>{t("print.pick")}</strong>
+              <small>{t("print.pickHint")}</small>
+            </button>
+          ) : (
+            <div className="previewbox">
+              <img className="printpreview" src={preview} alt={t("print.preview")} />
+              <div className="actions">
+                <button className="btn ghost" onClick={() => fileRef.current?.click()}>{t("print.change")}</button>
+                <button className="btn ghost" onClick={reset}>{t("print.remove")}</button>
+              </div>
+            </div>
+          )}
+          {preview && !result && (
+            <div className="actions">
+              <button className="btn primary" onClick={read} disabled={!image || busy}>{busy ? t("print.reading") : t("print.read")}</button>
+            </div>
+          )}
           <p className="hint">{t(demo ? "print.demoPrivacy" : "print.privacy")}</p>
-          <div className="actions">
-            <button className="btn primary" onClick={read} disabled={!image || busy}>{busy ? t("print.reading") : t("print.read")}</button>
-          </div>
         </>
       )}
-
-      <div className="guide">
-        <strong>{t("print.guideTitle")}</strong>
-        <p>{t("print.guide")}</p>
-      </div>
 
       {status && !status.enabled && !result && (
         <>
@@ -258,27 +342,48 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
             ))}
           </ul>
           <div className="actions">
-            <button
-              className="btn primary"
-              onClick={() => {
-                setResult(null);
-                setImage(null);
-                setPreview(null);
-              }}
-            >
-              {t("print.tryAgain")}
-            </button>
+            <button className="btn primary" onClick={reset}>{t("print.tryAgain")}</button>
           </div>
         </div>
       )}
 
-      {result && !notAd && (
+      {result && !notAd && lot && (
         <div className="confirm" ref={confirmRef}>
-          <div className="row">
-            <strong>{result.title || t("print.read1")}</strong>
+          {result.demo && <p className="note">{t("print.demoNote")}</p>}
+          <div className="found">
+            <small className="label">{t("print.lotTitle", { n: lot.items.length })}</small>
+            <div className="lotprice">
+              <label className="label" htmlFor="lotprice">{t("lot.ask")}</label>
+              <input id="lotprice" className="field mono" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+            </div>
+          </div>
+          <ul className="plain lotlist">
+            {lot.items.map((it, i) => {
+              const priced = Boolean(it.productId) || (i === 0 && mainLookupEstimate() !== null);
+              return (
+                <li key={i} className="row">
+                  <span>{it.qty}× {lotLabel(it)}</span>
+                  <small className={priced ? "gain" : "muted"}>{priced ? "✓" : t("print.lotNoPrice")}</small>
+                </li>
+              );
+            })}
+          </ul>
+          {lot.more > 0 && <p className="hint">{t("print.lotMore", { n: lot.more })}</p>}
+          <div className="actions">
+            <button className="btn primary" onClick={useLot}>{t("print.lotUse")}</button>
+            <button className="btn ghost" onClick={() => setMainOnly(true)}>{t("print.lotMain")}</button>
+          </div>
+        </div>
+      )}
+
+      {result && !notAd && !lot && (
+        <div className="confirm" ref={confirmRef}>
+          {result.demo && <p className="note">{t("print.demoNote")}</p>}
+          <div className="found">
+            <small className="label">{t("print.found")}</small>
+            <strong className="foundname">{foundName || t("print.read1")}</strong>
             <span className={`conf ${result.confidence}`}>{t(`conf.${result.confidence}` as Key)}</span>
           </div>
-          {result.demo && <p className="note">{t("print.demoNote")}</p>}
           {result.problems.length > 0 && (
             <ul className="problems" role="alert">
               {result.problems.map((p) => (
@@ -314,18 +419,21 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               }}
             />
           )}
-          {result.notes && <p className="hint">{result.notes}</p>}
           {result.defects.length > 0 && <p className="loss">{t("print.defects", { list: result.defects.join(", ") })}</p>}
-          {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}
+          {(result.notes || result.includes.length > 0 || result.conditionReason) && (
+            <details className="more">
+              <summary>{t("print.more")}</summary>
+              {result.includes.length > 0 && <p className="hint">{t("print.includes", { list: result.includes.join(", ") })}</p>}
+              {result.conditionReason && <p className="hint">{t("print.conditionNote", { note: result.conditionReason })}</p>}
+              {result.notes && <p className="hint">{result.notes}</p>}
+            </details>
+          )}
 
           {product && condition && !editing && (
             <div className="summary">
               <div>
-                <strong>{productLabel(product)}</strong>
-                <small>
-                  {CONDITIONS[product.category].find((c) => c.id === condition)?.label}
-                  {priceNum !== null && Number.isFinite(priceNum) && priceNum > 0 ? ` · ${priceNum} €` : ""}
-                </small>
+                <strong>{CONDITIONS[product.category].find((c) => c.id === condition)?.label}</strong>
+                <small>{validPrice ? `${priceNum} €` : t("print.noPrice")}</small>
               </div>
               <button className="btn ghost small" onClick={() => setEditing(true)}>{t("print.edit")}</button>
             </div>
@@ -370,18 +478,23 @@ export function Print({ onUse }: { onUse: (p: PrintPick) => void }) {
               </div>
             </>
           )}
-          {result.conditionReason && <p className="hint">{t("print.conditionNote", { note: result.conditionReason })}</p>}
 
           {(canUse || editing || !showLookup) && (
-          <div className="actions">
-            <button
-              className="btn primary"
-              disabled={!canUse}
-              onClick={() => onUse({ productId, condition: condition as Condition, price: priceNum !== null && Number.isFinite(priceNum) && priceNum > 0 ? priceNum : null })}
-            >
-              {t("print.use")}
-            </button>
-          </div>
+            <div className="actions">
+              <button
+                className="btn primary"
+                disabled={!canUse}
+                onClick={() => onUse({ productId, condition: condition as Condition, price: validPrice ? (priceNum as number) : null })}
+              >
+                {t("print.use")}
+              </button>
+              <button className="btn ghost" onClick={reset}>{t("print.tryAgain")}</button>
+            </div>
+          )}
+          {showLookup && !canUse && !editing && (
+            <div className="actions">
+              <button className="btn ghost" onClick={reset}>{t("print.tryAgain")}</button>
+            </div>
           )}
         </div>
       )}

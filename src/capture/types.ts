@@ -46,6 +46,8 @@ export interface CaptureResult {
   lookup?: LookupResult | null;
   /** Tipo de aparelho (laptop, headphones, tablet...), para achar a categoria no eBay. */
   deviceType?: string;
+  /** Anúncio que vende vários artigos por um só preço: lista lida (máx. 10), cada artigo casado com o catálogo quando possível. */
+  lot?: { items: { name: string; qty: number; productId: string | null; condition: Condition | null; deviceType?: string }[]; more: number };
   /** true quando é só um exemplo de demonstração, sem ler nenhuma imagem. */
   demo?: boolean;
 }

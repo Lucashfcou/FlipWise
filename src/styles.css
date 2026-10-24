@@ -1482,3 +1482,80 @@ textarea.field {
   min-height: 96px;
   font-family: var(--body);
 }
+
+/* Painel do print: escolher, trocar e remover o print; produto em destaque; lote */
+.dropzone {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  margin: 10px 0 4px;
+  padding: 26px 16px;
+  text-align: center;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border: 2px dashed color-mix(in srgb, var(--accent) 60%, var(--line-strong));
+  border-radius: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.dropzone strong {
+  font: 700 18px/1.2 var(--body);
+}
+
+.dropzone small {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.previewbox {
+  margin: 10px 0 4px;
+}
+
+.previewbox .printpreview {
+  margin: 0 0 10px;
+  max-height: 260px;
+}
+
+.found {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.foundname {
+  font: 800 clamp(24px, 7vw, 30px) / 1.1 var(--display);
+  font-stretch: 108%;
+  letter-spacing: -0.01em;
+}
+
+.found .conf {
+  justify-self: start;
+}
+
+.lotprice {
+  display: grid;
+  gap: 4px;
+}
+
+.lotlist {
+  margin: 10px 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+details.more > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.lotlist small {
+  white-space: nowrap;
+  margin-left: 12px;
+}

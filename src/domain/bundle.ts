@@ -7,6 +7,8 @@ export interface BundleLine {
   productId: string;
   condition: Condition;
   qty: number;
+  /** Artigo fora do catálogo, já com preço (busca no eBay): usa este preço e este nome em vez do catálogo. */
+  custom?: { label: string; price: PriceEstimate };
 }
 
 /** Vender tudo junto costuma obrigar a um desconto. Hipótese a calibrar com vendas reais. */
@@ -44,6 +46,7 @@ export function evaluateBundle(
   asked: number | null,
 ): BundleResult {
   const items: BundleItem[] = lines.map((line) => {
+    if (line.custom) return { line, price: line.custom.price, found: line.custom.price.count > 0, label: line.custom.label };
     const price = priceFor(line.productId, line.condition);
     const p = findProduct(line.productId);
     return { line, price, found: price.count > 0, label: p ? productLabel(p) : line.productId };
