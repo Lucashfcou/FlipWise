@@ -8,7 +8,7 @@ import type { MarketplaceId } from "../src/ebay/client";
 import { lookupConfident, lookupScore, runLookup } from "../src/ebay/lookup";
 import type { LookupResult } from "../src/ebay/lookup";
 import type { CaptureResult } from "../src/capture/types";
-import { DEFAULT_MODEL, buildRetryRequest, buildVisionRequest, parseRetryResponse, parseVisionResponse } from "../src/capture/vision";
+import { DEFAULT_MODEL, buildRetryRequest, buildVisionRequest, lotDiffs, parseRetryResponse, parseVisionResponse, statedGameCount } from "../src/capture/vision";
 
 export type QuotaKind = "smart" | "lookup";
 
@@ -110,15 +110,46 @@ export function createCore(cfg: CoreConfig, hooks: CoreHooks) {
     const first = await callVision(image, cfg.model, lang);
     let { result } = first;
     const usage = first.usage;
+    /** Segunda leitura (modelo forte), se houve: serve também para conferir as contagens de um lote. */
+    let strong: CaptureResult | null = null;
 
     if (cfg.smartModel && hard(result) && (await hooks.quota("smart"))) {
       try {
         const second = await callVision(image, cfg.smartModel, lang);
         hooks.log(`[captura] modelo forte ${cfg.smartModel} entrada=${second.usage.input} saída=${second.usage.output} (${quality(result)} -> ${quality(second.result)})`);
+        strong = second.result;
         if (quality(second.result) > quality(result)) result = second.result;
       } catch {
         /* mantém a primeira leitura */
       }
+    }
+
+    // Lote: o modelo barato erra contagens (jogos, canetas, carregadores). O forte lê também e as duas leituras são comparadas;
+    // se divergirem, o app avisa em vez de escolher em silêncio.
+    const cheap = first.result;
+    if (cfg.smartModel && (cheap.lot || strong?.lot)) {
+      if (!strong && (await hooks.quota("smart"))) {
+        try {
+          const second = await callVision(image, cfg.smartModel, lang);
+          hooks.log(`[captura] lote: conferência com ${cfg.smartModel} entrada=${second.usage.input} saída=${second.usage.output}`);
+          strong = second.result;
+        } catch {
+          /* fica com uma só leitura */
+        }
+      }
+      if (strong) {
+        // Num lote, a leitura forte manda, a menos que tenha perdido o produto principal.
+        const base = quality(strong) >= quality(cheap) - 1 ? strong : cheap;
+        if (base.lot) {
+          const diffs = lotDiffs(cheap.lot, strong.lot);
+          result = { ...base, lot: { ...base.lot, check: { state: diffs.length ? "differs" : "match", diffs, statedGames: statedGameCount(base) } } };
+        } else {
+          result = base;
+        }
+      }
+    }
+    if (result.lot && !result.lot.check) {
+      result = { ...result, lot: { ...result.lot, check: { state: "single", diffs: [], statedGames: statedGameCount(result) } } };
     }
 
     if (lookupOn && !result.productId && !result.needsModel && result.searchQuery && !(result.candidates?.length)) {

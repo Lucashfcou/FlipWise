@@ -1,6 +1,8 @@
 import type { Condition } from "../domain/types";
 import type { LookupResult } from "../ebay/lookup";
 
+export type LotKind = "console" | "controller" | "game" | "accessory" | "device";
+
 export type ImageType = "anuncio" | "foto_sem_texto" | "outro";
 
 export interface CaptureProblem {
@@ -47,7 +49,15 @@ export interface CaptureResult {
   /** Tipo de aparelho (laptop, headphones, tablet...), para achar a categoria no eBay. */
   deviceType?: string;
   /** Anúncio que vende vários artigos por um só preço: lista lida (máx. 10), cada artigo casado com o catálogo quando possível. */
-  lot?: { items: { name: string; qty: number; productId: string | null; condition: Condition | null; deviceType?: string }[]; more: number };
+  lot?: {
+    items: { name: string; qty: number; kind: LotKind; productId: string | null; condition: Condition | null; deviceType?: string }[];
+    more: number;
+    /**
+     * Conferência das contagens: "match" = duas leituras (modelo barato e forte) batem; "differs" = divergem em `diffs` (tipos de artigo);
+     * "single" = só houve uma leitura. `statedGames`: número de jogos que o próprio anúncio diz ter (título ou descrição).
+     */
+    check?: { state: "match" | "differs" | "single"; diffs: LotKind[]; statedGames?: number };
+  };
   /** true quando é só um exemplo de demonstração, sem ler nenhuma imagem. */
   demo?: boolean;
 }

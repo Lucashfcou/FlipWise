@@ -12,6 +12,8 @@ export interface LotSeed {
   lines: BundleLine[];
   asked: number | null;
   skipped: string[];
+  /** Unidades lidas do print que ficaram sem preço (não entram na soma). */
+  skippedUnits: number;
 }
 
 export function Lote({ goStock, seed }: { goStock: () => void; seed?: LotSeed }) {
@@ -25,7 +27,7 @@ export function Lote({ goStock, seed }: { goStock: () => void; seed?: LotSeed })
   const product = findProduct(productId)!;
   const askedNum = asked === "" ? null : Number(asked.replace(",", "."));
   const validAsked = askedNum !== null && Number.isFinite(askedNum) && askedNum > 0;
-  const r = useMemo(() => evaluateBundle(lines, priceFor, settings, validAsked ? askedNum : null), [lines, priceFor, settings, askedNum, validAsked]);
+  const r = useMemo(() => evaluateBundle(lines, priceFor, settings, validAsked ? askedNum : null, seed?.skippedUnits ?? 0), [lines, priceFor, settings, askedNum, validAsked, seed]);
 
   function add() {
     const q = Math.max(1, Math.min(50, Math.round(Number(qty) || 1)));
@@ -124,7 +126,7 @@ export function Lote({ goStock, seed }: { goStock: () => void; seed?: LotSeed })
         <div className={`verdict ${r.decision?.light ?? ""}`} aria-live="polite">
           <div className="ticket-head">
             <span className="label">{t("lot.payMax")}</span>
-            <span className="conf media">{t("lot.priced", { n: r.pricedUnits, total: r.totalUnits })}</span>
+            <span className="conf media">{t("lot.priced", { n: r.pricedUnits, total: r.totalUnits + (seed?.skippedUnits ?? 0) })}</span>
           </div>
           <div className="typical">
             <span className="num">{money(r.maxBuy)}</span>

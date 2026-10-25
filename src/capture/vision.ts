@@ -4,7 +4,7 @@ import type { Category, Condition } from "../domain/types";
 import { cleanLookupQuery, cleanSpecs } from "../ebay/lookup";
 import { isDistinctive } from "../ebay/titleMatch";
 import { matchCatalog } from "./match";
-import type { CaptureProblem, CaptureResult, ImageType } from "./types";
+import type { CaptureProblem, CaptureResult, ImageType, LotKind } from "./types";
 
 /** Limite de tamanho da imagem aceite (depois de comprimida no cliente). */
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -122,8 +122,7 @@ function conditionFor(category: Category, generic: unknown): Condition | null {
 /** Máximo de artigos lidos de um lote. */
 export const MAX_LOT_ITEMS = 10;
 
-const LOT_KINDS = ["console", "controller", "game", "accessory", "device"] as const;
-type LotKind = (typeof LOT_KINDS)[number];
+const LOT_KINDS: readonly LotKind[] = ["console", "controller", "game", "accessory", "device"];
 
 /** Categorias do catálogo que cada tipo de artigo do lote pode casar. Evita contar "jogos de DS" como consolas DS. */
 const KIND_CATEGORIES: Record<LotKind, Category[] | null> = {
@@ -163,6 +162,7 @@ function parseLot(input: Record<string, unknown>, mainId: string | null, generic
     items.push({
       name,
       qty,
+      kind,
       productId: m ? m.id : null,
       condition: m ? conditionFor(m.category, generic) : null,
       deviceType: typeof it.deviceType === "string" ? it.deviceType.replace(/[^\p{L}\s-]/gu, "").trim().slice(0, 24) || undefined : undefined,
@@ -173,6 +173,30 @@ function parseLot(input: Record<string, unknown>, mainId: string | null, generic
   // O principal do lote é o primeiro; se o catálogo reconheceu o artigo principal da leitura, usa esse.
   if (mainId && !items[0].productId && !/\b(games?|jogos?)\b/i.test(items[0].name)) items[0].productId = mainId;
   return { items, more: Math.max(0, raw.length - items.length) };
+}
+
+/** Total de unidades por tipo de artigo de um lote. */
+export function lotTotals(lot: NonNullable<CaptureResult["lot"]> | undefined): Record<LotKind, number> {
+  const out: Record<LotKind, number> = { console: 0, controller: 0, game: 0, accessory: 0, device: 0 };
+  for (const it of lot?.items ?? []) out[it.kind] += it.qty;
+  return out;
+}
+
+/** Tipos em que duas leituras do mesmo lote contam quantidades diferentes. */
+export function lotDiffs(a: CaptureResult["lot"], b: CaptureResult["lot"]): LotKind[] {
+  const x = lotTotals(a);
+  const y = lotTotals(b);
+  return LOT_KINDS.filter((k) => x[k] !== y[k]);
+}
+
+/** Número de jogos que o anúncio diz ter ("10 jeux", "13 games"), lido do título e, se não houver, do que vem incluído. */
+export function statedGameCount(r: Pick<CaptureResult, "title" | "includes" | "notes">): number | undefined {
+  const re = /(\d{1,3})\s*(?:\+\s*)?(?:video\s*)?(?:games?|jeux|jogos?|spiele|giochi|juegos)\b/i;
+  for (const text of [r.title, r.includes.join(" | "), r.notes]) {
+    const m = re.exec(text);
+    if (m) return Number(m[1]);
+  }
+  return undefined;
 }
 
 /** Interpreta a resposta da IA e casa o nome com o catálogo (em código). Nada do que a IA escreve entra na app sem esta validação. */

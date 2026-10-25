@@ -90,6 +90,14 @@ const PLATFORMS = {
   PS4: { search: "PS4", is: /ps4|playstation\s?4/i, not: [/ps5|playstation\s?5/i, /xbox/i, /switch/i] },
   PS5: { search: "PS5", is: /ps5|playstation\s?5/i, not: [/ps4|playstation\s?4/i, /xbox/i, /switch/i] },
   Switch: { search: "Nintendo Switch", is: /switch/i, not: [/ps4|playstation\s?4/i, /ps5|playstation\s?5/i, /xbox/i] },
+  // Plataformas mais antigas: cada uma rejeita as outras (um jogo de Wii U não pode contar como o de Wii, nem o de DS como o de 3DS).
+  DS: { search: "Nintendo DS", is: /\bnds\b|nintendo\s?ds\b|\bds\b/i, not: [/3ds/i, /switch/i, /wii/i, /ps\s?[2345]|playstation/i, /xbox/i] },
+  "3DS": { search: "Nintendo 3DS", is: /3ds/i, not: [/switch/i, /wii/i, /ps\s?[2345]|playstation/i, /xbox/i] },
+  Wii: { search: "Nintendo Wii", is: /\bwii\b/i, not: [/wii\s?u/i, /3ds|\bnds\b/i, /switch/i, /ps\s?[2345]|playstation/i, /xbox/i] },
+  "Wii U": { search: "Wii U", is: /wii\s?u/i, not: [/3ds|\bnds\b/i, /switch/i, /ps\s?[2345]|playstation/i, /xbox/i] },
+  "Xbox One": { search: "Xbox One", is: /xbox\s?one/i, not: [/360/i, /series/i, /ps\s?[2345]|playstation/i, /switch/i, /wii/i] },
+  "Xbox 360": { search: "Xbox 360", is: /360/i, not: [/xbox\s?one/i, /series/i, /ps\s?[2345]|playstation/i, /switch/i, /wii/i] },
+  PS3: { search: "PS3", is: /ps3|playstation\s?3/i, not: [/ps4|playstation\s?4/i, /ps5|playstation\s?5/i, /xbox/i, /switch/i, /wii/i] },
 } as const;
 
 function gameQuery(productId: string): ProductQuery | undefined {

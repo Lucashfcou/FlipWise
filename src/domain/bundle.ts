@@ -44,6 +44,8 @@ export function evaluateBundle(
   priceFor: (productId: string, condition: Condition) => PriceEstimate,
   settings: Pick<Settings, "targetMargin" | "shipping" | "promo">,
   asked: number | null,
+  /** Unidades do anúncio sem preço que nem entram nas linhas (jogos e acessórios lidos do print). */
+  extraUnpriced = 0,
 ): BundleResult {
   const items: BundleItem[] = lines.map((line) => {
     if (line.custom) return { line, price: line.custom.price, found: line.custom.price.count > 0, label: line.custom.label };
@@ -76,7 +78,15 @@ export function evaluateBundle(
 
   let decision: BundleResult["decision"] = null;
   if (asked !== null && Number.isFinite(asked) && asked > 0 && pricedUnits > 0) {
-    if (asked <= maxBuy) {
+    const unpriced = totalUnits - pricedUnits + extraUnpriced;
+    if (asked > maxBuy && asked > sumSafe && unpriced > 0) {
+      // Só parte das peças tem preço: não se pode dizer "deixa" nem "negoceia" comparando o total pedido com uma parte do lote.
+      decision = {
+        light: "maybe",
+        title: t("lot.partialTitle"),
+        text: t("lot.partialText", { priced: pricedUnits, total: pricedUnits + unpriced, worth: money(sumTypical), asked: money(asked) }),
+      };
+    } else if (asked <= maxBuy) {
       decision = {
         light: "go",
         title: t("lot.buyTitle"),

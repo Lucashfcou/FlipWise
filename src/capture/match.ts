@@ -68,13 +68,23 @@ const PLATFORMS: [string, RegExp][] = [
   ["ps3", /\bplaystation 3\b/],
   ["ps2", /\bplaystation 2\b/],
   ["switch", /\bswitch\b/],
-  ["wii", /\bwii\b/],
-  ["xbox", /\bxbox\b/],
+  ["wiiu", /\bwii u\b/],
+  ["wii", /\bwii\b(?! u\b)/],
+  ["xboxone", /\bxbox one\b/],
+  ["xbox360", /\bxbox 360\b/],
   ["3ds", /\b3ds\b/],
-  ["ds", /\bnintendo ds\b|\bnds\b/],
+  ["ds", /\bnintendo ds\b|\bnds\b|^ds$/],
   ["pc", /\bpc\b|\bsteam\b/],
 ];
-const platformsIn = (text: string) => new Set(PLATFORMS.filter(([, re]) => re.test(text)).map(([k]) => k));
+const platformsIn = (text: string) => {
+  const out = new Set(PLATFORMS.filter(([, re]) => re.test(text)).map(([k]) => k));
+  // "Xbox" sem mais nada: pode ser a One ou a 360, as duas servem de candidatas.
+  if (/\bxbox\b/.test(text) && !out.has("xboxone") && !out.has("xbox360")) {
+    out.add("xboxone");
+    out.add("xbox360");
+  }
+  return out;
+};
 const platformOf = (variant: string) => [...platformsIn(norm(variant))][0];
 
 export interface CatalogMatch {
@@ -123,6 +133,7 @@ export function matchCatalog(query: string, specs: string[] = []): CatalogMatch 
   }
   // Variante sem capacidade ("disc", "digital", "OLED"): usa as palavras da variante que aparecem no texto.
   const withVariant = cands.filter((c) => {
+    if (c.p.category === "game") return false; // a plataforma do jogo já foi tratada acima
     const vw = words(c.p.variant).filter((w) => !CAPACITY.test(w) && !/^\d+$/.test(w) && !STOP.has(w));
     return vw.length > 0 && vw.every(hit);
   });

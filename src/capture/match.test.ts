@@ -45,9 +45,9 @@ describe("casar o nome lido com o catálogo", () => {
 
 describe("jogos: cada plataforma tem o seu preço", () => {
   it("jogo de outra plataforma não casa com o do PS4", () => {
-    expect(matchCatalog("Minecraft Wii U Edition").exact).toBeUndefined();
-    expect(matchCatalog("Minecraft Wii U Edition").options).toHaveLength(0);
-    expect(matchCatalog("Minecraft Xbox One").exact).toBeUndefined();
+    expect(id("Minecraft Wii U Edition")).toBe("game-minecraft-wii-u-edition-wiiu");
+    expect(id("Minecraft Xbox One")).toBe("game-minecraft-xboxone");
+    expect(matchCatalog("Mario Kart 8 Deluxe Nintendo Switch").exact?.variant).toBe("Switch");
   });
 
   it("com a plataforma certa casa", () => {
@@ -59,5 +59,23 @@ describe("jogos: cada plataforma tem o seu preço", () => {
     const m = matchCatalog("Minecraft");
     expect(m.exact).toBeUndefined();
     expect(m.options.length).toBeGreaterThan(0);
+  });
+});
+
+describe("jogos das plataformas antigas", () => {
+  it("cada jogo casa só com a sua plataforma", () => {
+    expect(matchCatalog("Mario Kart 8 Wii U").exact?.variant).toBe("Wii U");
+    expect(matchCatalog("Mario Kart Wii").exact?.variant).toBe("Wii");
+    expect(matchCatalog("Mario Kart 7 Nintendo 3DS").exact?.variant).toBe("3DS");
+    expect(matchCatalog("Mario Kart DS Nintendo DS").exact?.variant).toBe("DS");
+    expect(matchCatalog("Halo 3 Xbox 360").exact?.variant).toBe("Xbox 360");
+    expect(matchCatalog("The Last of Us PS3").exact?.variant).toBe("PS3");
+  });
+
+  it("nome sem plataforma ou 'Xbox' sem versão: pergunta em vez de assumir", () => {
+    expect(matchCatalog("Halo 3").exact).toBeUndefined();
+    const m = matchCatalog("Grand Theft Auto V Xbox");
+    expect(m.exact).toBeUndefined();
+    expect(m.options.map((o) => o.variant).sort()).toEqual(["Xbox 360", "Xbox One"]);
   });
 });

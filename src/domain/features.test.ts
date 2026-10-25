@@ -152,3 +152,27 @@ describe("lote com artigo fora do catálogo", () => {
     expect(r.sumTypical).toBe(100);
   });
 });
+
+describe("lote com peças sem preço", () => {
+  const custom = { low: 90, typical: 100, high: 110, maxBuy: 70, firm: true, confidence: "media", count: 8, derived: false } as const;
+  const line = [{ productId: "custom:Wii U", condition: "B" as const, qty: 1, custom: { label: "Wii U", price: custom } }];
+  const settings = { targetMargin: 0.25, shipping: 4, promo: 0 };
+  const none = () => est(0, { count: 0, maxBuy: 0 });
+
+  it("com peças sem preço, pedir mais que o valor das contadas não vira 'Pass'", async () => {
+    const { evaluateBundle } = await import("./bundle");
+    const r = evaluateBundle(line, none, settings, 115, 12);
+    expect(r.decision?.title).toBe("Cannot say yet");
+    expect(r.decision?.light).toBe("maybe");
+  });
+
+  it("sem peças sem preço, o veredito normal continua", async () => {
+    const { evaluateBundle } = await import("./bundle");
+    expect(evaluateBundle(line, none, settings, 115, 0).decision?.title).toBe("Pass");
+  });
+
+  it("comprar barato continua 'Buy' mesmo com peças sem preço", async () => {
+    const { evaluateBundle } = await import("./bundle");
+    expect(evaluateBundle(line, none, settings, 40, 12).decision?.light).toBe("go");
+  });
+});

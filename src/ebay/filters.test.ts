@@ -25,10 +25,10 @@ describe("catálogo", () => {
     expect(semConsulta.sort()).toEqual(["gpu-rtx-3060-12", "gpu-rtx-4060", "gpu-rtx-4060ti", "gpu-rtx-4070", "ps5-pro", "switch-2"]);
   });
 
-  it("tem telemóveis, consolas, comandos e jogos de três plataformas", () => {
+  it("tem telemóveis, consolas, comandos e jogos de dez plataformas", () => {
     const cats = new Set(PRODUCTS.map((p) => p.category));
     expect([...cats].sort()).toEqual(["audio", "camera", "console", "controller", "cpu", "desktop", "game", "gpu", "laptop", "monitor", "peripheral", "phone", "shoe", "storage", "tablet", "watch"]);
-    expect(new Set(PRODUCTS.filter((p) => p.category === "game").map((p) => p.variant))).toEqual(new Set(["PS4", "PS5", "Switch"]));
+    expect(new Set(PRODUCTS.filter((p) => p.category === "game").map((p) => p.variant))).toEqual(new Set(["PS4", "PS5", "Switch", "DS", "3DS", "Wii", "Wii U", "Xbox One", "Xbox 360", "PS3"]));
   });
 });
 

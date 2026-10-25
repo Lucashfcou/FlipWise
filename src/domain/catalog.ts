@@ -1,5 +1,7 @@
 import { t } from "../i18n";
 import type { Key } from "../i18n";
+import { GAMES_BY_PLATFORM } from "./catalogGames";
+import type { OldPlatform } from "./catalogGames";
 import { MORE } from "./catalogMore";
 import { SHOES } from "./catalogShoes";
 import { TECH } from "./catalogTech";
@@ -207,7 +209,7 @@ const PHONES: [string, string, string][] = [
 
 const phoneSeeds: Seed[] = PHONES.map(([id, name, variant]) => ({ id, category: "phone" as const, brand: "Apple", name, variant }));
 
-export type Platform = "PS4" | "PS5" | "Switch";
+export type Platform = "PS4" | "PS5" | "Switch" | OldPlatform;
 
 const PS4_GAMES = [
   "The Last of Us Part II", "God of War", "Marvel's Spider-Man", "Red Dead Redemption 2", "Grand Theft Auto V",
@@ -256,6 +258,7 @@ const SEEDS: Seed[] = [
   ...gameSeeds(PS4_GAMES, "PS4", ""),
   ...gameSeeds(SWITCH_GAMES, "Switch", "-switch"),
   ...gameSeeds(PS5_GAMES, "PS5", "-ps5"),
+  ...(Object.entries(GAMES_BY_PLATFORM) as [OldPlatform, (typeof GAMES_BY_PLATFORM)[OldPlatform]][]).flatMap(([platform, g]) => gameSeeds(g.titles, platform, g.suffix)),
 ];
 
 /** Mesmo nome e variante já existente: fica o primeiro (os escritos à mão vêm antes dos gerados por listas). */

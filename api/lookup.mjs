@@ -16,10 +16,24 @@ var EN = {
   "print.lotNoPrice": "no price",
   "print.lotMore": "{n} more items were not read.",
   "print.lotUse": "See lot verdict",
+  "print.lotCounted": "{counted} of {total} pieces have a price and count in the verdict. The rest is not counted.",
+  "print.lotCountedLabel": "Counted in the verdict",
+  "print.lotNotCounted": "Not counted (no price)",
+  "print.lotMatch": "Counts confirmed by a second reading.",
+  "print.lotSingle": "Counts read once, not double-checked.",
+  "print.lotDiffers": "The two readings disagree on: {kinds}. Check the counts before trusting the verdict.",
+  "print.lotStated": "The listing says {n} games, but {m} were read.",
+  "kind.console": "consoles",
+  "kind.controller": "controllers",
+  "kind.game": "games",
+  "kind.accessory": "accessories",
+  "kind.device": "devices",
   "print.lotMain": "Only the main item",
   "lot.fromPrint": "Lot read from the screenshot. Check the pieces and the price.",
   "lot.skipped": "Not counted (no price): {list}.",
   "lot.addPiece": "Add another piece",
+  "lot.partialTitle": "Cannot say yet",
+  "lot.partialText": "Only {priced} of {total} pieces have a price (worth {worth}), and the lot asks {asked}. The pieces without a price may cover the difference: judge them yourself.",
   "legal.privacy": "Privacy",
   "legal.terms": "Terms of the beta",
   "legal.p1": "Your stock, sales and settings stay on your device (in the browser). We do not receive them.",
@@ -429,10 +443,24 @@ var PT = {
   "print.lotNoPrice": "sem pre\xE7o",
   "print.lotMore": "Mais {n} artigos n\xE3o foram lidos.",
   "print.lotUse": "Ver veredito do lote",
+  "print.lotCounted": "{counted} de {total} pe\xE7as t\xEAm pre\xE7o e contam no veredito. O resto n\xE3o \xE9 contado.",
+  "print.lotCountedLabel": "Contado no veredito",
+  "print.lotNotCounted": "N\xE3o contado (sem pre\xE7o)",
+  "print.lotMatch": "Contagens confirmadas por uma segunda leitura.",
+  "print.lotSingle": "Contagens lidas uma s\xF3 vez, sem dupla verifica\xE7\xE3o.",
+  "print.lotDiffers": "As duas leituras divergem em: {kinds}. Confere as contagens antes de confiar no veredito.",
+  "print.lotStated": "O an\xFAncio diz {n} jogos, mas foram lidos {m}.",
+  "kind.console": "consolas",
+  "kind.controller": "comandos",
+  "kind.game": "jogos",
+  "kind.accessory": "acess\xF3rios",
+  "kind.device": "aparelhos",
   "print.lotMain": "S\xF3 o artigo principal",
   "lot.fromPrint": "Lote lido do print. Confere as pe\xE7as e o pre\xE7o.",
   "lot.skipped": "N\xE3o contados (sem pre\xE7o): {list}.",
   "lot.addPiece": "Juntar outra pe\xE7a",
+  "lot.partialTitle": "Ainda n\xE3o d\xE1 para dizer",
+  "lot.partialText": "S\xF3 {priced} de {total} pe\xE7as t\xEAm pre\xE7o (valem {worth}) e o lote pede {asked}. As pe\xE7as sem pre\xE7o podem cobrir a diferen\xE7a: avalia-as tu.",
   "legal.privacy": "Privacidade",
   "legal.terms": "Termos do beta",
   "legal.p1": "O teu stock, as vendas e as defini\xE7\xF5es ficam no teu aparelho (no navegador). N\xF3s n\xE3o os recebemos.",
@@ -822,6 +850,268 @@ function t(key, params) {
   const s = DICTS[current][key] ?? DICTS.en[key] ?? key;
   return params ? s.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? "")) : s;
 }
+
+// src/domain/catalogGames.ts
+var GAMES_BY_PLATFORM = {
+  DS: {
+    suffix: "-ds",
+    titles: [
+      "New Super Mario Bros",
+      "Mario Kart DS",
+      "Pokemon Diamond",
+      "Pokemon Pearl",
+      "Pokemon Platinum",
+      "Pokemon HeartGold",
+      "Pokemon SoulSilver",
+      "Pokemon Black",
+      "Pokemon White",
+      "Pokemon Black 2",
+      "Pokemon White 2",
+      "The Legend of Zelda Phantom Hourglass",
+      "The Legend of Zelda Spirit Tracks",
+      "Animal Crossing Wild World",
+      "Brain Training",
+      "Nintendogs",
+      "Professor Layton and the Curious Village",
+      "Professor Layton and the Diabolical Box",
+      "Super Mario 64 DS",
+      "Mario & Luigi Bowser's Inside Story",
+      "Kirby Super Star Ultra",
+      "Dragon Quest IX",
+      "Mario Party DS",
+      "Tetris DS",
+      "Metroid Prime Hunters",
+      "Castlevania Dawn of Sorrow",
+      "Castlevania Portrait of Ruin",
+      "Grand Theft Auto Chinatown Wars",
+      "Pokemon Mystery Dungeon Explorers of Sky",
+      "Yoshi's Island DS",
+      "Lego Star Wars The Complete Saga",
+      "Phoenix Wright Ace Attorney",
+      "Big Brain Academy",
+      "Mario & Sonic at the Olympic Games"
+    ]
+  },
+  "3DS": {
+    suffix: "-3ds",
+    titles: [
+      "Pokemon X",
+      "Pokemon Y",
+      "Pokemon Omega Ruby",
+      "Pokemon Alpha Sapphire",
+      "Pokemon Sun",
+      "Pokemon Moon",
+      "Pokemon Ultra Sun",
+      "Pokemon Ultra Moon",
+      "Super Mario 3D Land",
+      "Mario Kart 7",
+      "New Super Mario Bros 2",
+      "The Legend of Zelda Ocarina of Time 3D",
+      "The Legend of Zelda Majora's Mask 3D",
+      "The Legend of Zelda A Link Between Worlds",
+      "Animal Crossing New Leaf",
+      "Fire Emblem Awakening",
+      "Fire Emblem Fates Birthright",
+      "Monster Hunter 4 Ultimate",
+      "Monster Hunter Generations",
+      "Kirby Triple Deluxe",
+      "Luigi's Mansion Dark Moon",
+      "Super Smash Bros for Nintendo 3DS",
+      "Mario & Luigi Dream Team",
+      "Bravely Default",
+      "Professor Layton and the Miracle Mask",
+      "Metroid Samus Returns",
+      "Kid Icarus Uprising",
+      "Yo-kai Watch",
+      "Tomodachi Life",
+      "Mario Party Island Tour",
+      "Super Mario Maker for Nintendo 3DS",
+      "Dragon Quest VII",
+      "Dragon Quest VIII",
+      "Xenoblade Chronicles 3D",
+      "Resident Evil Revelations",
+      "Star Fox 64 3D",
+      "Paper Mario Sticker Star"
+    ]
+  },
+  Wii: {
+    suffix: "-wii",
+    titles: [
+      "Wii Sports",
+      "Wii Sports Resort",
+      "Wii Fit",
+      "Wii Fit Plus",
+      "Mario Kart Wii",
+      "Super Mario Galaxy",
+      "Super Mario Galaxy 2",
+      "New Super Mario Bros Wii",
+      "Super Smash Bros Brawl",
+      "The Legend of Zelda Twilight Princess",
+      "The Legend of Zelda Skyward Sword",
+      "Animal Crossing City Folk",
+      "Just Dance 2",
+      "Just Dance 3",
+      "Mario Party 8",
+      "Mario Party 9",
+      "Donkey Kong Country Returns",
+      "Kirby's Epic Yarn",
+      "Metroid Prime Trilogy",
+      "Xenoblade Chronicles",
+      "The Last Story",
+      "Wii Party",
+      "Mario Sports Mix",
+      "Super Paper Mario",
+      "Resident Evil Umbrella Chronicles",
+      "Punch-Out",
+      "Fire Emblem Radiant Dawn",
+      "Guitar Hero World Tour",
+      "Rayman Origins",
+      "Lego Star Wars The Complete Saga"
+    ]
+  },
+  "Wii U": {
+    suffix: "-wiiu",
+    titles: [
+      "Mario Kart 8",
+      "Super Mario 3D World",
+      "New Super Mario Bros U",
+      "Super Smash Bros for Wii U",
+      "Splatoon",
+      "The Legend of Zelda Breath of the Wild",
+      "The Legend of Zelda The Wind Waker HD",
+      "The Legend of Zelda Twilight Princess HD",
+      "Nintendo Land",
+      "Super Mario Maker",
+      "Xenoblade Chronicles X",
+      "Bayonetta 2",
+      "Pikmin 3",
+      "Donkey Kong Country Tropical Freeze",
+      "Mario Party 10",
+      "Yoshi's Woolly World",
+      "Kirby and the Rainbow Curse",
+      "Star Fox Zero",
+      "Paper Mario Color Splash",
+      "Hyrule Warriors",
+      "Captain Toad Treasure Tracker",
+      "The Wonderful 101",
+      "Pokken Tournament",
+      "Minecraft Wii U Edition",
+      "Just Dance 2017",
+      "Lego City Undercover",
+      "Lego Marvel Super Heroes",
+      "Rayman Legends",
+      "Wii Party U",
+      "Guitar Hero Live"
+    ]
+  },
+  "Xbox One": {
+    suffix: "-xboxone",
+    titles: [
+      "Halo 5 Guardians",
+      "Halo The Master Chief Collection",
+      "Forza Horizon 3",
+      "Forza Horizon 4",
+      "Forza Motorsport 7",
+      "Gears of War 4",
+      "Gears 5",
+      "Red Dead Redemption 2",
+      "Grand Theft Auto V",
+      "Minecraft",
+      "FIFA 23",
+      "Call of Duty Black Ops 4",
+      "Call of Duty Modern Warfare",
+      "Battlefield 1",
+      "Fallout 4",
+      "The Witcher 3 Wild Hunt",
+      "Sea of Thieves",
+      "Cuphead",
+      "Ori and the Blind Forest",
+      "Ori and the Will of the Wisps",
+      "Rocket League",
+      "Assassin's Creed Odyssey",
+      "Assassin's Creed Origins",
+      "Far Cry 5",
+      "Star Wars Battlefront II",
+      "Titanfall 2",
+      "Dark Souls III",
+      "Resident Evil 2",
+      "WWE 2K19",
+      "The Lego Movie Videogame",
+      "Lego Marvel's Avengers",
+      "Lego Star Wars The Force Awakens",
+      "Mortal Kombat 11"
+    ]
+  },
+  "Xbox 360": {
+    suffix: "-xbox360",
+    titles: [
+      "Halo 3",
+      "Halo Reach",
+      "Halo 4",
+      "Gears of War",
+      "Gears of War 2",
+      "Gears of War 3",
+      "Forza Motorsport 4",
+      "Forza Horizon",
+      "Grand Theft Auto V",
+      "Red Dead Redemption",
+      "Call of Duty Modern Warfare 2",
+      "Call of Duty Black Ops",
+      "Call of Duty Black Ops 2",
+      "Fable II",
+      "Fable III",
+      "Mass Effect 2",
+      "Mass Effect 3",
+      "The Elder Scrolls V Skyrim",
+      "Fallout 3",
+      "Fallout New Vegas",
+      "Assassin's Creed II",
+      "Assassin's Creed Brotherhood",
+      "Dark Souls",
+      "Batman Arkham City",
+      "Minecraft Xbox 360 Edition",
+      "FIFA 14",
+      "Kinect Adventures",
+      "Kinect Sports",
+      "Just Dance 3",
+      "Lego Star Wars The Complete Saga"
+    ]
+  },
+  PS3: {
+    suffix: "-ps3",
+    titles: [
+      "The Last of Us",
+      "Uncharted Drake's Fortune",
+      "Uncharted 2 Among Thieves",
+      "Uncharted 3 Drake's Deception",
+      "God of War III",
+      "God of War Ascension",
+      "Metal Gear Solid 4",
+      "Grand Theft Auto V",
+      "Red Dead Redemption",
+      "Gran Turismo 5",
+      "Gran Turismo 6",
+      "Heavy Rain",
+      "Beyond Two Souls",
+      "Demon's Souls",
+      "Dark Souls",
+      "Resident Evil 5",
+      "Call of Duty Modern Warfare 3",
+      "Call of Duty Black Ops",
+      "Batman Arkham City",
+      "The Elder Scrolls V Skyrim",
+      "Fallout 3",
+      "Assassin's Creed II",
+      "Ratchet & Clank A Crack in Time",
+      "LittleBigPlanet",
+      "Killzone 3",
+      "Infamous",
+      "FIFA 14",
+      "Persona 5",
+      "BioShock Infinite"
+    ]
+  }
+};
 
 // src/data/more-keep.json
 var more_keep_default = {
@@ -3276,7 +3566,8 @@ var SEEDS = [
   ...controllerSeeds,
   ...gameSeeds(PS4_GAMES, "PS4", ""),
   ...gameSeeds(SWITCH_GAMES, "Switch", "-switch"),
-  ...gameSeeds(PS5_GAMES, "PS5", "-ps5")
+  ...gameSeeds(PS5_GAMES, "PS5", "-ps5"),
+  ...Object.entries(GAMES_BY_PLATFORM).flatMap(([platform, g]) => gameSeeds(g.titles, platform, g.suffix))
 ];
 var seenKeys = /* @__PURE__ */ new Set();
 var seenIds = /* @__PURE__ */ new Set();
@@ -3877,13 +4168,22 @@ var PLATFORMS = [
   ["ps3", /\bplaystation 3\b/],
   ["ps2", /\bplaystation 2\b/],
   ["switch", /\bswitch\b/],
-  ["wii", /\bwii\b/],
-  ["xbox", /\bxbox\b/],
+  ["wiiu", /\bwii u\b/],
+  ["wii", /\bwii\b(?! u\b)/],
+  ["xboxone", /\bxbox one\b/],
+  ["xbox360", /\bxbox 360\b/],
   ["3ds", /\b3ds\b/],
-  ["ds", /\bnintendo ds\b|\bnds\b/],
+  ["ds", /\bnintendo ds\b|\bnds\b|^ds$/],
   ["pc", /\bpc\b|\bsteam\b/]
 ];
-var platformsIn = (text) => new Set(PLATFORMS.filter(([, re]) => re.test(text)).map(([k]) => k));
+var platformsIn = (text) => {
+  const out = new Set(PLATFORMS.filter(([, re]) => re.test(text)).map(([k]) => k));
+  if (/\bxbox\b/.test(text) && !out.has("xboxone") && !out.has("xbox360")) {
+    out.add("xboxone");
+    out.add("xbox360");
+  }
+  return out;
+};
 var platformOf = (variant) => [...platformsIn(norm(variant))][0];
 function matchCatalog(query, specs = []) {
   const qw = new Set(words(query));
@@ -3913,6 +4213,7 @@ function matchCatalog(query, specs = []) {
     else return { options: [] };
   }
   const withVariant = cands.filter((c) => {
+    if (c.p.category === "game") return false;
     const vw = words(c.p.variant).filter((w) => !CAPACITY.test(w) && !/^\d+$/.test(w) && !STOP.has(w));
     return vw.length > 0 && vw.every(hit);
   });
@@ -4054,6 +4355,7 @@ function parseLot(input, mainId, generic) {
     items.push({
       name,
       qty,
+      kind,
       productId: m ? m.id : null,
       condition: m ? conditionFor(m.category, generic) : null,
       deviceType: typeof it.deviceType === "string" ? it.deviceType.replace(/[^\p{L}\s-]/gu, "").trim().slice(0, 24) || void 0 : void 0
@@ -4063,6 +4365,24 @@ function parseLot(input, mainId, generic) {
   if (items.length < 2) return void 0;
   if (mainId && !items[0].productId && !/\b(games?|jogos?)\b/i.test(items[0].name)) items[0].productId = mainId;
   return { items, more: Math.max(0, raw.length - items.length) };
+}
+function lotTotals(lot) {
+  const out = { console: 0, controller: 0, game: 0, accessory: 0, device: 0 };
+  for (const it of lot?.items ?? []) out[it.kind] += it.qty;
+  return out;
+}
+function lotDiffs(a, b) {
+  const x = lotTotals(a);
+  const y = lotTotals(b);
+  return LOT_KINDS.filter((k) => x[k] !== y[k]);
+}
+function statedGameCount(r) {
+  const re = /(\d{1,3})\s*(?:\+\s*)?(?:video\s*)?(?:games?|jeux|jogos?|spiele|giochi|juegos)\b/i;
+  for (const text of [r.title, r.includes.join(" | "), r.notes]) {
+    const m = re.exec(text);
+    if (m) return Number(m[1]);
+  }
+  return void 0;
 }
 function parseVisionResponse(data) {
   const block = data.content?.find((b) => b.type === "tool_use" && b.name === TOOL_NAME);
@@ -4266,13 +4586,38 @@ function createCore(cfg2, hooks) {
     const first = await callVision(image, cfg2.model, lang);
     let { result } = first;
     const usage = first.usage;
+    let strong = null;
     if (cfg2.smartModel && hard(result) && await hooks.quota("smart")) {
       try {
         const second = await callVision(image, cfg2.smartModel, lang);
         hooks.log(`[captura] modelo forte ${cfg2.smartModel} entrada=${second.usage.input} sa\xEDda=${second.usage.output} (${quality(result)} -> ${quality(second.result)})`);
+        strong = second.result;
         if (quality(second.result) > quality(result)) result = second.result;
       } catch {
       }
+    }
+    const cheap = first.result;
+    if (cfg2.smartModel && (cheap.lot || strong?.lot)) {
+      if (!strong && await hooks.quota("smart")) {
+        try {
+          const second = await callVision(image, cfg2.smartModel, lang);
+          hooks.log(`[captura] lote: confer\xEAncia com ${cfg2.smartModel} entrada=${second.usage.input} sa\xEDda=${second.usage.output}`);
+          strong = second.result;
+        } catch {
+        }
+      }
+      if (strong) {
+        const base = quality(strong) >= quality(cheap) - 1 ? strong : cheap;
+        if (base.lot) {
+          const diffs = lotDiffs(cheap.lot, strong.lot);
+          result = { ...base, lot: { ...base.lot, check: { state: diffs.length ? "differs" : "match", diffs, statedGames: statedGameCount(base) } } };
+        } else {
+          result = base;
+        }
+      }
+    }
+    if (result.lot && !result.lot.check) {
+      result = { ...result, lot: { ...result.lot, check: { state: "single", diffs: [], statedGames: statedGameCount(result) } } };
     }
     if (lookupOn && !result.productId && !result.needsModel && result.searchQuery && !result.candidates?.length) {
       try {

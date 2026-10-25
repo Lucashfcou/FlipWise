@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SYSTEM, buildVisionRequest, parseDataUrl, parseVisionResponse } from "./vision";
+import { SYSTEM, buildVisionRequest, lotDiffs, lotTotals, parseDataUrl, parseVisionResponse, statedGameCount } from "./vision";
 
 const PNG = "data:image/png;base64,iVBORw0KGgo=";
 
@@ -193,5 +193,24 @@ describe("lote: placa gráfica não é confundida com jogo ou acessório", () =>
       lotItems: [{ name: "Intel Core i5 PC", qty: 1, kind: "device" }, { name: "RTX 3060 graphics card", qty: 1, kind: "device" }, { name: "SD card", qty: 2, kind: "device" }],
     })));
     expect(result.lot!.items[2].productId).toBeNull();
+  });
+});
+
+describe("conferência do lote", () => {
+  const lot = (items: [string, number, string][]) =>
+    parseVisionResponse(reply(ad({ isLot: true, lotItems: items.map(([name, qty, kind]) => ({ name, qty, kind })) }))).result.lot;
+
+  it("totais por tipo e divergências entre duas leituras", () => {
+    const cheap = lot([["Nintendo DS Lite", 3, "console"], ["Nintendo DS games", 13, "game"]]);
+    const strong = lot([["Nintendo DS Lite", 3, "console"], ["Nintendo DS games", 10, "game"], ["Nintendo DS charger", 2, "accessory"]]);
+    expect(lotTotals(cheap).game).toBe(13);
+    expect(lotDiffs(cheap, strong)).toEqual(["game", "accessory"]);
+    expect(lotDiffs(cheap, cheap)).toEqual([]);
+  });
+
+  it("lê o número de jogos que o anúncio diz ter", () => {
+    expect(statedGameCount({ title: "Lot Nintendo Wii U complet + 10 jeux + accessoires", includes: [], notes: "" })).toBe(10);
+    expect(statedGameCount({ title: "Console Nintendo ds", includes: ["13 games", "2 chargers"], notes: "" })).toBe(13);
+    expect(statedGameCount({ title: "PS4 Slim", includes: ["1 controller"], notes: "" })).toBeUndefined();
   });
 });

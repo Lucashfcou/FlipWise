@@ -226,6 +226,24 @@ export function Print({ onUse, onUseLot }: { onUse: (p: PrintPick) => void; onUs
     return p ? productLabel(p) : it.name;
   }
 
+  /** O que conta no veredito do lote e o que não conta, mais as avisos de contagem. */
+  const lotInfo = (() => {
+    if (!lot) return null;
+    const rows = lot.items.map((it, i) => ({ it, i, priced: Boolean(it.productId) || (i === 0 && mainLookupEstimate() !== null) }));
+    const total = rows.reduce((a, r) => a + r.it.qty, 0);
+    const counted = rows.filter((r) => r.priced).reduce((a, r) => a + r.it.qty, 0);
+    const warnings: string[] = [];
+    const c = lot.check;
+    if (c?.state === "differs") warnings.push(t("print.lotDiffers", { kinds: c.diffs.map((k) => t(("kind." + k) as Key)).join(", ") }));
+    const games = lot.items.filter((x) => x.kind === "game").reduce((a, x) => a + x.qty, 0);
+    if (c?.statedGames !== undefined && c.statedGames !== games) warnings.push(t("print.lotStated", { n: c.statedGames, m: games }));
+    const check =
+      c?.state === "match" && warnings.length === 0 ? <p className="hint">{t("print.lotMatch")}</p>
+      : c?.state === "single" ? <p className="hint">{t("print.lotSingle")}</p>
+      : null;
+    return { rows, total, counted, warnings, check };
+  })();
+
   function useLot() {
     if (!result?.lot) return;
     const lines: BundleLine[] = [];
@@ -240,7 +258,12 @@ export function Print({ onUse, onUseLot }: { onUse: (p: PrintPick) => void; onUs
       if (est) lines.push({ productId: "custom:" + it.name, condition: "B", qty: it.qty, custom: { label: it.name, price: est } });
       else skipped.push(it.qty > 1 ? `${it.qty}× ${it.name}` : it.name);
     });
-    onUseLot({ lines, asked: validPrice ? (priceNum as number) : null, skipped });
+    const skippedUnits = result.lot.items.reduce((a, it, i) => {
+      const p = it.productId ? findProduct(it.productId) : undefined;
+      const priced = Boolean(p) || (i === 0 && mainLookupEstimate() !== null);
+      return priced ? a : a + it.qty;
+    }, 0);
+    onUseLot({ lines, asked: validPrice ? (priceNum as number) : null, skipped, skippedUnits });
   }
 
   if (!open) {
@@ -347,7 +370,7 @@ export function Print({ onUse, onUseLot }: { onUse: (p: PrintPick) => void; onUs
         </div>
       )}
 
-      {result && !notAd && lot && (
+      {result && !notAd && lot && lotInfo && (
         <div className="confirm" ref={confirmRef}>
           {result.demo && <p className="note">{t("print.demoNote")}</p>}
           <div className="found">
@@ -357,17 +380,41 @@ export function Print({ onUse, onUseLot }: { onUse: (p: PrintPick) => void; onUs
               <input id="lotprice" className="field mono" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
           </div>
-          <ul className="plain lotlist">
-            {lot.items.map((it, i) => {
-              const priced = Boolean(it.productId) || (i === 0 && mainLookupEstimate() !== null);
-              return (
-                <li key={i} className="row">
-                  <span>{it.qty}× {lotLabel(it)}</span>
-                  <small className={priced ? "gain" : "muted"}>{priced ? "✓" : t("print.lotNoPrice")}</small>
-                </li>
-              );
-            })}
-          </ul>
+
+          <p className={lotInfo.counted < lotInfo.total ? "note" : "hint"}>
+            {t("print.lotCounted", { counted: lotInfo.counted, total: lotInfo.total })}
+          </p>
+          {lotInfo.warnings.map((w) => (
+            <p key={w} className="loss" role="alert">{w}</p>
+          ))}
+          {lotInfo.check}
+
+          {lotInfo.counted > 0 && (
+            <>
+              <small className="label">{t("print.lotCountedLabel")}</small>
+              <ul className="plain lotlist">
+                {lotInfo.rows.filter((r) => r.priced).map((r) => (
+                  <li key={r.i} className="row">
+                    <span>{r.it.qty}× {lotLabel(r.it)}</span>
+                    <small className="gain">✓</small>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {lotInfo.counted < lotInfo.total && (
+            <>
+              <small className="label">{t("print.lotNotCounted")}</small>
+              <ul className="plain lotlist muted">
+                {lotInfo.rows.filter((r) => !r.priced).map((r) => (
+                  <li key={r.i} className="row">
+                    <span>{r.it.qty}× {lotLabel(r.it)}</span>
+                    <small>{t(("kind." + r.it.kind) as Key)}</small>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           {lot.more > 0 && <p className="hint">{t("print.lotMore", { n: lot.more })}</p>}
           <div className="actions">
             <button className="btn primary" onClick={useLot}>{t("print.lotUse")}</button>
